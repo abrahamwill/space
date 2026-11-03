@@ -14,7 +14,7 @@ import { LIVE } from './actors';
 import { ANCHORS, ROOMS, FACE_NORMAL, type AnchorId, type Face, type RoomId } from './layout';
 import { useHouse, isLit, type View } from './store';
 import { HOTSPOTS, ROOM_DEFAULT, type HouseContent } from './content';
-import { WindowBody, WINDOW_TITLES } from './Windows';
+import { WindowBody, WINDOW_TITLES, type Deck } from './Windows';
 import './house.css';
 
 const MAX_TILT = (15 * Math.PI) / 180;
@@ -103,6 +103,12 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
   const tilt = useHouse((s) => s.tilt);
   const rot = useHouse((s) => s.rot);
   const rotate = useHouse((s) => s.rotate);
+  const record = useHouse((s) => s.record);
+  const onDeck = useHouse((s) => s.onDeck);
+  const recordState = useHouse((s) => s.recordState);
+  const sound = useHouse((s) => s.sound);
+  const records = content.records;
+  const hasAudio = records.some((r) => r.src);
 
   // Create the scene once WebGL is confirmed, or take over the hero's.
   useEffect(() => {
@@ -110,7 +116,13 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
     const s = useHouse.getState();
     const onRoomClick = (room: RoomId) => useHouse.getState().go(room, ROOM_DEFAULT[room]);
     const lit = { main: true, studio: isLit('studio', s), lab: isLit('lab', s) };
+    // the turntable reports which record is on (and when it's being changed)
+    const hookRecords = (en: HouseEngine) => {
+      en.setRecords(records.map((r) => r.label));
+      en.setRecordListener((d, st) => useHouse.getState().setDeck(d, st));
+    };
     if (external) {
+      hookRecords(external);
       // The canvas is framed on the hero's position; move it full-screen (it jumps to the same spot),
       // then ease into the house view. That ease is the "zoom in".
       external.setHost(stageRef.current);
@@ -125,6 +137,7 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
       engine.current = external;
       return () => {
         external.setRoomClick(undefined);
+        external.setRecordListener(undefined);
         engine.current = null;
       };
     }
@@ -138,6 +151,7 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
     });
     e.setLit(lit, true);
     e.setAmbient(60);
+    hookRecords(e);
     engine.current = e;
     return () => {
       e.dispose();
@@ -213,14 +227,48 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
   const here = view === 'overview' ? 'main' : view;
   const crumb = view === 'overview' ? null : ROOMS[view].label;
 
+  // ---- click-to-task ----
+  /** "Now playing" changes straight away; the record itself changes when it's swapped. */
+  const pickRecord = (i: number) => {
+    useHouse.getState().setRecord(i);
+    engine.current?.playRecord(i);
+  };
+  const nextRecord = () => pickRecord((useHouse.getState().record + 1) % records.length);
+  const deck: Deck = { record, state: recordState, pick: pickRecord };
+
   const openHotspot = (id: string, room: RoomId, el: HTMLElement) => {
     lastHotspot.current = el;
-    if (id === 'pet') {
-      engine.current?.greetPet();
-      return setPetted((n) => n + 1);
+    switch (id) {
+      case 'pet':
+        engine.current?.ask('pet'); // the pet bounces now; the character comes over to say hello
+        return setPetted((n) => n + 1);
+      case 'sofa':
+        return engine.current?.ask('sofa');
+      case 'turntable':
+        nextRecord();
+        break;
+      case 'arcade':
+        engine.current?.ask('arcade');
+        break;
     }
     go(room, id);
   };
+
+  // Optional music: only if the owner has added audio files to the records.
+  const audio = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const src = records[onDeck]?.src;
+    if (!sound || !src) {
+      audio.current?.pause();
+      return;
+    }
+    audio.current ??= new Audio();
+    const a = audio.current;
+    a.loop = true;
+    if (!a.src.endsWith(src)) a.src = src;
+    a.play().catch(() => {});
+  }, [sound, onDeck, records]);
+  useEffect(() => () => audio.current?.pause(), []);
 
   if (gl === false) {
     return (
@@ -313,6 +361,28 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
         </div>
       </header>
 
+      {records.length > 0 && (
+        <div className="hx-now" aria-live="polite">
+          <span className={`hx-now-disc${recordState === 'playing' ? ' is-spinning' : ''}`} style={{ ['--label' as string]: records[onDeck]?.label }} aria-hidden="true" />
+          <span className="hx-now-text">
+            <strong>{records[record]?.title}</strong>
+            <span className="hx-muted">{recordState === 'playing' ? `${records[record]?.artist} · on the turntable` : 'Changing the record…'}</span>
+          </span>
+          <button type="button" className="hx-now-next" onClick={nextRecord} aria-label="Next record">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 4l10 8-10 8V4z" /><path d="M17 4h3v16h-3z" /></svg>
+          </button>
+          {hasAudio && (
+            <button type="button" className="hx-now-next" onClick={() => useHouse.getState().setSound(!sound)} aria-pressed={sound} aria-label={sound ? 'Sound off' : 'Sound on'}>
+              {sound ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="m22 9-6 6" /><path d="m16 9 6 6" /></svg>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
       <p className="hx-hint">{view === 'overview' ? 'Follow the light through a doorway · drag to tilt' : 'Esc to step back · drag to tilt'}</p>
 
       <div className="hx-turn" role="group" aria-label="Rotate the view">
@@ -347,7 +417,7 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
             </button>
           </div>
           <div className="hx-window-body">
-            <WindowBody id={item} content={content} />
+            <WindowBody id={item} content={content} deck={deck} />
           </div>
         </aside>
       )}

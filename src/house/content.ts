@@ -18,6 +18,7 @@ export interface HouseContent {
   }>;
   lab: ReadonlyArray<{ title: string; body: string; status: string; mark: string }>;
   about: { body: string; facts: ReadonlyArray<{ what: string; when: string }> };
+  records: ReadonlyArray<{ title: string; artist: string; label: string; src?: string }>;
 }
 
 export interface Hotspot {
@@ -35,10 +36,11 @@ export interface Hotspot {
 export const HOTSPOTS: Hotspot[] = [
   // main room
   { id: 'window', anchor: 'window', room: 'main', label: 'Window · about me', wall: '-x' },
-  { id: 'turntable', anchor: 'turntable', room: 'main', label: 'Turntable' },
+  { id: 'turntable', anchor: 'turntable', room: 'main', label: 'Turntable · next record' },
   { id: 'notice', anchor: 'notice', room: 'main', label: 'Prints · talks', wall: '-x' },
   { id: 'door', anchor: 'door', room: 'main', label: 'Front door · contact + CV', wall: '-x' },
   { id: 'photos', anchor: 'photos', room: 'main', label: 'Record shelf · photos', wall: '-y' },
+  { id: 'sofa', anchor: 'sofa', room: 'main', label: 'Sofa · take a break', inline: true },
   // studio
   { id: 'folders', anchor: 'folders', room: 'studio', label: '3 featured folders' },
   { id: 'archive', anchor: 'archive', room: 'studio', label: 'Shelves · archive' },

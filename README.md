@@ -1,6 +1,6 @@
 # Portfolio ("Space")
 
-The portfolio has two ways in: the fast view (the Home v3 design and its case studies) and the house view (an interactive 3D cutaway of the house). Milestones 1–3 are done: the fast view, the 3D house, and ambient life in it.
+The portfolio has two ways in: the fast view (the Home v3 design and its case studies) and the house view (an interactive 3D cutaway of the house). Milestones 1–4 are done: the fast view, the 3D house, ambient life, and click-to-task.
 The design brief and the reference files are in `design/`. Read `design/portfolio-handoff.md` first.
 
 ```bash
@@ -71,8 +71,15 @@ Anything in `[brackets]` is a placeholder. Never invent metrics.
 
 **Ambient life:** the character and pet run on their own once the scene is live. It runs at 30 fps at 1.5× resolution in the hero, and 60 fps at full quality in the house. It stops while the canvas is off-screen or the tab is hidden, and the scene stays still with reduced motion. The posters show the starting pose, so the hero crossfade still lines up. To change routines, edit `ACTIVITIES` and the waypoint graph in `life.ts`; keep paths clear of furniture (there's no collision).
 
-## Next: milestone 4
+**Click-to-task:**
+- **Turntable:** the turntable hotspot, the "next" button on the now-playing card, or a record in the turntable window changes "now playing" straight away. The record itself changes at the swap. If the character can get to the deck within `SWAP_WALK_CAP` (2 s, in `actors.ts`), they hurry over and swap it by hand; otherwise the record lifts, flips and swaps itself. Rapid clicks keep only the latest; a click after the swap moment gets one more swap.
+- **Arcade, sofa and pet:** the arcade hotspot sends the character to play (the screen shows "P1"), the sofa hotspot sends them to sit, and "Pet me" makes the pet bounce while the character comes over.
+- **Code:** `CharacterBrain.ask()` interrupts whatever they're doing, re-routing mid-walk if needed. `eta()` estimates how long they'd take.
+- **Reduced motion:** the record changes at once and nobody walks.
 
-- Click-to-task: clicking the turntable updates "now playing" right away. The character then walks over (capped at about 2 s, otherwise swap in place) and plays a record-swap clip, and the song changes at the swap. Rapid clicks keep only the latest. `CharacterBrain` needs an "interrupt with this activity" entry point; the turntable activity and the `onActivity` hook already exist.
-- The same pattern for the arcade, the sofa and the pet.
+**Records:** `records` in `src/data/site.ts` holds placeholders (title, artist, label colour). Add `src` with an audio file in `/public` and a sound button appears on the now-playing card. It's off by default and the music changes when the record does.
+
+## Next
+
 - Swap primitives for Blender GLBs room by room: compressed, flat vertex colours, no textures.
+- Fill in the [bracket] content, pick real records, and check the lab screenshots for internal names.

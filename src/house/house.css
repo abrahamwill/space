@@ -57,10 +57,12 @@
   font-weight: 600;
   line-height: 1.2;
 }
-/* Overview: dots only, labels on hover/focus. Zoomed rooms have room for labels. */
-.hx[data-view='overview'] .hx-hotspot-label { opacity: 0; transform: translateX(-4px); transition: opacity 0.15s ease, transform 0.15s ease; }
-.hx[data-view='overview'] .hx-hotspot button:hover .hx-hotspot-label,
-.hx[data-view='overview'] .hx-hotspot button:focus-visible .hx-hotspot-label { opacity: 1; transform: none; }
+/* Overview and the (big, busy) main room: dots only, labels on hover/focus, so they never cover
+   what's happening (the record being changed, say). The zoomed studio and lab have room for labels. */
+.hx:is([data-view='overview'], [data-view='main']) .hx-hotspot-label { opacity: 0; transform: translateX(-4px); transition: opacity 0.15s ease, transform 0.15s ease; }
+.hx:is([data-view='overview'], [data-view='main']) .hx-hotspot button:hover .hx-hotspot-label,
+.hx:is([data-view='overview'], [data-view='main']) .hx-hotspot button:focus-visible .hx-hotspot-label,
+.hx:is([data-view='overview'], [data-view='main']) .hx-hotspot.is-open .hx-hotspot-label { opacity: 1; transform: none; }
 .hx-hotspot:hover, .hx-hotspot:focus-within { z-index: 2; }
 
 .hx-hotspot button:hover .hx-dot,
@@ -196,6 +198,81 @@
   pointer-events: none;
 }
 
+/* ---------- now playing ---------- */
+.hx-now {
+  position: absolute;
+  left: clamp(16px, 3vw, 32px);
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(360px, calc(50vw - 120px));
+  padding: 6px 6px 6px 10px;
+  background: var(--page);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.hx-now-disc {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fbf3e6 0 2px, var(--label, var(--red)) 3px 7px, #1a1a1a 8px 15px);
+  box-shadow: inset 0 0 0 1px #1a1a1a;
+}
+.hx-now-disc.is-spinning { animation: hx-spin 1.8s linear infinite; }
+.hx-now-disc::after {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 3px;
+  margin: 6px 0 0 14px;
+  background: #fbf3e6;
+}
+@keyframes hx-spin { to { transform: rotate(360deg); } }
+.hx-now-text { display: flex; flex-direction: column; min-width: 0; font-size: 13px; line-height: 1.3; }
+.hx-now-text strong, .hx-now-text span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hx-now-text strong { font-weight: 600; font-size: 14px; }
+.hx-now-next {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.hx-now-next:hover { color: var(--red); }
+.hx-now-next[aria-pressed='true'] { color: var(--red); }
+
+/* the hint moves right, to make room */
+.hx-hint { left: auto; right: clamp(16px, 3vw, 32px); margin-left: 0; margin-right: -8px; }
+.hx:has(.hx-window) .hx-hint { display: none; }
+
+.hx-records { margin: 4px 0 0; padding: 0; list-style: none; }
+.hx-records li { border-top: 1px solid var(--rule); }
+.hx-records li:last-child { border-bottom: 1px solid var(--rule); }
+.hx-records button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.hx-records button:hover { color: var(--red); }
+.hx-records button[aria-pressed='true'] { font-weight: 600; }
+.hx-record-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 4px #1a1a1a; margin: 0 4px; }
+
 /* ---------- rotate ---------- */
 .hx-turn {
   position: absolute;
@@ -225,10 +302,10 @@
 .hx-turn-dots span.on { background: var(--ink); }
 
 /* ---------- entering from / leaving to the home page ---------- */
-.hx-top, .hx-hint, .hx-turn { transition: opacity 0.4s ease 0.15s; }
-.hx:not(.is-ready) .hx-top, .hx:not(.is-ready) .hx-hint, .hx:not(.is-ready) .hx-turn { opacity: 0; }
+.hx-top, .hx-hint, .hx-turn, .hx-now { transition: opacity 0.4s ease 0.15s; }
+.hx:not(.is-ready) .hx-top, .hx:not(.is-ready) .hx-hint, .hx:not(.is-ready) .hx-turn, .hx:not(.is-ready) .hx-now { opacity: 0; }
 .hx.is-leaving { background: transparent; }
-.hx.is-leaving .hx-top, .hx.is-leaving .hx-hint, .hx.is-leaving .hx-turn,
+.hx.is-leaving .hx-top, .hx.is-leaving .hx-hint, .hx.is-leaving .hx-turn, .hx.is-leaving .hx-now,
 .hx.is-leaving .hx-overlay, .hx.is-leaving .hx-window { opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
 .hx.is-embedded { z-index: 50; }
 
@@ -338,6 +415,10 @@
   @keyframes hx-up { from { transform: translateY(40px); opacity: 0; } }
   .hx-hint { display: none; }
   .hx[data-view]:has(.hx-window) .hx-turn { display: none; }
+  .hx-turn { left: auto; right: 12px; transform: none; }
+  .hx-now { left: 12px; bottom: 16px; max-width: calc(100vw - 140px); }
+  .hx-turn-dots { display: none; }
+  .hx:has(.hx-window) .hx-now { display: none; }
   .hx-hotspot-label { display: none; }
   .hx-hotspot.is-open .hx-hotspot-label, .hx-hotspot button:focus-visible .hx-hotspot-label { display: inline; }
   .hx-bubble { display: none; }

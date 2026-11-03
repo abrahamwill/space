@@ -232,6 +232,29 @@ export class HouseEngine {
     this.invalidate();
   }
 
+  /** Labels for the records in the playlist (one colour each). */
+  setRecords(labels: string[]) {
+    this.actors.setRecords(labels);
+    this.invalidate();
+  }
+
+  /** Called when the record on the platter changes, and while it's being changed. */
+  setRecordListener(fn: Actors['onRecord']) {
+    this.actors.onRecord = fn;
+  }
+
+  /** Click-to-task: put on record `i` (the character comes over if close, else it swaps itself). */
+  playRecord(i: number) {
+    this.actors.playRecord(i, this.alive);
+    this.invalidate();
+  }
+
+  /** Click-to-task: send the character to the sofa, the arcade or the pet. */
+  ask(task: 'sofa' | 'arcade' | 'pet') {
+    this.actors.ask(task);
+    this.invalidate();
+  }
+
   /** Someone clicked "Pet me". */
   greetPet() {
     this.actors.greetPet();
@@ -361,7 +384,7 @@ export class HouseEngine {
     if (alive) {
       this.clock += dt;
       this.actors.update(dt);
-      this.screens.update(this.clock);
+      this.screens.update(this.clock, this.actors.playingArcade);
     }
 
     // camera

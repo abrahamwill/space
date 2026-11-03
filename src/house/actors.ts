@@ -4,13 +4,13 @@
  * hierarchies of groups with pivots at the joints. life.ts decides what they're doing; this file
  * turns that into joint angles, blending between postures so nothing snaps.
  */
-import { Group, Mesh, type Material, type MeshBasicMaterial, type Scene, Vector3 } from 'three';
+import { Color, Group, Mesh, MeshBasicMaterial, type Material, type Scene, Vector3 } from 'three';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import type { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { buildPart, toWorld } from './geometry';
 import { INK, P, PLATTER, Z_SQUASH as S, ANCHORS, type Prim, type RoomId, type V3 } from './layout';
-import { CharacterBrain, PetBrain, roomAt, type CharacterPose } from './life';
+import { CharacterBrain, PetBrain, roomAt, SWAP_TIME, type CharacterPose } from './life';
 
 /** Live hotspot positions (world). The overlay pins read these every frame. */
 export const LIVE = {
@@ -50,6 +50,10 @@ function part(ctx: Ctx, prims: Prim[], room: RoomId, meshes: Mesh[]) {
 }
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
+const smooth = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 const at = (x: number, z: number, y: number) => new Vector3(x, z * S, y); // plan (x, y, z) offsets → world
 
 // ---------------------------------------------------------------- character
@@ -143,6 +147,15 @@ class Character {
           arm: [s * 0.75 + pat, s * 0.45],
           head: 0,
         };
+      }
+      case 'swap': {
+        // reach for the record, lift it while it's off the platter, put the new one down
+        const up = smooth(0.25, 0.6, t) * (1 - smooth(1.0, 1.4, t));
+        return { hip: HIP + breathe, thigh: [0, 0], shin: [0, 0], arm: [s * (0.9 + up * 0.55), s * (0.8 + up * 0.55)], head: 0 };
+      }
+      case 'play': {
+        const mash = Math.sin(t * 17) * 0.09;
+        return { hip: HIP + breathe, thigh: [0, 0], shin: [0, 0], arm: [s * 0.85 + mash, s * 0.85 - mash], head: Math.sin(t * 3) * 0.05 };
       }
       case 'interact': {
         const reach = 0.95 + Math.sin(t * 2.2) * 0.2;
@@ -238,43 +251,170 @@ class Pet {
 
 // ---------------------------------------------------------------- record
 
+/**
+ * The record on the turntable. Spins at 33⅓; a swap lifts it off, tips it, changes the label at the
+ * halfway point (that's when the song changes), and drops it back on. Same timing as the character's
+ * 'swap' clip, so their hands meet it.
+ */
 class Vinyl {
   root = new Group();
+  private lift = new Group();
+  private spin = new Group();
+  private label: MeshBasicMaterial;
+  private t = -1;
+  private swapped = false;
+  onSwap?: () => void;
+  onEnd?: () => void;
+
   constructor(ctx: Ctx) {
-    this.root.add(part(ctx, [
+    this.spin.add(part(ctx, [
       disc(0, 0, 0, PLATTER.r, INK, true, 32),
-      disc(0, 0, 0.01, 0.2, P.red, false),
-      // a cream mark on the label, so you can see it turn
-      disc(0.11, 0, 0.02, 0.045, P.cream, false, 12),
-      // a sheen across the grooves
+      // a sheen across the grooves, so you can see it turn
       { t: 'poly', pts: [[0.28, -0.03, 0.012], [0.52, -0.05, 0.012], [0.52, 0.05, 0.012], [0.28, 0.03, 0.012]], fill: '#4a4a4e', ol: false },
+      disc(0.11, 0, 0.022, 0.045, P.cream, false, 12),
     ], 'main', []));
+    // the label is its own mesh so its colour can change with the record
+    const { batch } = buildPart([disc(0, 0, 0.01, 0.2, P.red, false)]);
+    this.label = new MeshBasicMaterial({ color: new Color(P.red) });
+    ctx.disposables.push(batch.mesh, this.label);
+    this.spin.add(new Mesh(batch.mesh, this.label));
+    this.lift.add(this.spin);
+    this.root.add(this.lift);
     this.root.position.copy(toWorld([PLATTER.cx, PLATTER.cy, PLATTER.z]));
   }
+
+  get swapping() {
+    return this.t >= 0;
+  }
+  /** Past the moment the record changes (a new request now needs another swap). */
+  get pastSwap() {
+    return this.swapped;
+  }
+
+  setLabel(hex: string) {
+    this.label.color.set(hex);
+  }
+
+  startSwap() {
+    this.t = 0;
+    this.swapped = false;
+  }
+
   update(dt: number) {
-    this.root.rotation.y -= dt * ((33.33 / 60) * 2 * Math.PI);
+    let up = 0;
+    if (this.t >= 0) {
+      this.t += dt;
+      up = smooth(0.3, 0.65, this.t) * (1 - smooth(1.05, 1.45, this.t));
+      if (!this.swapped && this.t >= SWAP_TIME / 2) {
+        this.swapped = true;
+        this.onSwap?.();
+      }
+      if (this.t >= SWAP_TIME) {
+        this.t = -1;
+        this.onEnd?.();
+      }
+    }
+    this.lift.position.y = up * 0.55;
+    this.lift.rotation.z = up * 0.45;
+    // slows to a stop while it's off the platter
+    this.spin.rotation.y -= dt * ((33.33 / 60) * 2 * Math.PI) * (1 - Math.min(1, up * 3));
   }
 }
 
 // ---------------------------------------------------------------- all together
 
+export type RecordState = 'playing' | 'coming' | 'swapping';
+/** How far (in seconds) the character will come to change a record; any further and it swaps itself. */
+export const SWAP_WALK_CAP = 2;
+
 export class Actors {
   private character: Character;
   private pet: Pet;
   private record: Vinyl;
+  private labels: string[] = [P.red];
+  private want = 0;
+  private onDeck = 0;
+  /** The character is on the way to change the record. */
+  private coming = false;
+  private comingFor = 0;
+  /** (record on the platter, what's happening) — for "now playing" in the UI. */
+  onRecord?: (onDeck: number, state: RecordState) => void;
 
   constructor(scene: Scene, ctx: Ctx) {
     this.character = new Character(ctx);
     this.pet = new Pet(ctx);
     this.record = new Vinyl(ctx);
     scene.add(this.character.root, this.pet.root, this.record.root);
-    // the pet notices when the character comes over
     this.character.brain.onActivity = (name, active) => {
-      if (name !== 'pet') return;
-      const p = this.character.brain.pose;
-      if (active) this.pet.brain.greet({ x: p.x, y: p.y });
-      else this.pet.brain.bye();
+      // the pet notices when the character comes over
+      if (name === 'pet') {
+        const p = this.character.brain.pose;
+        if (active) this.pet.brain.greet({ x: p.x, y: p.y });
+        else this.pet.brain.bye();
+      }
+      // their hands are on the record: swap it
+      if (name === 'swap' && active) {
+        this.coming = false;
+        this.swap();
+      }
     };
+    // the song changes the moment the new record is on
+    this.record.onSwap = () => {
+      this.onDeck = this.want;
+      this.record.setLabel(this.labels[this.onDeck % this.labels.length]);
+      this.emit();
+    };
+    // clicked again after the swap moment: only the latest counts, so swap once more
+    this.record.onEnd = () => (this.want !== this.onDeck ? this.swap() : this.emit());
+  }
+
+  private emit() {
+    this.onRecord?.(this.onDeck, this.record.swapping ? 'swapping' : this.coming ? 'coming' : 'playing');
+  }
+
+  private swap() {
+    this.record.startSwap();
+    this.emit();
+  }
+
+  /** Label colours, one per record in the playlist. */
+  setRecords(labels: string[]) {
+    this.labels = labels.length ? labels : [P.red];
+    this.record.setLabel(this.labels[this.onDeck % this.labels.length]);
+  }
+
+  /**
+   * Put on record `i`. The character comes over if they can get there within SWAP_WALK_CAP seconds,
+   * otherwise the record swaps itself. Rapid requests: only the latest is played.
+   * `alive` = false (reduced motion, paused): change it straight away, no animation.
+   */
+  playRecord(i: number, alive: boolean) {
+    this.want = i;
+    if (!alive) {
+      this.coming = false;
+      this.onDeck = i;
+      this.record.setLabel(this.labels[i % this.labels.length]);
+      return this.emit();
+    }
+    if (this.record.swapping || this.coming) return; // already on it; the latest request wins
+    if (i === this.onDeck) return this.emit();
+    if (this.character.brain.eta('swap') <= SWAP_WALK_CAP) {
+      this.coming = true;
+      this.comingFor = 0;
+      this.character.brain.ask('swap');
+      this.emit();
+    } else this.swap();
+  }
+
+  /** Ask the character to go and do something (click-to-task). */
+  ask(task: 'sofa' | 'arcade' | 'pet') {
+    if (this.coming) {
+      // they were on their way to the record: it swaps itself instead
+      this.coming = false;
+      this.swap();
+    }
+    if (task === 'pet') this.pet.brain.greet();
+    this.character.brain.ask(task);
   }
 
   /** A click on "Pet me". */
@@ -282,9 +422,19 @@ export class Actors {
     this.pet.brain.greet();
   }
 
+  /** The character is at the arcade, playing (the screen shows a game in progress). */
+  get playingArcade() {
+    return this.character.brain.current === 'arcade' && this.character.brain.pose.clip === 'play';
+  }
+
   update(dt: number) {
     this.character.update(dt);
     this.pet.update(dt);
     this.record.update(dt);
+    // safety net: if they don't make it in time, don't keep the listener waiting
+    if (this.coming && (this.comingFor += dt) > SWAP_WALK_CAP + 2) {
+      this.coming = false;
+      this.swap();
+    }
   }
 }

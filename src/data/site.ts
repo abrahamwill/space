@@ -37,6 +37,18 @@ export const lab = [
   },
 ] as const;
 
+/**
+ * The records by the turntable in the house. Placeholders until the owner picks real ones.
+ * `label` is the record's label colour on the platter. Add `src` (an audio file in /public, e.g.
+ * '/music/track.mp3') to let visitors turn the sound on; with no `src` anywhere the sound button is hidden.
+ */
+export const records: Array<{ title: string; artist: string; label: string; src?: string }> = [
+  { title: '[Track title 1]', artist: '[Artist]', label: '#c8442b' },
+  { title: '[Track title 2]', artist: '[Artist]', label: '#2b4fa8' },
+  { title: '[Track title 3]', artist: '[Artist]', label: '#e0a72e' },
+  { title: '[Track title 4]', artist: '[Artist]', label: '#fbf3e6' },
+];
+
 export const about = {
   body: "I studied computer science at Universitas Indonesia, then fell for the part where software meets people. Since 2021 I've designed for farmers and field teams at Gokomodo. Most evenings there's a record on, a game half-built, or a workshop to prep.",
   facts: [

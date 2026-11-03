@@ -11,6 +11,9 @@ import { P, SCREENS, type ScreenId } from './layout';
 
 type Draw = (g: CanvasRenderingContext2D, w: number, h: number, t: number) => void;
 
+/** Someone is at the arcade: the game speeds up and shows a player marker. */
+let arcadePlaying = false;
+
 const rect = (g: CanvasRenderingContext2D, c: string, x: number, y: number, w: number, h: number) => {
   g.fillStyle = c;
   g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
@@ -36,8 +39,13 @@ const monitor: Draw = (g, w, h, t) => {
   if (Math.floor(t * 4) % 2 === 0 || shown >= blocks.length) rect(g, '#ffffff', cx, cy, 1, 3);
 };
 
-const arcade: Draw = (g, w, h, t) => {
+const arcade: Draw = (g, w, h, t0) => {
+  const t = arcadePlaying ? t0 * 1.8 : t0;
   rect(g, P.leaf2, 0, 0, w, h);
+  if (arcadePlaying) {
+    // "P1" in the corner
+    rect(g, P.red, w - 9, 3, 2, 5); rect(g, P.red, w - 7, 3, 2, 2); rect(g, P.red, w - 4, 3, 1, 5);
+  }
   rect(g, '#6e9447', 0, h - 7, w, 7);
   // a snack falls; the pet hops over to catch it
   const cycle = 3.2;
@@ -122,7 +130,8 @@ export class Screens {
   }
 
   /** Redraw at ~12 fps (pixel art doesn't need more). */
-  update(t: number) {
+  update(t: number, playing = false) {
+    arcadePlaying = playing;
     const tick = Math.floor(t * 12);
     if (tick === this.last) return;
     this.last = tick;

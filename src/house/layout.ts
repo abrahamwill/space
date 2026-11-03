@@ -110,7 +110,7 @@ export const ANCHORS = {
   archive: [4.7, 1.0, 3.4], pinboard: [0, 4.9, 3.3], folders: [7.0, 5.0, 2.3],
   lbl_studio: [11.6, 7.4, 0], c_studio: [5.0, 4.4, 1.0],
   window: [0, 13.8, 3.4], notice: [0, 21.9, 3.5], door: [0, 25.1, 3.3], photos: [16.0, 9, 3.8],
-  turntable: [1.5, 18.2, 2.6], coatrack: [2.7, 22.8, 3.4], me: [6.4, 19.8, 3.9],
+  turntable: [0.5, 17.4, 3.1], sofa: [12.9, 15.5, 2.0], coatrack: [2.7, 22.8, 3.4], me: [6.4, 19.8, 3.9],
   lbl_main: [9.6, 22.4, 0],
   // camera centre for the main room view: nudged toward the door wall so the door and prints stay on screen
   c_main: [6.5, 19.0, 1.0],

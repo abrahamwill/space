@@ -6,7 +6,7 @@
  */
 import type { RoomId } from './layout';
 
-export type Clip = 'idle' | 'walk' | 'sit' | 'interact' | 'type' | 'crouch';
+export type Clip = 'idle' | 'walk' | 'sit' | 'interact' | 'type' | 'crouch' | 'swap' | 'play';
 
 export interface CharacterPose {
   x: number;
@@ -57,6 +57,8 @@ const N: Record<string, Node> = {
   labDoor: { x: 17.2, y: 16.0 },
   labIn: { x: 19.6, y: 16.0 },
   petSpot: { x: 22.6, y: 15.4 },
+  labMid: { x: 20.6, y: 12.5 },
+  arcade: { x: 22.1, y: 8.0 },
   hall: { x: 4.4, y: 23.4 },
   door: { x: 1.7, y: 25.2 },
 };
@@ -65,7 +67,7 @@ const EDGES: Array<[string, string]> = [
   ['rugNorth', 'chairFront'], ['rugNorth', 'studioDoor'], ['studioDoor', 'studioIn'], ['rugNorth', 'sofaNorth'],
   ['sofaNorth', 'sofaFront'], ['sofaFront', 'south'], ['start', 'south'], ['south', 'eastSouth'],
   ['eastSouth', 'eastNorth'], ['eastNorth', 'records'], ['eastSouth', 'labDoor'], ['labDoor', 'labIn'],
-  ['labIn', 'petSpot'], ['start', 'hall'], ['hall', 'door'],
+  ['labIn', 'petSpot'], ['labIn', 'labMid'], ['labMid', 'arcade'], ['start', 'hall'], ['hall', 'door'],
 ];
 const ADJ: Record<string, string[]> = {};
 for (const [a, b] of EDGES) {
@@ -99,6 +101,9 @@ function route(from: string, to: string): string[] {
 
 // ---------------------------------------------------------------- activities
 
+/** Length of the record-swap clip (s). The record changes halfway through. */
+export const SWAP_TIME = 1.6;
+
 interface Activity {
   name: string;
   node: string;
@@ -121,7 +126,14 @@ export const ACTIVITIES: Activity[] = [
   { name: 'door', node: 'door', face: PI, clip: 'idle', dur: [2.5, 4], weight: 1 },
   { name: 'pet', node: 'petSpot', face: -0.95, clip: 'crouch', dur: [4, 6], weight: 2 },
   { name: 'rest', node: 'start', face: PI / 2, clip: 'idle', dur: [3, 5], weight: 1 },
+  { name: 'arcade', node: 'arcade', face: PI, clip: 'play', dur: [6, 9], weight: 1 },
 ];
+/** Only ever asked for (click-to-task), never picked at random. */
+const TASK_ONLY: Activity[] = [
+  // timed to the record animation in actors.ts (lift, swap, drop)
+  { name: 'swap', node: 'turntable', face: PI, clip: 'swap', dur: [SWAP_TIME, SWAP_TIME], weight: 0 },
+];
+const byName = (n: string) => [...ACTIVITIES, ...TASK_ONLY].find((a) => a.name === n)!;
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const angleTo = (from: number, to: number) => {
@@ -138,18 +150,24 @@ export function roomAt(x: number, y: number): RoomId {
   return 'main';
 }
 
-const WALK_SPEED = 1.7; // plan units / s
+const WALK_SPEED = 1.7; // plan units / s, pottering about
+const HURRY_SPEED = 2.6; // when asked to do something
 const TURN_SPEED = 7; // rad / s
+const STAND_RATE = 2.5; // settle units / s (sitting down and getting up)
+
+type Step = Node & { name?: string };
 
 export class CharacterBrain {
   pose: CharacterPose;
-  /** Fired when the character starts / stops an activity (the pet listens for 'pet'). */
+  /** Fired when the character starts / stops an activity (the pet listens for 'pet', the record for 'swap'). */
   onActivity?: (name: string, active: boolean) => void;
-  private node = 'start';
-  private path: Node[] = [];
-  private activity: Activity = ACTIVITIES[ACTIVITIES.length - 1];
+  private path: Step[] = [];
+  private activity: Activity = ACTIVITIES.find((a) => a.name === 'rest')!;
   private left: number;
   private phase: 'act' | 'leave' | 'walk' | 'arrive' = 'act';
+  /** A task someone asked for; taken instead of a random pick. */
+  private forced: Activity | null = null;
+  private hurry = false;
 
   constructor() {
     const s = N.start;
@@ -158,11 +176,69 @@ export class CharacterBrain {
     this.left = 3; // hold the poster pose a moment before wandering off
   }
 
+  /** Sitting or crouching: getting up takes a moment. Standing poses are dropped at once when hurrying. */
+  private get seated() {
+    return !!this.activity.seat || this.activity.clip === 'crouch';
+  }
+
+  /** What they're doing or heading to do. */
+  get current() {
+    return this.activity.name;
+  }
+
   private pick() {
+    if (this.forced) {
+      const f = this.forced;
+      this.forced = null;
+      return f;
+    }
     const options = ACTIVITIES.filter((a) => a.name !== this.activity.name);
     let r = Math.random() * options.reduce((s, a) => s + a.weight, 0);
     for (const a of options) if ((r -= a.weight) <= 0) return a;
     return options[0];
+  }
+
+  /** The steps from where they are now to an activity's spot. */
+  private plan(to: Activity): Step[] {
+    const named = (k: string): Step => ({ ...N[k], name: k });
+    let from: string;
+    const lead: Step[] = [];
+    if (this.phase === 'walk' && this.path[0]?.name) {
+      from = this.path[0].name; // carry on to the node we're heading for, then turn off
+    } else {
+      from = this.activity.node;
+      if (this.activity.at) lead.push(named(from)); // step off the seat first
+    }
+    const steps = [...lead, ...route(from, to.node).map(named)];
+    return [...steps, ...(to.at ? [to.at] : [])];
+  }
+
+  /** Seconds until they could start `name` if asked now (standing up + hurrying over + turning). */
+  eta(name: string) {
+    const to = byName(name);
+    if (this.activity.name === name && this.phase === 'act') return 0;
+    const p = this.pose;
+    let d = 0, prev: Node = p;
+    for (const s of this.plan(to)) {
+      d += dist(prev, s);
+      prev = s;
+    }
+    return (this.seated ? p.settle / (STAND_RATE * 1.6) : 0) + d / HURRY_SPEED + 0.3;
+  }
+
+  /** Drop whatever they're doing and go and do `name` (click-to-task). */
+  ask(name: string) {
+    const to = byName(name);
+    this.forced = to;
+    this.hurry = true;
+    if (this.phase === 'act' || this.phase === 'arrive') {
+      if (this.phase === 'act') this.onActivity?.(this.activity.name, false);
+      this.phase = 'leave';
+    } else if (this.phase === 'walk') {
+      this.path = this.plan(to);
+      this.activity = to;
+      this.forced = null;
+    }
   }
 
   update(dt: number) {
@@ -171,7 +247,7 @@ export class CharacterBrain {
     switch (this.phase) {
       case 'act': {
         this.left -= dt;
-        p.settle = Math.min(1, p.settle + dt * 2.5);
+        p.settle = Math.min(1, p.settle + dt * STAND_RATE);
         this.turnTo(this.activity.face, dt);
         if (this.left <= 0) {
           this.onActivity?.(this.activity.name, false);
@@ -181,14 +257,11 @@ export class CharacterBrain {
       }
       case 'leave': {
         // stand up, then step back onto the graph
-        p.settle = Math.max(0, p.settle - dt * 2.5);
+        p.settle = this.hurry && !this.seated ? 0 : Math.max(0, p.settle - dt * STAND_RATE * (this.hurry ? 1.6 : 1));
         if (p.settle === 0) {
           const next = this.pick();
-          const nodes = route(this.node, next.node).map((k) => N[k]);
-          if (this.activity.at) nodes.unshift(N[this.activity.node]); // step off the seat first
-          this.path = [...nodes, ...(next.at ? [next.at] : [])];
+          this.path = this.plan(next);
           this.activity = next;
-          this.node = next.node;
           this.phase = 'walk';
           this.setClip('walk');
         }
@@ -210,7 +283,8 @@ export class CharacterBrain {
         this.turnTo(want, dt);
         // slow down while turning sharply, so corners look deliberate
         const facing = Math.cos(angleTo(p.heading, want));
-        const step = Math.min(d, WALK_SPEED * dt * Math.max(0.15, facing));
+        const speed = this.hurry ? HURRY_SPEED : WALK_SPEED;
+        const step = Math.min(d, speed * dt * Math.max(0.15, facing));
         p.x += (dx / d) * step;
         p.y += (dy / d) * step;
         p.phase += step * 2.2;
@@ -224,6 +298,7 @@ export class CharacterBrain {
           p.settle = 0;
           this.left = rand(...this.activity.dur);
           this.phase = 'act';
+          this.hurry = false;
           this.onActivity?.(this.activity.name, true);
         }
         break;
@@ -240,7 +315,7 @@ export class CharacterBrain {
 
   private turnTo(h: number, dt: number) {
     const d = angleTo(this.pose.heading, h);
-    this.pose.heading += Math.sign(d) * Math.min(Math.abs(d), TURN_SPEED * dt);
+    this.pose.heading += Math.sign(d) * Math.min(Math.abs(d), TURN_SPEED * (this.hurry ? 1.5 : 1) * dt);
   }
 }
 

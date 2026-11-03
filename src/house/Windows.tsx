@@ -123,7 +123,37 @@ export const WINDOW_TITLES: Record<string, string> = {
   photos: 'Main room · record shelf',
 };
 
-export function WindowBody({ id, content }: { id: string; content: HouseContent }) {
+export interface Deck {
+  /** The record asked for (instant). */
+  record: number;
+  state: 'playing' | 'coming' | 'swapping';
+  pick: (i: number) => void;
+}
+
+function Turntable({ content, deck }: { content: HouseContent; deck: Deck }) {
+  const r = content.records[deck.record];
+  if (!r) return null;
+  return (
+    <>
+      <span className="hx-muted hx-small">{deck.state === 'playing' ? 'On the turntable' : 'Changing the record…'}</span>
+      <h3 className="hx-h">{r.title}</h3>
+      <p>{r.artist}</p>
+      <ul className="hx-records" aria-label="Records">
+        {content.records.map((rec, i) => (
+          <li key={i}>
+            <button type="button" aria-pressed={i === deck.record} onClick={() => deck.pick(i)}>
+              <span className="hx-record-dot" style={{ background: rec.label }} aria-hidden="true" />
+              <span>{rec.title}</span>
+              <span className="hx-muted">{rec.artist}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+export function WindowBody({ id, content, deck }: { id: string; content: HouseContent; deck: Deck }) {
   const { site, about } = content;
   switch (id) {
     case 'folders':
@@ -178,13 +208,7 @@ export function WindowBody({ id, content }: { id: string; content: HouseContent 
         </>
       );
     case 'turntable':
-      return (
-        <>
-          <span className="hx-muted hx-small">On the turntable</span>
-          <h3 className="hx-h">[Track title]</h3>
-          <p>[Artist]</p>
-        </>
-      );
+      return <Turntable content={content} deck={deck} />;
     case 'notice':
       return (
         <>

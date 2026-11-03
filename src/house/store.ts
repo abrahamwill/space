@@ -12,6 +12,15 @@ interface HouseState {
   tilt: number;
   /** Quarter turns from the default view. Unbounded, so turning keeps going the same way. */
   rot: number;
+  /** The record asked for (shown as "now playing" straight away). */
+  record: number;
+  /** The record actually on the platter, and what's happening to it. */
+  onDeck: number;
+  recordState: 'playing' | 'coming' | 'swapping';
+  sound: boolean;
+  setRecord: (i: number) => void;
+  setDeck: (i: number, state: HouseState['recordState']) => void;
+  setSound: (on: boolean) => void;
   go: (view: View, item?: string | null) => void;
   open: (item: string, room: RoomId) => void;
   close: () => void;
@@ -40,6 +49,13 @@ export const useHouse = create<HouseState>((set, get) => ({
   visited: typeof window === 'undefined' ? [] : loadVisited(),
   tilt: 0,
   rot: 0,
+  record: 0,
+  onDeck: 0,
+  recordState: 'playing',
+  sound: false,
+  setRecord: (record) => set({ record }),
+  setDeck: (onDeck, recordState) => set({ onDeck, recordState }),
+  setSound: (sound) => set({ sound }),
   go: (view, item = null) => {
     const visited = get().visited;
     if (view !== 'overview' && !visited.includes(view)) {
