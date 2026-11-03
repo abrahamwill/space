@@ -152,9 +152,21 @@ const houseContent = inlineJson(await getHouseContent());
             });
           }),
       ));
+    // Dev only: this page has no React island, so @astrojs/react never adds the React Refresh
+    // preamble, and importing enter.ts (React) throws "can't detect preamble". Install it first.
+    const preamble: Promise<unknown> = import.meta.env.DEV
+      ? import(/* @vite-ignore */ '/@react-refresh' as string).then(({ injectIntoGlobalHook }) => {
+          const w = window as unknown as Record<string, unknown>;
+          injectIntoGlobalHook(window);
+          w.$RefreshReg$ = () => {};
+          w.$RefreshSig$ = () => (type: unknown) => type;
+        })
+      : Promise.resolve();
+    const loadEnter = () => preamble.then(() => import('../house/enter'));
+
     const warm = () => {
       start();
-      import('../house/enter');
+      loadEnter();
     };
 
     if (holdBack) {
@@ -198,7 +210,7 @@ const houseContent = inlineJson(await getHouseContent());
       busy = true;
       document.documentElement.classList.add('house-loading');
       try {
-        const [e, mod] = await Promise.all([start(), import('../house/enter')]);
+        const [e, mod] = await Promise.all([start(), loadEnter()]);
         mod.onHistory(() => go(false));
         mod.enter(e, host, content(), push);
       } finally {
