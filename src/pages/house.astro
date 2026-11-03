@@ -1,54 +1,59 @@
 ---
-// Holding page for the house. Milestone 2 replaces this with the 3D scene
-// (poster first, then the React Three Fiber island crossfades in).
 import { Picture } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import houseDim from '../assets/house/house_dim.png';
+import HouseApp from '../house/HouseApp';
+import type { HouseContent } from '../house/content';
+import { site, lab, about } from '../data/site';
+import posterDim from '../assets/house/poster-dim.png';
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order).slice(0, 3);
+const content: HouseContent = {
+  site: { name: site.name, email: site.email, emailHref: site.emailHref, linkedin: site.linkedin, cv: site.cv },
+  featured: work.map((w) => ({
+    slug: w.id,
+    title: w.data.title,
+    summary: w.data.summary,
+    company: w.data.company,
+    role: w.data.role,
+    year: w.data.year,
+    published: w.data.published,
+    cover: w.data.cover,
+    tldr: w.data.tldr,
+    metrics: w.data.metrics,
+    prototypeUrl: w.data.prototypeUrl,
+  })),
+  lab,
+  about,
+};
 ---
-<Base title="The house" description="The interactive house is still being built. The short tour has everything in the meantime.">
-  <section class="container holding">
-    <div class="copy">
-      <span class="label">The house</span>
-      <h1 class="h1">The doors are still being fitted.</h1>
-      <p class="muted-ink">Soon you'll be able to walk from room to room. Until then, the short tour covers the same ground.</p>
-      <div class="rooms">
-        <a href="/#studio">The studio <span class="muted">· work</span></a>
-        <a href="/#lab">The lab <span class="muted">· side projects</span></a>
-        <a href="/#about">The main room <span class="muted">· about me</span></a>
-      </div>
-      <div><a class="btn" href="/#studio">Take the short tour</a></div>
+<Base title="The house" description="Step inside: a studio full of work, a lab of side projects, and the room I live in." bare>
+  <h1 class="sr-only">The house</h1>
+  <!-- First paint: a still of the arrival state. The 3D house fades in over it. -->
+  <div class="house-poster" aria-hidden="true">
+    <Picture src={posterDim} formats={['avif', 'webp']} widths={[960, 1440, 2400]} sizes="100vw" alt="" loading="eager" fetchpriority="high" />
+  </div>
+  <HouseApp client:only="react" content={content} />
+  <noscript>
+    <div class="house-noscript">
+      <p>The house needs JavaScript. The short tour has everything:</p>
+      <p><a href="/#studio">The studio</a> · <a href="/#lab">The lab</a> · <a href="/#about">The main room</a></p>
     </div>
-    <Picture
-      src={houseDim}
-      formats={['avif', 'webp']}
-      widths={[720, 1080, 1440, 2336]}
-      sizes="(max-width: 900px) 100vw, 760px"
-      alt="The house cut into the page: the main room lit, the studio and lab still dark"
-      class="poster"
-      loading="eager"
-    />
-  </section>
+  </noscript>
 </Base>
 
 <style>
-  .holding {
-    display: grid;
-    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
-    gap: 48px;
+  .house-poster {
+    position: fixed;
+    inset: 96px 32px 72px;
+    display: flex;
     align-items: center;
-    padding-top: clamp(40px, 6vw, 72px);
-    padding-bottom: var(--section-y);
+    justify-content: center;
   }
-  .copy { display: flex; flex-direction: column; gap: 24px; }
-  .muted-ink { color: var(--ink-soft); max-width: 380px; }
-  .rooms { display: flex; flex-direction: column; }
-  .rooms a {
-    padding: 12px 0;
-    border-top: 1px solid var(--rule);
-    font-weight: 600;
-    text-decoration: none;
+  .house-poster :global(img) { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+  @media (max-width: 899px) { .house-poster { inset: 136px 32px 32px; } }
+  .house-noscript {
+    position: fixed; left: 0; right: 0; bottom: 0; padding: 24px 32px;
+    background: var(--page); display: flex; flex-direction: column; gap: 8px;
   }
-  .rooms a:last-child { border-bottom: 1px solid var(--rule); }
-  .holding :global(.poster) { width: 100%; height: auto; }
-  @media (max-width: 900px) { .holding { grid-template-columns: minmax(0, 1fr); } }
 </style>

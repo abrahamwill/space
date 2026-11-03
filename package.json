@@ -8,16 +8,25 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "poster": "python3 scripts/make-poster.py"
+    "poster": "node scripts/render-poster.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",
+    "@astrojs/react": "^4.4.2",
     "@fontsource-variable/schibsted-grotesk": "^5.3.0",
     "astro": "^5.18.2",
-    "sharp": "^0.35.5"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sharp": "^0.35.5",
+    "three": "^0.187.0",
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "playwright": "^1.63.0",
     "typescript": "^5.9.3"
   }
 }

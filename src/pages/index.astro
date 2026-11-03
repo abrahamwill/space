@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Cover from '../components/Cover.astro';
 import { site, lab, about, houseHref } from '../data/site';
-import houseLit from '../assets/house/house_lit.png';
+import houseLit from '../assets/house/poster-lit.png';
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const featured = work.slice(0, 3);
@@ -38,6 +38,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
           fetchpriority="high"
           decoding="async"
         />
+        <div class="house-live" data-house-live aria-hidden="true"></div>
       </a>
     </section>
   </div>
@@ -110,6 +111,53 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </section>
 </Base>
 
+<script>
+  /**
+   * Load the live house only when it's cheap and wanted:
+   * after the page is idle AND the hero is on screen. Never on Save-Data, slow connections,
+   * low-memory devices, reduced motion, or ?mode=focus; there it waits for intent (hover/focus/touch).
+   */
+  const host = document.querySelector<HTMLElement>('[data-house-live]');
+  const link = host?.closest<HTMLElement>('.house');
+  if (host && link) {
+    type Conn = { saveData?: boolean; effectiveType?: string };
+    const nav = navigator as Navigator & { connection?: Conn; deviceMemory?: number };
+    const conn = nav.connection;
+    const holdBack =
+      conn?.saveData ||
+      /(^|-)(2g|3g)$/.test(conn?.effectiveType ?? '') ||
+      (nav.deviceMemory !== undefined && nav.deviceMemory <= 2) ||
+      matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      document.documentElement.dataset.mode === 'focus';
+
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      import('../house/hero').then(({ mountHero }) => mountHero(host, () => link.classList.add('is-live'))).catch(() => {});
+    };
+
+    if (holdBack) {
+      for (const ev of ['pointerenter', 'focusin', 'touchstart'] as const) link.addEventListener(ev, start, { once: true, passive: true });
+    } else {
+      const idle = (cb: () => void) =>
+        'requestIdleCallback' in window ? requestIdleCallback(cb, { timeout: 4000 }) : setTimeout(cb, 1500);
+      const whenLoaded = (cb: () => void) => (document.readyState === 'complete' ? cb() : addEventListener('load', cb, { once: true }));
+      whenLoaded(() =>
+        idle(() => {
+          const io = new IntersectionObserver((entries) => {
+            if (entries.some((e) => e.isIntersecting)) {
+              io.disconnect();
+              start();
+            }
+          });
+          io.observe(link);
+        }),
+      );
+    }
+  }
+</script>
+
 <style>
   /* ---------- Hero ---------- */
   .hero-wrap { overflow-x: clip; }
@@ -139,7 +187,12 @@ const pad = (n: number) => String(n).padStart(2, '0');
     transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .house:hover { transform: translateY(-6px); }
-  .house :global(img) { width: 100%; height: auto; }
+  .house { position: relative; }
+  .house :global(img) { width: 100%; height: auto; transition: opacity 0.6s ease; }
+  /* Live 3D house: sits exactly over the poster, fades in once it has drawn a frame. */
+  .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
+  .house.is-live .house-live { opacity: 1; }
+  .house.is-live :global(img) { opacity: 0; }
 
   @media (max-width: 900px) {
     .hero { grid-template-columns: minmax(0, 1fr); gap: 24px; }

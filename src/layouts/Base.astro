@@ -9,9 +9,11 @@ interface Props {
   description?: string;
   /** Hide the standard header (case studies bring their own reading bar). */
   bareHeader?: boolean;
+  /** No header or footer at all (the house is full-screen). */
+  bare?: boolean;
   image?: string;
 }
-const { title, description = site.description, bareHeader = false, image } = Astro.props;
+const { title, description = site.description, bareHeader = false, bare = false, image } = Astro.props;
 const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.role}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = image ? new URL(image, Astro.site).href : undefined;
@@ -32,26 +34,28 @@ const ogImage = image ? new URL(image, Astro.site).href : undefined;
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content="summary_large_image" />
     <!--
-      Entry mode per application link: ?mode=focus (recruiters, poster only) or ?mode=play (house first).
-      Milestone 1 only records it; the house island (milestone 2) reads html[data-mode].
+      Entry mode per application link: ?mode=focus (poster only until the house is touched)
+      or ?mode=play (land in the house). The hero loader reads html[data-mode].
     -->
     <script is:inline>
       (function () {
         try {
           var m = new URLSearchParams(location.search).get('mode');
           if (m === 'focus' || m === 'play') sessionStorage.setItem('mode', m);
-          document.documentElement.dataset.mode = m || sessionStorage.getItem('mode') || 'focus';
+          document.documentElement.dataset.mode = m || sessionStorage.getItem('mode') || 'default';
+          // A "play" link lands in the house; the stored mode never redirects again, so Exit house works.
+          if (m === 'play' && location.pathname === '/') location.replace('/house');
         } catch (e) {}
       })();
     </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    {!bareHeader && <Header />}
+    {!bareHeader && !bare && <Header />}
     <slot name="header" />
     <main id="main">
       <slot />
     </main>
-    <Footer />
+    {!bare && <Footer />}
   </body>
 </html>

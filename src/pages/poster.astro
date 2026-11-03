@@ -1,0 +1,19 @@
+---
+// Internal: the 3D scene framed like the hero, for `npm run poster` to screenshot. Not linked anywhere.
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Poster</title>
+    <style>html, body { margin: 0; background: transparent; } #poster { position: fixed; inset: 0; }</style>
+  </head>
+  <body>
+    <div id="poster"></div>
+    <script>
+      import { mountPoster } from '../house/poster';
+      mountPoster(document.getElementById('poster')!);
+    </script>
+  </body>
+</html>
