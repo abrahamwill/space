@@ -1,0 +1,85 @@
+---
+title: A storefront app farmers in Kalimantan and Sumatra could actually use
+summary: I led research and design of a storefront app so farmers in Kalimantan and Sumatra could [outcome].
+company: Gokomodo
+role: Lead designer
+year: '[Year]'
+order: 1
+cover: sun
+meta:
+  - { label: Role, value: Lead product designer }
+  - { label: Team, value: '[PM, engineers, ops]' }
+  - { label: Timeline, value: '[Month – Month, Year]' }
+  - { label: Platform, value: '[Android · web admin]' }
+tldr: '[One paragraph: who struggled with what, what I did, and what changed.]'
+# Fill with real figures only. Delete the list if they're confidential; the page copes.
+metrics:
+  - { value: '[x]', label: '[metric, e.g. weekly orders]' }
+  - { value: '[x]', label: '[metric, e.g. task success]' }
+  - { value: '[x]', label: '[field visits / interviews]' }
+# prototypeUrl: https://...
+---
+import Placeholder from '../../components/case/Placeholder.astro';
+import Insights from '../../components/case/Insights.astro';
+import Reflection from '../../components/case/Reflection.astro';
+import Screens from '../../components/case/Screens.astro';
+import Action from '../../components/case/Action.astro';
+
+{/*
+  How this page is built:
+  - `## Heading` = section name. It becomes the numbered label and the "On this page" link.
+  - `### Heading` = the one-line statement under it.
+  - Plain paragraphs are body copy. Replace every [bracket]; never invent numbers.
+*/}
+
+## The problem
+
+### [Headline that states the tension in one line]
+
+[Context: who the farmers are, how they bought supplies before, and why that was costly. Keep it to what a reader needs to understand the stakes.]
+
+## Field research
+
+### [What I learned on the ground]
+
+[Method: visits, interviews, shadowing. Then the 2–3 insights that shaped the design.]
+
+<Insights items={[
+  '[Short, quotable finding]',
+  '[Short, quotable finding]',
+  '[Short, quotable finding]',
+]} />
+
+## Explorations
+
+### [The options I weighed]
+
+<Placeholder note="[Side-by-side of 2–3 directions]" ratio="16 / 8" />
+
+<Reflection>
+[What I'd do differently here, and why. Short, honest, specific.]
+</Reflection>
+
+## The solution
+
+### [Key decisions, one screen at a time]
+
+<Screens>
+  <Placeholder note="[Screen]" tone="red" ratio="9 / 16" caption="[Decision this screen shows]" />
+  <Placeholder note="[Screen]" tone="cobalt" ratio="9 / 16" caption="[Decision this screen shows]" />
+  <Placeholder note="[Screen]" tone="mustard" ratio="9 / 16" caption="[Decision this screen shows]" />
+</Screens>
+
+<Action href={frontmatter.prototypeUrl}>Try the coded prototype</Action>
+
+## Impact
+
+### [What changed, with numbers where you can share them]
+
+[If figures are confidential, describe the shift qualitatively and say so.]
+
+## Reflection
+
+### [What this taught me about designing for rural users]
+
+[Two or three lessons you would carry into the next project.]

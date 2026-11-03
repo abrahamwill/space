@@ -1,0 +1,7 @@
+---
+interface Props { href?: string }
+const { href } = Astro.props;
+---
+<p class="action"><a class="btn" href={href ?? '#'}><slot /></a></p>
+
+<style>.action { margin-top: 8px; }</style>

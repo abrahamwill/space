@@ -1,0 +1,33 @@
+---
+/** Two to four short, quotable findings. Pass them as an array of strings. */
+interface Props { items: string[] }
+const { items } = Astro.props;
+---
+<ol class="insights" role="list">
+  {items.map((text, i) => (
+    <li>
+      <span class="label">Insight {i + 1}</span>
+      <span class="text">{text}</span>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .insights {
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+    gap: 0 32px;
+  }
+  li {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px 0 8px;
+    border-top: 2px solid var(--ink);
+  }
+  .label { color: var(--cobalt); }
+  .text { font-weight: 600; font-size: 19px; line-height: 1.35; letter-spacing: -0.01em; }
+</style>

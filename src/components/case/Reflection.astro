@@ -1,0 +1,21 @@
+---
+/** "What I'd do differently" aside. Short, honest, specific. */
+---
+<aside class="reflection">
+  <span class="label">Looking back</span>
+  <div class="body"><slot /></div>
+</aside>
+
+<style>
+  .reflection {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 20px;
+    padding: 24px 28px;
+    background: var(--tint);
+  }
+  .label { color: var(--walnut); padding-top: 4px; white-space: nowrap; }
+  .body { font-style: italic; font-weight: 500; font-size: 17px; line-height: 1.55; }
+  .body :global(p) { margin: 0; }
+  @media (max-width: 560px) { .reflection { grid-template-columns: minmax(0, 1fr); } }
+</style>

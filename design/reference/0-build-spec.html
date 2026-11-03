@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Build reference, read me first</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1b1a17}a:hover{color:#c8442b}
+</style>
+</helmet>
+<div style="width: 1600px; height: 1560px; box-sizing: border-box; padding: 64px; background: #f4eee4; color: #1b1a17; font-family: 'Schibsted Grotesk', sans-serif; display: flex; flex-direction: column; gap: 56px">
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; border-bottom: 2px solid #1b1a17; padding-bottom: 28px">
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.16em">BUILD REFERENCE · READ ME FIRST</span>
+      <h1 style="margin: 0; font-weight: 700; font-size: 64px; line-height: 0.95; letter-spacing: -0.045em">What to build, and in what order.</h1>
+    </div>
+    <p style="margin: 0; max-width: 460px; font-size: 16px; line-height: 1.55; color: #3e3a33">Everything on this page is current. The Exploration page holds the history. Full written brief: <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px">portfolio-handoff.md</span>.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px">
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.16em">01 · SCREENS ON THIS PAGE</span>
+      <div style="display: flex; flex-direction: column">
+        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #cfc6b6; font-size: 15px"><span style="font-weight: 600">Home v3</span><span style="color: #2b4fa8; font-weight: 600">Final direction</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #cfc6b6; font-size: 15px"><span style="font-weight: 600">Case study</span><span style="color: #8f4f26">Structure only, restyle</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #cfc6b6; font-size: 15px"><span style="font-weight: 600">House overview</span><span style="color: #8f4f26">Behaviour only, restyle</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #cfc6b6; font-size: 15px"><span style="font-weight: 600">Studio zoom</span><span style="color: #8f4f26">Behaviour only, restyle</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid #cfc6b6; border-bottom: 1px solid #cfc6b6; font-size: 15px"><span style="font-weight: 600">Lab zoom</span><span style="color: #8f4f26">Behaviour only, restyle</span></div>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #3e3a33">"Restyle" means: keep the layout and flow, but use Home v3's look. No thick borders, no offset shadows.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.16em">02 · TOKENS</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; background: #f4eee4; border: 1px solid #1b1a17"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">page #F4EEE4</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; background: #1b1a17"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">ink #1B1A17</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; background: #6b6458"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">muted #6B6458</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; background: #c8442b"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">red #C8442B</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; background: #2b4fa8"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">cobalt #2B4FA8</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="height: 52px; background: #e0a72e"></span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px">mustard #E0A72E</span></div>
+      </div>
+      <div style="display: flex; flex-direction: column; font-size: 14px">
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #cfc6b6"><span>H1 · 76 / 0.95 · −4.5%</span><span style="color: #6b6458">700</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #cfc6b6"><span>H2 · 48 / 1.02 · −3.5%</span><span style="color: #6b6458">700</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #cfc6b6"><span>Lead · 22 / 1.5 · body 18 / 1.55</span><span style="color: #6b6458">400</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #cfc6b6"><span>Label · 13 caps · +0.16em</span><span style="color: #6b6458">600</span></div>
+        <div style="display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid #cfc6b6; border-bottom: 1px solid #cfc6b6"><span>Container 1280 · gutter 48 · sections 120–140</span><span style="color: #6b6458">px</span></div>
+      </div>
+      <span style="font-size: 14px; color: #3e3a33">One typeface: Schibsted Grotesk.</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.16em">03 · MILESTONES</span>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px"><span style="font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -0.04em">1</span><span style="font-size: 15px; line-height: 1.45"><strong>Fast view.</strong> Home v3 and one case study, with the house as a still poster.</span></div>
+        <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px"><span style="font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -0.04em">2</span><span style="font-size: 15px; line-height: 1.45"><strong>Static 3D house.</strong> Lazy-loaded after the page settles, crossfades over the poster; camera zoom between rooms.</span></div>
+        <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px"><span style="font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -0.04em">3</span><span style="font-size: 15px; line-height: 1.45"><strong>Ambient life.</strong> Character and pet routines, spinning turntable, looping screens.</span></div>
+        <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px"><span style="font-weight: 800; font-size: 28px; line-height: 1; letter-spacing: -0.04em">4</span><span style="font-size: 15px; line-height: 1.45"><strong>Click-to-task.</strong> Pick a song and the character walks over and swaps the record.</span></div>
+      </div>
+      <div style="margin-top: 8px; padding: 16px; background: #1b1a17; color: #f4eee4; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.16em; color: #e0a72e">STACK</span>
+        <span style="font-size: 15px; line-height: 1.5">Astro · React Three Fiber + drei · Zustand · Blender to compressed GLB</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 560px minmax(0, 1fr); gap: 56px; flex-grow: 1">
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.16em">04 · HOUSE PLAN (TOP VIEW, PLAN UNITS)</span>
+      <div style="position: relative; width: 560px; height: 520px">
+        <div style="position: absolute; left: 0; top: 0; width: 252px; height: 162px; box-sizing: border-box; border: 2px solid #1b1a17; background: #e9dcc6; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px"><span style="font-weight: 700; font-size: 16px">Studio</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px">x 0–14 · y 0–9 · work</span></div>
+        <div style="position: absolute; left: 0; top: 162px; width: 324px; height: 342px; box-sizing: border-box; border: 2px solid #1b1a17; border-top: 1px dashed #1b1a17; background: #f0e3cd; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px"><span style="font-weight: 700; font-size: 16px">Main room</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px">x 0–18 · y 9–28 · about, music, contact</span></div>
+        <div style="position: absolute; left: 324px; top: 72px; width: 234px; height: 288px; box-sizing: border-box; border: 2px solid #1b1a17; border-left: 1px dashed #1b1a17; background: #ddd6c8; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px"><span style="font-weight: 700; font-size: 16px">Lab</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px">x 18–31 · y 4–20 · side projects</span></div>
+        <span style="position: absolute; left: 340px; top: 400px; font-size: 13px; color: #6b6458; max-width: 200px; line-height: 1.4">Empty notch = page surface. Dashed lines = low partitions with doorways.</span>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #3e3a33">Walls 4.2 units, only on back edges. The page is a surface at wall-top height with the plan cut out of it, so the front rim hides about 4.6 units of floor. Keep key objects on back walls. Layout is data (rooms, waypoints, hotspots), so it can change later without touching code.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.16em">05 · LOOK AND STATES (2D REFERENCE FOR THE 3D SCENE)</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+        <div style="display: flex; flex-direction: column; gap: 8px"><img src="../assets/house/house_dim.png" alt="Arrival: main room lit, studio and lab dark" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block"><span style="font-size: 14px"><strong>Arrival.</strong> Main room lit, the others dark, light through doorways.</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><img src="../assets/house/house_studio.png" alt="After visiting the studio" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block"><span style="font-size: 14px"><strong>Studio visited.</strong> Lab still dark.</span></div>
+        <div style="display: flex; flex-direction: column; gap: 8px"><img src="../assets/house/house_lit.png" alt="All rooms lit" style="width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block"><span style="font-size: 14px"><strong>All lit.</strong> Also the hero poster.</span></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; padding-top: 12px">
+        <div style="display: flex; flex-direction: column; font-size: 14px">
+          <div style="padding: 9px 0; border-top: 1px solid #cfc6b6"><strong>Zoom</strong> ≈ 2.1×, room centred left of the info window; neighbours stay visible.</div>
+          <div style="padding: 9px 0; border-top: 1px solid #cfc6b6"><strong>Hero</strong> poster first, live scene after load and idle; ~30 fps, paused off-screen.</div>
+          <div style="padding: 9px 0; border-top: 1px solid #cfc6b6; border-bottom: 1px solid #cfc6b6"><strong>Skip auto-load</strong> on slow network, Save-Data, low memory, reduced motion, <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">?mode=focus</span>.</div>
+        </div>
+        <div style="display: flex; flex-direction: column; font-size: 14px">
+          <div style="padding: 9px 0; border-top: 1px solid #cfc6b6"><strong>Main room</strong> turntable, window (about), record shelf, prints (talks), door (contact + CV).</div>
+          <div style="padding: 9px 0; border-top: 1px solid #cfc6b6"><strong>Studio</strong> 3 folders (featured work), credenza (archive), pinboard (process).</div>
+          <div style="padding: 9px 0; border-top: 1px solid #cfc6b6; border-bottom: 1px solid #cfc6b6"><strong>Lab</strong> bench (Prototype Hub), arcade (pet game), voice gadget (conversational AI), pet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

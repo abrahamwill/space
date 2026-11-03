@@ -1,0 +1,54 @@
+---
+// Holding page for the house. Milestone 2 replaces this with the 3D scene
+// (poster first, then the React Three Fiber island crossfades in).
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import houseDim from '../assets/house/house_dim.png';
+---
+<Base title="The house" description="The interactive house is still being built. The short tour has everything in the meantime.">
+  <section class="container holding">
+    <div class="copy">
+      <span class="label">The house</span>
+      <h1 class="h1">The doors are still being fitted.</h1>
+      <p class="muted-ink">Soon you'll be able to walk from room to room. Until then, the short tour covers the same ground.</p>
+      <div class="rooms">
+        <a href="/#studio">The studio <span class="muted">· work</span></a>
+        <a href="/#lab">The lab <span class="muted">· side projects</span></a>
+        <a href="/#about">The main room <span class="muted">· about me</span></a>
+      </div>
+      <div><a class="btn" href="/#studio">Take the short tour</a></div>
+    </div>
+    <Picture
+      src={houseDim}
+      formats={['avif', 'webp']}
+      widths={[720, 1080, 1440, 2336]}
+      sizes="(max-width: 900px) 100vw, 760px"
+      alt="The house cut into the page: the main room lit, the studio and lab still dark"
+      class="poster"
+      loading="eager"
+    />
+  </section>
+</Base>
+
+<style>
+  .holding {
+    display: grid;
+    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+    gap: 48px;
+    align-items: center;
+    padding-top: clamp(40px, 6vw, 72px);
+    padding-bottom: var(--section-y);
+  }
+  .copy { display: flex; flex-direction: column; gap: 24px; }
+  .muted-ink { color: var(--ink-soft); max-width: 380px; }
+  .rooms { display: flex; flex-direction: column; }
+  .rooms a {
+    padding: 12px 0;
+    border-top: 1px solid var(--rule);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .rooms a:last-child { border-bottom: 1px solid var(--rule); }
+  .holding :global(.poster) { width: 100%; height: auto; }
+  @media (max-width: 900px) { .holding { grid-template-columns: minmax(0, 1fr); } }
+</style>

@@ -1,0 +1,57 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Hide the standard header (case studies bring their own reading bar). */
+  bareHeader?: boolean;
+  image?: string;
+}
+const { title, description = site.description, bareHeader = false, image } = Astro.props;
+const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · ${site.role}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = image ? new URL(image, Astro.site).href : undefined;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f4eee4" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <!--
+      Entry mode per application link: ?mode=focus (recruiters, poster only) or ?mode=play (house first).
+      Milestone 1 only records it; the house island (milestone 2) reads html[data-mode].
+    -->
+    <script is:inline>
+      (function () {
+        try {
+          var m = new URLSearchParams(location.search).get('mode');
+          if (m === 'focus' || m === 'play') sessionStorage.setItem('mode', m);
+          document.documentElement.dataset.mode = m || sessionStorage.getItem('mode') || 'focus';
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    {!bareHeader && <Header />}
+    <slot name="header" />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

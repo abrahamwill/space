@@ -1,0 +1,38 @@
+---
+/**
+ * Stand-in for an image the owner hasn't supplied yet. Swap for <Image> / ![]() when ready.
+ * `tone` picks a flat colour field from the palette so the page keeps its rhythm meanwhile.
+ */
+interface Props {
+  note: string;
+  tone?: 'tint' | 'mustard' | 'cobalt' | 'red' | 'ink';
+  ratio?: string;
+  caption?: string;
+}
+const { note, tone = 'tint', ratio = '16 / 9', caption } = Astro.props;
+---
+<figure class="ph">
+  <div class:list={['field', `tone-${tone}`]} style={`aspect-ratio:${ratio}`} role="img" aria-label={note}>
+    <span>{note}</span>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .ph { margin: 0; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .field {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tone-tint { background: var(--tint); color: var(--muted); }
+  .tone-mustard { background: var(--mustard); color: var(--ink); }
+  .tone-cobalt { background: var(--cobalt); color: var(--page); }
+  .tone-red { background: var(--red); color: var(--page); }
+  .tone-ink { background: var(--ink); color: var(--page); }
+  figcaption { font-size: 15px; line-height: 1.5; color: var(--muted); }
+</style>

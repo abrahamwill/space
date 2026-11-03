@@ -1,0 +1,79 @@
+---
+import { site, houseHref } from '../data/site';
+---
+<footer class="site-footer" id="contact">
+  <div class="shape red" aria-hidden="true"></div>
+  <div class="shape mustard" aria-hidden="true"></div>
+  <div class="container inner">
+    <span class="label">The front door</span>
+    <h2 class="display">The door's open.</h2>
+    <p class="invite">If any of this sounds like your kind of problem, come say hi.</p>
+    <div class="links">
+      <a href={site.emailHref}>{site.email}</a>
+      <a href={site.linkedin}>LinkedIn</a>
+      <a href={site.cv}>CV (PDF)</a>
+    </div>
+    <div class="base">
+      <span>© {site.year} {site.name}</span>
+      <a href={houseHref}>Or step back inside the house ↗</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    position: relative;
+    overflow: hidden;
+    background: var(--cobalt);
+    color: var(--page);
+  }
+  .shape { position: absolute; border-radius: 50%; }
+  .red {
+    right: clamp(-260px, -16vw, -120px);
+    top: -160px;
+    width: clamp(320px, 40vw, 520px);
+    aspect-ratio: 1;
+    background: var(--red);
+  }
+  .mustard {
+    left: 46%;
+    bottom: -150px;
+    width: clamp(200px, 23vw, 300px);
+    aspect-ratio: 1;
+    background: var(--mustard);
+  }
+  .inner {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding-top: var(--section-y-lg);
+    padding-bottom: 56px;
+  }
+  .display {
+    max-width: 820px;
+    font-weight: 700;
+    font-size: var(--display);
+    line-height: 0.92;
+    letter-spacing: -0.05em;
+  }
+  .invite { max-width: 460px; font-size: 20px; line-height: 1.5; }
+  a { color: var(--page); }
+  a:hover { color: var(--mustard); }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    padding-top: 8px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: clamp(64px, 8vw, 96px);
+    font-size: 14px;
+  }
+</style>

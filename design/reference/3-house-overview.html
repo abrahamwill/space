@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>House overview</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1a1a1a}a:hover{color:#773d26}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100vh; min-height: 760px; background: #ffeede; color: #1a1a1a; font-family: 'Geist', sans-serif; overflow: hidden">
+
+  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 52px 24px 60px; box-sizing: border-box">
+    <div style="position: relative; width: 100%; max-width: 1060px; aspect-ratio: 4 / 3; transform-origin: 50% 50%">
+      <img src="../assets/house/house_dim.png" alt="The house cut into the page: main room lit, studio and lab dark with light spilling through their doorways" style="position: absolute; inset: 0; width: 100%; height: 100%; display: block">
+
+      <span style="position: absolute; left: 28.75%; top: 68.12%; transform: translate(-50%, -50%) matrix(0.894, 0.447, -0.894, 0.447, 0, 0); font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: 0.08em; color: #fff2e3; white-space: nowrap">MAIN ROOM</span>
+      <a href="4-house-studio.html" style="position: absolute; left: 41.71%; top: 43.37%; transform: translate(-50%, -50%) matrix(0.894, 0.447, -0.894, 0.447, 0, 0); display: flex; flex-direction: column; align-items: center; gap: 2px; text-decoration: none; color: #f6c86a; white-space: nowrap">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 0.08em">STUDIO</span>
+        <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #fff2e3">selected work →</span>
+      </a>
+      <a href="5-house-lab.html" style="position: absolute; left: 62.26%; top: 73.42%; transform: translate(-50%, -50%) matrix(0.894, 0.447, -0.894, 0.447, 0, 0); display: flex; flex-direction: column; align-items: center; gap: 2px; text-decoration: none; color: #f6c86a; white-space: nowrap">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px; letter-spacing: 0.08em">LAB</span>
+        <span style="font-family: 'Geist Mono', monospace; font-size: 12px; color: #fff2e3">experiments →</span>
+      </a>
+
+      <button type="button" style="position: absolute; left: 22.02%; top: 45%; transform: translate(-50%, -100%); display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border: 2px solid #1a1a1a; border-radius: 999px; background: #1a1a1a; color: #fff2e3; font-family: 'Geist Mono', monospace; font-size: 12px; cursor: pointer; white-space: nowrap"><span style="width: 12px; height: 12px; border-radius: 50%; background: #f2c14e; border: 2px solid #fff2e3"></span>turntable</button>
+      <button type="button" style="position: absolute; left: 27.03%; top: 36.5%; transform: translate(-50%, -100%); display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border: 2px solid #1a1a1a; border-radius: 999px; background: #1a1a1a; color: #fff2e3; font-family: 'Geist Mono', monospace; font-size: 12px; cursor: pointer; white-space: nowrap"><span style="width: 12px; height: 12px; border-radius: 50%; background: #f2c14e; border: 2px solid #fff2e3"></span>window · about me</button>
+      <button type="button" style="position: absolute; left: 62.95%; top: 48%; transform: translate(-50%, -100%); display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border: 2px solid #1a1a1a; border-radius: 999px; background: #1a1a1a; color: #fff2e3; font-family: 'Geist Mono', monospace; font-size: 12px; cursor: pointer; white-space: nowrap"><span style="width: 12px; height: 12px; border-radius: 50%; background: #f2c14e; border: 2px solid #fff2e3"></span>record shelf · photos</button>
+      <button type="button" style="position: absolute; left: 13.04%; top: 44%; transform: translate(-50%, -100%); display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border: 2px solid #1a1a1a; border-radius: 999px; background: #1a1a1a; color: #fff2e3; font-family: 'Geist Mono', monospace; font-size: 12px; cursor: pointer; white-space: nowrap"><span style="width: 12px; height: 12px; border-radius: 50%; background: #f2c14e; border: 2px solid #fff2e3"></span>noticeboard · talks</button>
+      <button type="button" style="position: absolute; left: 8.5%; top: 50.5%; transform: translate(-50%, -100%); display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 8px; border: 2px solid #1a1a1a; border-radius: 999px; background: #fff8f0; color: #1a1a1a; font-family: 'Geist Mono', monospace; font-size: 12px; cursor: pointer; white-space: nowrap"><span style="width: 12px; height: 12px; border-radius: 50%; background: #f08a4b; border: 2px solid #1a1a1a"></span>front door · contact + CV</button>
+      <div style="position: absolute; left: 30.5%; top: 47%; padding: 10px 14px; max-width: 210px; border: 2px solid #1a1a1a; border-radius: 14px 14px 14px 4px; background: #ffffff; font-size: 14px; line-height: 1.4; box-shadow: 3px 3px 0 #1a1a1a">Hi, I'm [name]. Make yourself at home. My work is in the studio.</div>
+    </div>
+  </div>
+
+  <div style="position: absolute; top: 20px; left: 24px; right: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <a href="1-home-v3.html" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; box-sizing: border-box; border: 2px solid #1a1a1a; border-radius: 999px; background: #fff8f0; text-decoration: none; font-weight: 600; font-size: 14px; box-shadow: 3px 3px 0 #1a1a1a">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17-5-5 5-5"/><path d="M5 12h12"/></svg>Exit house</a>
+      <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #5c4f43">House / <strong style="color: #1a1a1a">Main room</strong></span>
+    </div>
+    <nav aria-label="Rooms" style="display: flex; gap: 6px; padding: 5px; border: 2px solid #1a1a1a; border-radius: 999px; background: #fff8f0">
+      <a href="3-house-overview.html" style="display: flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; background: #1a1a1a; color: #fff2e3; text-decoration: none; font-size: 14px; font-weight: 600">Main room</a>
+      <a href="4-house-studio.html" style="display: flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600">Studio</a>
+      <a href="5-house-lab.html" style="display: flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 600">Lab</a>
+    </nav>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; box-sizing: border-box; border: 2px solid #1a1a1a; border-radius: 999px; background: #fff8f0; font-family: 'Geist Mono', monospace; font-size: 13px">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #f2c14e; border: 1.5px solid #1a1a1a"></span>
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #3a3f50; border: 1.5px solid #1a1a1a"></span>
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #3a3f50; border: 1.5px solid #1a1a1a"></span>1 / 3 rooms lit</span>
+      <button type="button" aria-label="Sound off" style="width: 44px; height: 44px; border: 2px solid #1a1a1a; border-radius: 50%; background: #fff8f0; color: #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg></button>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 24px; right: 24px; bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 6px 8px 6px 6px; border: 2px solid #1a1a1a; border-radius: 999px; background: #1a1a1a; color: #fff2e3">
+      <span style="width: 32px; height: 32px; border-radius: 50%; background: #1a1a1a; border: 2px solid #fff2e3; display: flex; align-items: center; justify-content: center"><span style="width: 10px; height: 10px; border-radius: 50%; background: #f08a4b"></span></span>
+      <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 13px; font-weight: 600">[Track title]</span><span style="font-family: 'Geist Mono', monospace; font-size: 11px; color: #c9b8a4">[Artist] · on the turntable</span></span>
+      <button type="button" aria-label="Next record" style="width: 32px; height: 32px; border: none; border-radius: 50%; background: #fff2e3; color: #1a1a1a; display: flex; align-items: center; justify-content: center; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l10 8-10 8V4z"/><path d="M17 4h3v16h-3z"/></svg></button>
+    </div>
+    <span style="font-family: 'Geist Mono', monospace; font-size: 13px; color: #5c4f43">Follow the light through a doorway · drag to tilt</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

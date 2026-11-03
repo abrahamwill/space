@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Not found">
+  <section class="container nf">
+    <span class="label">404</span>
+    <h1 class="h1">This room doesn't exist.</h1>
+    <p>Maybe it got moved. The rest of the house is still here.</p>
+    <div><a class="btn" href="/">Back to the front</a></div>
+  </section>
+</Base>
+<style>
+  .nf { display: flex; flex-direction: column; gap: 24px; padding-block: var(--section-y); max-width: 760px; margin-left: 0; }
+  @media (min-width: 1280px) { .nf { margin-left: auto; margin-right: auto; max-width: var(--container); } }
+</style>
