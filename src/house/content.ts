@@ -1,4 +1,4 @@
-import type { AnchorId, RoomId } from './layout';
+import type { AnchorId, Face, RoomId } from './layout';
 
 /** Content handed to the house from Astro (so the house and the fast view share one source). */
 export interface HouseContent {
@@ -27,25 +27,27 @@ export interface Hotspot {
   label: string;
   /** No window: does something in place (e.g. the pet). */
   inline?: boolean;
+  /** Hangs on this wall, so it's hidden while the view has that wall cut away. */
+  wall?: Face;
 }
 
 /** What each object in the house opens. Order = tab order within a room. */
 export const HOTSPOTS: Hotspot[] = [
   // main room
-  { id: 'window', anchor: 'window', room: 'main', label: 'Window · about me' },
+  { id: 'window', anchor: 'window', room: 'main', label: 'Window · about me', wall: '-x' },
   { id: 'turntable', anchor: 'turntable', room: 'main', label: 'Turntable' },
-  { id: 'notice', anchor: 'notice', room: 'main', label: 'Prints · talks' },
-  { id: 'door', anchor: 'door', room: 'main', label: 'Front door · contact + CV' },
-  { id: 'photos', anchor: 'photos', room: 'main', label: 'Record shelf · photos' },
+  { id: 'notice', anchor: 'notice', room: 'main', label: 'Prints · talks', wall: '-x' },
+  { id: 'door', anchor: 'door', room: 'main', label: 'Front door · contact + CV', wall: '-x' },
+  { id: 'photos', anchor: 'photos', room: 'main', label: 'Record shelf · photos', wall: '-y' },
   // studio
   { id: 'folders', anchor: 'folders', room: 'studio', label: '3 featured folders' },
   { id: 'archive', anchor: 'archive', room: 'studio', label: 'Shelves · archive' },
-  { id: 'pinboard', anchor: 'pinboard', room: 'studio', label: 'Pinboard · how I work' },
+  { id: 'pinboard', anchor: 'pinboard', room: 'studio', label: 'Pinboard · how I work', wall: '-x' },
   // lab
   { id: 'prototypehub', anchor: 'prototypehub', room: 'lab', label: 'Workbench · Prototype Hub' },
   { id: 'arcade', anchor: 'arcade', room: 'lab', label: 'Arcade · pet game' },
   { id: 'voice', anchor: 'voice', room: 'lab', label: 'Voice gadget · conversational AI' },
-  { id: 'whiteboard', anchor: 'whiteboard', room: 'lab', label: 'Whiteboard · learning notes' },
+  { id: 'whiteboard', anchor: 'whiteboard', room: 'lab', label: 'Whiteboard · learning notes', wall: '-y' },
   { id: 'pet', anchor: 'pet', room: 'lab', label: 'Pet me', inline: true },
 ];
 

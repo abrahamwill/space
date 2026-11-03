@@ -1,13 +1,16 @@
 /**
- * /house: the whole house, zoom between rooms, windows over the zoomed room.
- * Rooms light up as you visit them. Deep links: /house?room=studio|lab|main
+ * The house view: the whole house, zoom between rooms, windows over the zoomed room, rotate in
+ * 90° steps. Rooms light up as you visit them. Deep links: /house?room=studio|lab|main
+ *
+ * Runs standalone on /house, or embedded on the home page, where it takes over the hero's engine
+ * (see enter.ts) so entering the house is one continuous camera move.
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { HouseEngine, webglAvailable } from './engine';
-import { fitHouse, fitRoom, type Insets } from './camera';
+import { fitHouse, fitRoom, azimuthFor, type Insets } from './camera';
 import { toWorld } from './geometry';
 import { track, setFlipEdge, setVisibleBand } from './overlay';
-import { ANCHORS, ROOMS, type AnchorId, type RoomId } from './layout';
+import { ANCHORS, ROOMS, FACE_NORMAL, type AnchorId, type Face, type RoomId } from './layout';
 import { useHouse, isLit, type View } from './store';
 import { HOTSPOTS, ROOM_DEFAULT, type HouseContent } from './content';
 import { WindowBody, WINDOW_TITLES } from './Windows';
@@ -32,7 +35,7 @@ function insetsFor(view: View, item: string | null, w: number, h: number): Inset
 }
 
 /** Camera goal for the current view: whole house, or a room at ~2.1× centred in the free space. */
-function frameFor(view: View, item: string | null) {
+function frameFor(view: View, item: string | null, rot: number) {
   return (w: number, h: number) => {
     const ins = insetsFor(view, item, w, h);
     // labels flip side before they'd run under the window (desktop) or off the right edge
@@ -40,7 +43,7 @@ function frameFor(view: View, item: string | null) {
     // pins that slide under the HUD bar or the window can't be clicked, so hide them
     setVisibleBand(overviewInsets(w).top - 16, w >= 900 || view === 'overview' || !item ? h : h - ins.bottom);
     // Room zoom is relative to the whole-house fit, so opening a window pans but doesn't change the zoom.
-    const whole = fitHouse(w, h, overviewInsets(w));
+    const whole = fitHouse(w, h, overviewInsets(w), azimuthFor(rot));
     if (view !== 'overview') return fitRoom(whole, ROOMS[view].centre, ins, ROOMS[view].zoom);
     // On a phone the whole house is too small to read; start closer, on the main room.
     if (w < 600) return fitRoom(whole, 'c_main', ins, 2);
@@ -67,7 +70,19 @@ function Hearts() {
   );
 }
 
-export default function HouseApp({ content }: { content: HouseContent }) {
+interface Props {
+  content: HouseContent;
+  /** Embedded on the home page: reuse this engine instead of creating one. */
+  engine?: HouseEngine;
+  /** Embedded: leave the house without a page load. */
+  onExit?: () => void;
+  /** Embedded: fading out while the camera zooms back to the hero. */
+  leaving?: boolean;
+}
+
+export const ENTER_SPEED = 4.5; // camera easing rate for the zoom in from the hero (slower than room moves)
+
+export default function HouseApp({ content, engine: external, onExit, leaving = false }: Props) {
   const view = useHouse((s) => s.view);
   const item = useHouse((s) => s.item);
   const visited = useHouse((s) => s.visited);
@@ -81,29 +96,55 @@ export default function HouseApp({ content }: { content: HouseContent }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const engine = useRef<HouseEngine | null>(null);
   const tilt = useHouse((s) => s.tilt);
+  const rot = useHouse((s) => s.rot);
+  const rotate = useHouse((s) => s.rotate);
 
-  // Create the scene once WebGL is confirmed.
+  // Create the scene once WebGL is confirmed, or take over the hero's.
   useEffect(() => {
     if (!gl || !stageRef.current) return;
     const s = useHouse.getState();
+    const onRoomClick = (room: RoomId) => useHouse.getState().go(room, ROOM_DEFAULT[room]);
+    const lit = { main: true, studio: isLit('studio', s), lab: isLit('lab', s) };
+    if (external) {
+      // The canvas is framed on the hero's position; move it full-screen (it jumps to the same spot),
+      // then ease into the house view. That ease is the "zoom in".
+      external.setHost(stageRef.current);
+      external.setRoomClick(onRoomClick);
+      external.setTilt(0);
+      external.setInstant(reduced());
+      external.setLit(lit);
+      external.nextFrame().then(() => {
+        external.setFrame(frameFor(s.view, s.item, s.rot), false, ENTER_SPEED);
+        setReady(true);
+      });
+      engine.current = external;
+      return () => {
+        external.setRoomClick(undefined);
+        engine.current = null;
+      };
+    }
     const e = new HouseEngine(stageRef.current, {
-      frame: frameFor(s.view, s.item),
-      onRoomClick: (room) => useHouse.getState().go(room, ROOM_DEFAULT[room]),
+      frame: frameFor(s.view, s.item, s.rot),
+      onRoomClick,
       onFirstFrame: () => {
         e.setInstant(reduced());
         setReady(true);
       },
     });
-    e.setLit({ main: true, studio: isLit('studio', s), lab: isLit('lab', s) }, true);
+    e.setLit(lit, true);
     engine.current = e;
     return () => {
       e.dispose();
       engine.current = null;
     };
-  }, [gl]);
+  }, [gl, external]);
 
-  // Keep the scene in step with the store.
-  useEffect(() => engine.current?.setFrame(frameFor(view, item)), [view, item]);
+  // Keep the scene in step with the store (not while leaving: enter.ts owns the camera then).
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) return void (first.current = false);
+    if (!leaving) engine.current?.setFrame(frameFor(view, item, rot));
+  }, [view, item, rot, leaving]);
   useEffect(() => engine.current?.setLit({ main: true, studio: isLit('studio', { view, visited }), lab: isLit('lab', { view, visited }) }), [view, visited]);
   useEffect(() => engine.current?.setTilt(tilt), [tilt]);
   const lastHotspot = useRef<HTMLElement | null>(null);
@@ -118,14 +159,17 @@ export default function HouseApp({ content }: { content: HouseContent }) {
     const url = new URL(location.href);
     if (view === 'overview') url.searchParams.delete('room');
     else url.searchParams.set('room', view);
-    history.replaceState(null, '', url);
+    history.replaceState(history.state, '', url);
   }, [view]);
 
   // Escape: close the window, then step back out to the whole house.
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
       const s = useHouse.getState();
+      const typing = (e.target as HTMLElement)?.closest?.('input, textarea, [contenteditable]');
+      if (!typing && (e.key === 'q' || e.key === '[')) return s.rotate(-1);
+      if (!typing && (e.key === 'e' || e.key === ']')) return s.rotate(1);
+      if (e.key !== 'Escape') return;
       if (s.item) {
         s.close();
         lastHotspot.current?.focus();
@@ -156,6 +200,9 @@ export default function HouseApp({ content }: { content: HouseContent }) {
   );
   const endDrag = useCallback(() => (drag.current = null), []);
 
+  // walls facing the camera are cut away in rotated views; so are the hotspots hung on them
+  const az = azimuthFor(rot);
+  const wallShown = (f?: Face) => !f || FACE_NORMAL[f][0] * Math.sin(az) + FACE_NORMAL[f][1] * Math.cos(az) < 0;
   const litCount = ROOM_ORDER.filter((r) => isLit(r, { view, visited })).length;
   const here = view === 'overview' ? 'main' : view;
   const crumb = view === 'overview' ? null : ROOMS[view].label;
@@ -180,7 +227,7 @@ export default function HouseApp({ content }: { content: HouseContent }) {
   }
 
   return (
-    <div className={`hx${ready ? ' is-ready' : ''}`} data-view={view}>
+    <div className={`hx${ready ? ' is-ready' : ''}${leaving ? ' is-leaving' : ''}${external ? ' is-embedded' : ''}`} data-view={view}>
       <div
         ref={stageRef}
         className="hx-stage"
@@ -203,7 +250,7 @@ export default function HouseApp({ content }: { content: HouseContent }) {
           </Pin>
         ))}
         {HOTSPOTS.map((h) => (
-          <Pin key={h.id} anchor={h.anchor} className={`hx-hotspot${item === h.id ? ' is-open' : ''}`} hidden={h.room !== here}>
+          <Pin key={h.id} anchor={h.anchor} className={`hx-hotspot${item === h.id ? ' is-open' : ''}`} hidden={h.room !== here || !wallShown(h.wall)}>
             <button type="button" onClick={(e) => openHotspot(h.id, h.room, e.currentTarget)} aria-expanded={h.inline ? undefined : item === h.id}>
               <span className="hx-dot" aria-hidden="true" />
               <span className="hx-hotspot-label">{h.label}</span>
@@ -218,7 +265,15 @@ export default function HouseApp({ content }: { content: HouseContent }) {
 
       <header className="hx-top">
         <div className="hx-top-start">
-          <a className="hx-exit" href="/">
+          <a
+            className="hx-exit"
+            href="/"
+            onClick={(e) => {
+              if (!onExit || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              onExit();
+            }}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m11 18-6-6 6-6" /></svg>
             Exit house
           </a>
@@ -250,6 +305,21 @@ export default function HouseApp({ content }: { content: HouseContent }) {
       </header>
 
       <p className="hx-hint">{view === 'overview' ? 'Follow the light through a doorway · drag to tilt' : 'Esc to step back · drag to tilt'}</p>
+
+      <div className="hx-turn" role="group" aria-label="Rotate the view">
+        <button type="button" onClick={() => rotate(-1)} aria-label="Rotate left (Q)" title="Rotate left (Q)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /></svg>
+        </button>
+        <span className="hx-turn-dots" aria-live="polite">
+          <span className="sr-only">View {(((rot % 4) + 4) % 4) + 1} of 4</span>
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} aria-hidden="true" className={(((rot % 4) + 4) % 4) === i ? 'on' : ''} />
+          ))}
+        </span>
+        <button type="button" onClick={() => rotate(1)} aria-label="Rotate right (E)" title="Rotate right (E)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></svg>
+        </button>
+      </div>
 
       {item && WINDOW_TITLES[item] && (
         <aside ref={windowRef} className="hx-window" aria-labelledby="hx-window-title">

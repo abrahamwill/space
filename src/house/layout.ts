@@ -9,15 +9,23 @@
 export type RoomId = 'studio' | 'main' | 'lab';
 export type V3 = readonly [number, number, number];
 
-export type Prim =
-  /** Box showing its three camera-facing faces: top, +y face ("left"), +x face ("right"). */
+/** Which way a wall faces, outward from its room: '-x' is the wall at the room's low-x side, etc. */
+export type Face = '-x' | '+x' | '-y' | '+y';
+export const FACE_NORMAL: Record<Face, readonly [number, number]> = { '-x': [-1, 0], '+x': [1, 0], '-y': [0, -1], '+y': [0, 1] };
+
+export type Prim = (
+  /** Box: top and four sides. Sides take `left` or `right` depending on which side of the screen they face. */
   | { t: 'box'; x: number; y: number; z: number; w: number; d: number; h: number; top: string; left: string; right: string; ol: boolean }
   /** Flat convex polygon (decals, floors, screens, ellipses). */
   | { t: 'poly'; pts: V3[]; fill: string; ol: boolean }
   /** Upright cylinder. */
   | { t: 'cyl'; cx: number; cy: number; z: number; r: number; h: number; top: string; side: string; ol: boolean }
   /** Sphere; `hi` adds the toon highlight the 2D art draws as a small inner circle. */
-  | { t: 'ball'; cx: number; cy: number; z: number; r: number; fill: string; hi?: string; ol: boolean };
+  | { t: 'ball'; cx: number; cy: number; z: number; r: number; fill: string; hi?: string; ol: boolean }
+) & {
+  /** Set on walls and anything hung on them. When the camera rotates so that wall is nearest, it's cut away. */
+  face?: Face;
+};
 
 export const H = 4.2; // wall height
 export const HP = 1.3; // partition height
@@ -74,13 +82,15 @@ const decoX = (X: number, y0: number, y1: number, z0: number, z1: number, fill: 
   q([[X + 0.01, y0, z0], [X + 0.01, y1, z0], [X + 0.01, y1, z1], [X + 0.01, y0, z1]], fill, ol);
 const decoY = (Y: number, x0: number, x1: number, z0: number, z1: number, fill: string, ol = true) =>
   q([[x0, Y + 0.01, z0], [x1, Y + 0.01, z0], [x1, Y + 0.01, z1], [x0, Y + 0.01, z1]], fill, ol);
-/** Back walls: only the inner face is ever visible (the page surface hides the rest). */
+/** Walls are single quads on the plan outline. Near walls are cut away (see engine.ts). */
 const wallX = (X: number, y0: number, y1: number) => q([[X, y0, 0], [X, y1, 0], [X, y1, H], [X, y0, H]], P.wallX);
 const wallY = (Y: number, x0: number, x1: number) => q([[x0, Y, 0], [x1, Y, 0], [x1, Y, H], [x0, Y, H]], P.wallY);
 const partY = (Y: number, x0: number, x1: number, gap: [number, number]) =>
   [[x0, gap[0]], [gap[1], x1]].filter(([a, b]) => b > a).map(([a, b]) => box(a, Y - T, 0, b - a, T, HP, P.top, P.wallY, P.wallY));
 const partX = (X: number, y0: number, y1: number, gap: [number, number]) =>
   [[y0, gap[0]], [gap[1], y1]].filter(([a, b]) => b > a).map(([a, b]) => box(X - T, a, 0, T, b - a, HP, P.top, P.wallX, P.wallX));
+/** Tag prims as belonging to the wall facing `face`. */
+const on = (face: Face, ...prims: Prim[]): Prim[] => prims.map((p) => ({ ...p, face }));
 const floorRect = (x0: number, y0: number, x1: number, y1: number, color: string, z = 0, ol = true) =>
   q([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]], color, ol);
 const oakFloor = (x0: number, y0: number, x1: number, y1: number) => {
@@ -142,23 +152,23 @@ export function buildHouse(): Record<RoomId, Prim[]> {
   lab.push(floorRect(18, 4, 31, 20, P.lab));
 
   // ================= STUDIO =================
-  studio.push(wallY(0, 0, 14), wallX(0, 0, 9));
-  studio.push(decoY(0, 0.4, 9.6, 0, 4.2, P.wal, false));
-  for (const zs of [2.3, 3.2]) studio.push(box(1.0, 0, zs, 7.6, 0.55, 0.12, P.cream, P.creamS, P.creamD));
-  studio.push(
+  studio.push(...on('-y', wallY(0, 0, 14)), ...on('-x', wallX(0, 0, 9)), ...on('+x', wallX(14, 0, 9)));
+  studio.push(...on('-y', decoY(0, 0.4, 9.6, 0, 4.2, P.wal, false)));
+  for (const zs of [2.3, 3.2]) studio.push(...on('-y', box(1.0, 0, zs, 7.6, 0.55, 0.12, P.cream, P.creamS, P.creamD)));
+  studio.push(...on('-y',
     box(1.4, 0.05, 2.42, 0.5, 0.4, 0.55, P.oliT, P.oli, P.oliD), cyl(3.1, 0.3, 2.42, 0.22, 0.5, P.cream, P.creamS),
     box(4.6, 0.05, 2.42, 1.2, 0.4, 0.3, P.red, P.red, '#a3361f'), box(6.6, 0.05, 3.32, 0.9, 0.4, 0.55, P.cob, P.cob, '#1f3b80'),
     cyl(2.2, 0.3, 3.32, 0.25, 0.55, P.mus, '#b8861f'),
-  );
+  ));
   studio.push(box(0.5, 0.2, 0, 8.6, 1.4, 1.5, P.walT, P.wal, P.walD));
   {
     const cols = [P.cream, P.char, P.red, P.creamS, P.cob, P.mus, P.oliT];
     for (let bx = 0.7, k = 0; bx < 8.8; bx += 0.38, k++)
       studio.push(q([[bx, 1.61, 0.2], [bx + 0.3, 1.61, 0.2], [bx + 0.3, 1.61, 1.25], [bx, 1.61, 1.25]], cols[k % 7]));
   }
-  studio.push(decoX(0, 2.4, 7.4, 1.5, 3.7, '#d9a066'));
+  studio.push(...on('-x', decoX(0, 2.4, 7.4, 1.5, 3.7, '#d9a066')));
   for (const [a, b, z0, c] of [[2.8, 4.0, 2.6, P.mus], [4.4, 5.6, 2.8, P.pink], [6.0, 7.1, 2.5, P.cream], [3.2, 4.5, 1.7, P.cream], [5.3, 6.6, 1.75, P.mus]] as const)
-    studio.push(decoX(0.02, a, b, z0, z0 + 0.75, c));
+    studio.push(...on('-x', decoX(0.02, a, b, z0, z0 + 0.75, c)));
   // walnut desk on chrome legs, cream monitor, folders, blue mushroom lamp
   for (const [lx, ly] of [[3.4, 3.5], [8.6, 3.5], [3.4, 5.8], [8.6, 5.8]]) studio.push(tube(lx, ly, 0, 0.16, 0.16, 1.6));
   studio.push(
@@ -183,14 +193,16 @@ export function buildHouse(): Record<RoomId, Prim[]> {
       main.push(floorRect(x0, y0, x0 + 1.7, y0 + 1.6, (i + j) % 2 === 0 ? P.chkA : P.chkB, 0.02, false));
     }
   main.push(floorRect(6.0, 19.6, 8.4, 21.0, P.red, 0.03), floorRect(6.3, 19.85, 8.1, 20.75, P.mus, 0.04, false));
-  main.push(wallX(0, 9, 28), wallY(9, 14, 18));
+  main.push(...on('-x', wallX(0, 9, 28)), ...on('-y', wallY(9, 14, 18)), ...on('+x', wallX(18, 20, 28)), ...on('+y', wallY(28, 0, 18)));
   main.push(...partY(9, 0, 14, [5, 9]));
   // big black-framed window onto a garden, low walnut bookshelf beneath it
   // (decoX adds 0.01 to x; the leaves sit at 0.03 so they're in front of the glass at 0.02)
-  main.push(decoX(0, 10.8, 16.6, 1.1, 3.95, P.char), decoX(0.01, 11.0, 16.4, 1.25, 3.8, P.glass), decoX(0.015, 11.0, 16.4, 1.25, 2.3, P.glass2, false));
-  main.push(q(circlePts(20, (a) => [0.03, 12.0 + 1.0 * Math.cos(a), 2.5 + 0.9 * Math.sin(a)]), P.leaf, false));
-  main.push(q(circlePts(20, (a) => [0.03, 14.8 + 1.1 * Math.cos(a), 2.7 + 0.85 * Math.sin(a)]), P.leaf, false));
-  main.push(decoX(0.03, 12.75, 12.85, 1.25, 3.8, P.char, false), decoX(0.03, 14.55, 14.65, 1.25, 3.8, P.char, false));
+  main.push(...on('-x',
+    decoX(0, 10.8, 16.6, 1.1, 3.95, P.char), decoX(0.01, 11.0, 16.4, 1.25, 3.8, P.glass), decoX(0.015, 11.0, 16.4, 1.25, 2.3, P.glass2, false),
+    q(circlePts(20, (a) => [0.03, 12.0 + 1.0 * Math.cos(a), 2.5 + 0.9 * Math.sin(a)]), P.leaf, false),
+    q(circlePts(20, (a) => [0.03, 14.8 + 1.1 * Math.cos(a), 2.7 + 0.85 * Math.sin(a)]), P.leaf, false),
+    decoX(0.03, 12.75, 12.85, 1.25, 3.8, P.char, false), decoX(0.03, 14.55, 14.65, 1.25, 3.8, P.char, false),
+  ));
   main.push(box(0.2, 11.0, 0, 1.2, 5.4, 1.05, P.walT, P.wal, P.walD));
   {
     const cols = [P.cream, P.red, P.char, P.cob, P.creamS, P.mus, P.oliT];
@@ -198,17 +210,19 @@ export function buildHouse(): Record<RoomId, Prim[]> {
       main.push(q([[1.41, by, 0.15], [1.41, by + 0.28, 0.15], [1.41, by + 0.28, 0.9], [1.41, by, 0.9]], cols[k % 7]));
   }
   // framed Bauhaus prints (talks & workshops) + walnut front door
-  main.push(decoX(0, 20.5, 22.0, 1.7, 3.6, P.walT), decoX(0.01, 20.7, 21.8, 1.9, 3.4, P.cream));
-  main.push(q(circlePts(20, (a) => [0.03, 21.25 + 0.4 * Math.cos(a), 2.85 + 0.4 * Math.sin(a)]), P.red, false));
-  main.push(decoX(0.02, 20.9, 21.6, 2.0, 2.2, P.cob, false));
-  main.push(decoX(0, 22.2, 23.4, 2.0, 3.4, P.walT), decoX(0.01, 22.35, 23.25, 2.15, 3.25, P.mus));
-  main.push(decoX(0, 23.8, 26.4, 0, 3.3, P.walD), decoX(0.02, 24.1, 26.1, 0.25, 3.05, P.wal), decoX(0.03, 25.7, 25.9, 1.5, 1.8, P.chr, false));
+  main.push(...on('-x',
+    decoX(0, 20.5, 22.0, 1.7, 3.6, P.walT), decoX(0.01, 20.7, 21.8, 1.9, 3.4, P.cream),
+    q(circlePts(20, (a) => [0.03, 21.25 + 0.4 * Math.cos(a), 2.85 + 0.4 * Math.sin(a)]), P.red, false),
+    decoX(0.02, 20.9, 21.6, 2.0, 2.2, P.cob, false),
+    decoX(0, 22.2, 23.4, 2.0, 3.4, P.walT), decoX(0.01, 22.35, 23.25, 2.15, 3.25, P.mus),
+    decoX(0, 23.8, 26.4, 0, 3.3, P.walD), decoX(0.02, 24.1, 26.1, 0.25, 3.05, P.wal), decoX(0.03, 25.7, 25.9, 1.5, 1.8, P.chr, false),
+  ));
   // walnut panel + floating record shelves on the short back wall
-  main.push(decoY(9, 14.0, 18.0, 0, 4.2, P.wal, false));
-  for (const zs of [1.9, 3.0]) main.push(box(14.2, 9.0, zs, 3.6, 0.45, 0.1, P.walT, P.walT, P.walD));
+  main.push(...on('-y', decoY(9, 14.0, 18.0, 0, 4.2, P.wal, false)));
+  for (const zs of [1.9, 3.0]) main.push(...on('-y', box(14.2, 9.0, zs, 3.6, 0.45, 0.1, P.walT, P.walT, P.walD)));
   for (const [x0, zs, c, disc] of [[14.4, 2.0, P.red, true], [15.6, 2.0, P.char, true], [16.8, 2.0, P.mus, false], [14.8, 3.1, P.cob, true], [16.2, 3.1, P.pink, false]] as const) {
-    main.push(q([[x0, 9.42, zs], [x0 + 0.85, 9.42, zs], [x0 + 0.85, 9.42, zs + 0.85], [x0, 9.42, zs + 0.85]], c));
-    if (disc) main.push(q(circlePts(16, (a) => [x0 + 0.42 + 0.3 * Math.cos(a), 9.43, zs + 0.42 + 0.3 * Math.sin(a)]), INK, false));
+    main.push(...on('-y', q([[x0, 9.42, zs], [x0 + 0.85, 9.42, zs], [x0 + 0.85, 9.42, zs + 0.85], [x0, 9.42, zs + 0.85]], c)));
+    if (disc) main.push(...on('-y', q(circlePts(16, (a) => [x0 + 0.42 + 0.3 * Math.cos(a), 9.43, zs + 0.42 + 0.3 * Math.sin(a)]), INK, false)));
   }
   main.push(...fiddle(1.0, 10.0));
   // long low walnut media console with the turntable, red mushroom lamp
@@ -247,12 +261,14 @@ export function buildHouse(): Record<RoomId, Prim[]> {
   main.push(...person(6.0, 19.4));
 
   // ================= LAB =================
-  lab.push(wallY(4, 18, 31), wallX(18, 4, 9));
+  lab.push(...on('-y', wallY(4, 18, 31)), ...on('-x', wallX(18, 4, 9)), ...on('+x', wallX(31, 4, 20)), ...on('+y', wallY(20, 18, 31)));
   lab.push(...partX(18, 9, 20, [12, 20]));
-  lab.push(q(circlePts(28, (a) => [26.9 + 1.05 * Math.cos(a), 4.02, 2.75 + 1.05 * Math.sin(a)]), P.cob, false));
-  lab.push(decoY(4, 21.2, 25.8, 1.7, 3.9, P.cream));
+  lab.push(...on('-y',
+    q(circlePts(28, (a) => [26.9 + 1.05 * Math.cos(a), 4.02, 2.75 + 1.05 * Math.sin(a)]), P.cob, false),
+    decoY(4, 21.2, 25.8, 1.7, 3.9, P.cream),
+  ));
   for (const [a, b, z0, z1, c] of [[21.6, 23.2, 3.25, 3.65, P.cob], [23.5, 25.4, 3.4, 3.6, P.red], [21.6, 23.8, 2.4, 2.6, INK], [24.1, 24.8, 2.2, 3.0, P.mus], [25.0, 25.5, 2.2, 3.0, P.pink]] as const)
-    lab.push(decoY(4.02, a, b, z0, z1, c, false));
+    lab.push(...on('-y', decoY(4.02, a, b, z0, z1, c, false)));
   for (const [lx, ly] of [[21.2, 4.5], [25.8, 4.5], [21.2, 6.3], [25.8, 6.3]]) lab.push(tube(lx, ly, 0, 0.16, 0.16, 1.6));
   lab.push(box(21.0, 4.3, 1.6, 5.2, 2.3, 0.22, P.cream, P.creamS, P.creamD));
   [P.cob, P.red, P.mus].forEach((c, i) => {

@@ -4,14 +4,17 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Cover from '../components/Cover.astro';
 import { site, lab, about, houseHref } from '../data/site';
+import { getHouseContent, inlineJson } from '../data/houseContent';
 import houseLit from '../assets/house/poster-lit.png';
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const featured = work.slice(0, 3);
 const publishedCount = work.filter((w) => w.data.published).length;
 const pad = (n: number) => String(n).padStart(2, '0');
+const houseContent = inlineJson(await getHouseContent());
 ---
 <Base>
+  <script type="application/json" id="house-content" set:html={houseContent} />
   <!-- Hero: the house is the point. Nothing else competes. -->
   <div class="hero-wrap">
     <section id="top" class="container hero">
@@ -113,10 +116,18 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 <script>
   /**
-   * Load the live house only when it's cheap and wanted:
-   * after the page is idle AND the hero is on screen. Never on Save-Data, slow connections,
-   * low-memory devices, reduced motion, or ?mode=focus; there it waits for intent (hover/focus/touch).
+   * The live house in the hero, and stepping inside without a page load.
+   *
+   * Auto-load only when it's cheap and wanted: after the page is idle AND the hero is on screen.
+   * Never on Save-Data, slow connections, low-memory devices, reduced motion, or ?mode=focus;
+   * there it waits for intent (hover/focus/touch).
+   *
+   * Any link to /house on this page enters the house in place: the hero's canvas zooms up into
+   * the house view (src/house/enter.ts). Modified clicks and browsers without WebGL just navigate.
    */
+  import type { HouseEngine } from '../house/engine';
+  import type { HouseContent } from '../house/content';
+
   const host = document.querySelector<HTMLElement>('[data-house-live]');
   const link = host?.closest<HTMLElement>('.house');
   if (host && link) {
@@ -130,15 +141,24 @@ const pad = (n: number) => String(n).padStart(2, '0');
       matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.documentElement.dataset.mode === 'focus';
 
-    let started = false;
-    const start = () => {
-      if (started) return;
-      started = true;
-      import('../house/hero').then(({ mountHero }) => mountHero(host, () => link.classList.add('is-live'))).catch(() => {});
+    let engine: Promise<HouseEngine> | null = null;
+    const start = () =>
+      (engine ??= import('../house/hero').then(
+        ({ mountHero }) =>
+          new Promise<HouseEngine>((resolve) => {
+            const e = mountHero(host, () => {
+              link.classList.add('is-live');
+              resolve(e);
+            });
+          }),
+      ));
+    const warm = () => {
+      start();
+      import('../house/enter');
     };
 
     if (holdBack) {
-      for (const ev of ['pointerenter', 'focusin', 'touchstart'] as const) link.addEventListener(ev, start, { once: true, passive: true });
+      for (const ev of ['pointerenter', 'focusin', 'touchstart'] as const) link.addEventListener(ev, () => start(), { once: true, passive: true });
     } else {
       const idle = (cb: () => void) =>
         'requestIdleCallback' in window ? requestIdleCallback(cb, { timeout: 4000 }) : setTimeout(cb, 1500);
@@ -155,6 +175,43 @@ const pad = (n: number) => String(n).padStart(2, '0');
         }),
       );
     }
+
+    // ---- stepping inside ----
+    const webgl = (() => {
+      try {
+        const c = document.createElement('canvas');
+        return !!(c.getContext('webgl2') || c.getContext('webgl'));
+      } catch {
+        return false;
+      }
+    })();
+    const content = () => JSON.parse(document.getElementById('house-content')!.textContent!) as HouseContent;
+    const isHouseLink = (t: EventTarget | null) => (t as Element | null)?.closest?.('a[href="/house"]');
+
+    // Get the UI code moving as soon as someone looks like they'll go in.
+    for (const ev of ['pointerover', 'focusin'] as const)
+      document.addEventListener(ev, (e) => isHouseLink(e.target) && webgl && warm(), { passive: true });
+
+    let busy = false;
+    const go = async (push: boolean) => {
+      if (busy) return;
+      busy = true;
+      document.documentElement.classList.add('house-loading');
+      try {
+        const [e, mod] = await Promise.all([start(), import('../house/enter')]);
+        mod.onHistory(() => go(false));
+        mod.enter(e, host, content(), push);
+      } finally {
+        busy = false;
+        document.documentElement.classList.remove('house-loading');
+      }
+    };
+    document.addEventListener('click', (e) => {
+      if (!webgl || !isHouseLink(e.target)) return;
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      go(true);
+    });
   }
 </script>
 
@@ -193,6 +250,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
   .house.is-live .house-live { opacity: 1; }
   .house.is-live :global(img) { opacity: 0; }
+  /* while the canvas moves between the hero and the house, the poster holds the picture */
+  .house.is-handoff :global(img) { opacity: 1; transition: none; }
+  .house.is-away :global(img) { opacity: 0; transition: none; }
 
   @media (max-width: 900px) {
     .hero { grid-template-columns: minmax(0, 1fr); gap: 24px; }

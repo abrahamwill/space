@@ -17,7 +17,7 @@ npm run poster   # re-render the house posters from the 3D scene (run after npm 
 |---|---|---|
 | `/` | `src/pages/index.astro` | Hero with the house (poster first, then live 3D), then 01 Studio, 02 Lab, 03 Main room, and the front-door footer |
 | `/work/<slug>` | `src/pages/work/[slug].astro` | Case-study template. Only entries with `published: true` get a page |
-| `/house` | `src/pages/house.astro` → `src/house/HouseApp.tsx` | The house: the overview, zooming into rooms, info windows, and rooms lighting up as you visit them |
+| `/house` | `src/pages/house.astro` → `src/house/HouseApp.tsx` | The house: the overview, zooming into rooms, info windows, rotating in 90° steps, and rooms lighting up as you visit them. Loading this URL directly gives the standalone page; from the home page the house opens in place (below) |
 | `/poster` | `src/pages/poster.astro` | Internal (noindex). Used by `npm run poster` |
 
 Entry links: `?mode=focus` keeps the hero a still image until the visitor hovers over or touches it. `?mode=play` on `/` goes straight to `/house`. `/house?room=studio|lab|main` opens a room directly.
@@ -31,8 +31,11 @@ Entry links: `?mode=focus` keeps the hero a still image until the visitor hovers
 | `engine.ts` | A three.js renderer with no framework, shared by the hero and `/house`. It renders on demand only, so an idle house costs nothing. |
 | `camera.ts` | The orthographic 2:1 dimetric camera (the same angle as the 2D art), the framing of the whole house and of each room (`ROOMS[room].zoom`), and the poster aspect ratio. |
 | `hero.ts` | Mounts the hero house, with a small tilt toward the mouse. The loader script in `index.astro` decides when to mount it. |
+| `enter.ts` | Steps inside from the home page with no page load: the hero canvas moves to a full-screen layer framed exactly where the hero was, then the camera eases into the house while the UI fades in over the page. Uses `pushState('/house')`; back, forward and "Exit house" run the reverse zoom into the hero. |
 | `HouseApp.tsx`, `Windows.tsx`, `store.ts`, `content.ts`, `house.css` | The `/house` UI: top bar, hotspots, windows, and zustand state. Content comes from `src/data/site.ts` and the work collection. |
 | `overlay.ts` | Pins DOM hotspots and labels to 3D points. Labels never scale with zoom. |
+
+**Rotating:** the rotate buttons (or Q/E) turn the view in 90° steps, so every piece of furniture can be seen from four sides. The default view is the sunken cutaway from the art. In the other three views the page surface and the walls nearest the camera (plus anything hung on them, and its hotspot) are cut away, because the near rim would otherwise hide exactly the furniture you rotated to see. Box sides take the art's light or dark colour depending on which side of the screen they face, so the lighting reads the same from every angle. Wall-mounted items are tagged in `layout.ts` with `on('-x', …)` etc.
 
 How it looks:
 - **Colours:** flat vertex colours, written to the screen without colour management, so every hex value matches the reference art exactly.

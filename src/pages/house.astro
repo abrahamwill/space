@@ -1,31 +1,11 @@
 ---
 import { Picture } from 'astro:assets';
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import HouseApp from '../house/HouseApp';
-import type { HouseContent } from '../house/content';
-import { site, lab, about } from '../data/site';
+import { getHouseContent } from '../data/houseContent';
 import posterDim from '../assets/house/poster-dim.png';
 
-const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order).slice(0, 3);
-const content: HouseContent = {
-  site: { name: site.name, email: site.email, emailHref: site.emailHref, linkedin: site.linkedin, cv: site.cv },
-  featured: work.map((w) => ({
-    slug: w.id,
-    title: w.data.title,
-    summary: w.data.summary,
-    company: w.data.company,
-    role: w.data.role,
-    year: w.data.year,
-    published: w.data.published,
-    cover: w.data.cover,
-    tldr: w.data.tldr,
-    metrics: w.data.metrics,
-    prototypeUrl: w.data.prototypeUrl,
-  })),
-  lab,
-  about,
-};
+const content = await getHouseContent();
 ---
 <Base title="The house" description="Step inside: a studio full of work, a lab of side projects, and the room I live in." bare>
   <h1 class="sr-only">The house</h1>

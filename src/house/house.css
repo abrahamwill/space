@@ -196,6 +196,42 @@
   pointer-events: none;
 }
 
+/* ---------- rotate ---------- */
+.hx-turn {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--page);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.hx-turn button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.hx-turn button:hover { color: var(--red); }
+.hx-turn-dots { display: flex; gap: 5px; padding: 0 6px; }
+.hx-turn-dots span[aria-hidden] { width: 7px; height: 7px; background: var(--rule); }
+.hx-turn-dots span.on { background: var(--ink); }
+
+/* ---------- entering from / leaving to the home page ---------- */
+.hx-top, .hx-hint, .hx-turn { transition: opacity 0.4s ease 0.15s; }
+.hx:not(.is-ready) .hx-top, .hx:not(.is-ready) .hx-hint, .hx:not(.is-ready) .hx-turn { opacity: 0; }
+.hx.is-leaving { background: transparent; }
+.hx.is-leaving .hx-top, .hx.is-leaving .hx-hint, .hx.is-leaving .hx-turn,
+.hx.is-leaving .hx-overlay, .hx.is-leaving .hx-window { opacity: 0; transition: opacity 0.25s ease; pointer-events: none; }
+.hx.is-embedded { z-index: 50; }
+
 /* ---------- window ---------- */
 .hx-window {
   position: absolute;
@@ -301,6 +337,7 @@
   }
   @keyframes hx-up { from { transform: translateY(40px); opacity: 0; } }
   .hx-hint { display: none; }
+  .hx[data-view]:has(.hx-window) .hx-turn { display: none; }
   .hx-hotspot-label { display: none; }
   .hx-hotspot.is-open .hx-hotspot-label, .hx-hotspot button:focus-visible .hx-hotspot-label { display: inline; }
   .hx-bubble { display: none; }
