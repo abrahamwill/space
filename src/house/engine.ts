@@ -2,8 +2,10 @@
  * The 3D house, framework-free. Plain three.js keeps the hero under the ~200 KB budget
  * (React Three Fiber pulls in all of three, roughly doubling the download).
  *
- * Renders on demand only: a frame is drawn when something changes (resize, tilt, zoom, rotation,
- * lighting), so an idle house costs nothing, and nothing runs while the tab is hidden.
+ * Rendering: on demand when something changes (resize, tilt, zoom, rotation, lighting). With
+ * ambient life on (`setAmbient(fps)`), the character, pet, record and screens also tick at that
+ * frame rate, but only while the canvas is on screen and the tab is visible, and never with
+ * reduced motion. Nothing runs in the background.
  *
  * Views: the default view is the sunken cutaway from the art (a depth-only page surface hides
  * everything outside the plan, and the strip of floor behind the near rim). When the view is
@@ -21,6 +23,8 @@ import { getRoomBuffers, surfaceGeometry, rimLines, spillGeometry, LINE_WORLD, t
 import { applyCamera, isSunken, type Framing } from './camera';
 import { updateOverlay } from './overlay';
 import { INK, NIGHT, GLOW, FACE_NORMAL, type Face, type RoomId } from './layout';
+import { Actors } from './actors';
+import { Screens } from './screens';
 
 // Colours are authored as sRGB hex and must reach the screen unchanged.
 ColorManagement.enabled = false;
@@ -61,7 +65,8 @@ function roomMaterial(dark: { value: number }, right: { value: Vector2 }) {
     shader.uniforms.uRight = right;
     shader.vertexShader = shader.vertexShader
       .replace('void main() {', 'attribute vec3 color2;\nattribute vec2 sideN;\nuniform vec2 uRight;\nvoid main() {')
-      .replace('#include <color_vertex>', '#include <color_vertex>\nif (dot(sideN, uRight) > 0.0) vColor.rgb = color2;');
+      // sideN is the face normal in the object's own space; moving actors rotate it into world space
+      .replace('#include <color_vertex>', '#include <color_vertex>\nif (dot((modelMatrix * vec4(sideN.x, 0.0, sideN.y, 0.0)).xz, uRight) > 0.0) vColor.rgb = color2;');
     shader.fragmentShader = shader.fragmentShader
       .replace('void main() {', 'uniform float uDark;\nuniform vec3 uNight;\nvoid main() {')
       .replace('#include <dithering_fragment>', `gl_FragColor.rgb = mix(gl_FragColor.rgb, uNight, uDark * ${DARK_MIX.toFixed(2)});\n#include <dithering_fragment>`);
@@ -89,7 +94,16 @@ export class HouseEngine {
   private disposables: Array<{ dispose(): void }> = [];
   private ro: ResizeObserver;
   private raf = 0;
-  private last = 0;
+  private dirty = false;
+  private animating = false;
+  private lastRender = 0;
+  private actors: Actors;
+  private screens: Screens;
+  private ambientFps = 0;
+  private clock = 0;
+  private onScreen = true;
+  private io: IntersectionObserver;
+  private reduced = matchMedia('(prefers-reduced-motion: reduce)');
   private width = 1;
   private height = 1;
   private goal: Framing;
@@ -168,11 +182,22 @@ export class HouseEngine {
       this.rooms.push({ id, mesh, dark, goalDark: 0, spill, spillMat, silA, silB, walls });
     }
 
+    // ---- things that move ----
+    const materials = Object.fromEntries(this.rooms.map((r) => [r.id, r.mesh.material])) as Record<RoomId, MeshBasicMaterial>;
+    this.actors = new Actors(this.scene, { materials, lineMat: this.lineMat, hullMat, disposables: this.disposables });
+    this.screens = new Screens(this.scene, this.disposables);
+
     // ---- size ----
     this.goal = opts.frame(1, 1);
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(host);
     this.resize();
+    // pause ambient life while the canvas is scrolled away
+    this.io = new IntersectionObserver((entries) => {
+      this.onScreen = entries.some((e) => e.isIntersecting);
+      if (this.onScreen) this.invalidate();
+    });
+    this.io.observe(host);
 
     // ---- room clicks (ignored after a drag) ----
     this.canvas.addEventListener('pointerdown', this.onDown);
@@ -184,10 +209,37 @@ export class HouseEngine {
   setHost(el: HTMLElement) {
     if (el === this.host) return;
     this.ro.unobserve(this.host);
+    this.io.unobserve(this.host);
     this.host = el;
     el.appendChild(this.canvas);
     this.ro.observe(el);
+    this.io.observe(el);
     this.resize();
+  }
+
+  /** Ambient life at this frame rate (0 = still). The hero runs ~30, the house 60. */
+  setAmbient(fps: number) {
+    this.ambientFps = fps;
+    this.invalidate();
+  }
+
+  /** Cap the device pixel ratio (the hero renders at reduced resolution). */
+  setMaxDpr(dpr: number) {
+    if (this.opts.maxDpr === dpr) return;
+    this.opts.maxDpr = dpr;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dpr));
+    this.renderer.setSize(this.width, this.height, false);
+    this.invalidate();
+  }
+
+  /** Someone clicked "Pet me". */
+  greetPet() {
+    this.actors.greetPet();
+    this.invalidate();
+  }
+
+  private get alive() {
+    return this.ambientFps > 0 && this.onScreen && !this.reduced.matches;
   }
 
   setRoomClick(fn: EngineOptions['onRoomClick']) {
@@ -280,19 +332,37 @@ export class HouseEngine {
 
   /** True while the camera is still easing toward its goal. */
   get settling() {
-    return this.raf !== 0;
+    return this.animating;
   }
 
   invalidate() {
+    this.dirty = true;
+    this.schedule();
+  }
+
+  private schedule() {
     if (!this.raf) this.raf = requestAnimationFrame(this.frame);
   }
 
   private frame = (now: number) => {
     this.raf = 0;
     if (document.hidden) return;
-    const dt = this.last ? Math.min((now - this.last) / 1000, 0.05) : 1 / 60;
-    this.last = now;
+    const alive = this.alive;
+    // Ambient-only frames are throttled to the ambient frame rate; camera moves render every frame.
+    if (!this.dirty && !this.animating) {
+      if (!alive) return;
+      if (now - this.lastRender < 1000 / this.ambientFps - 2) return this.schedule();
+    }
+    this.dirty = false;
+    const dt = this.lastRender ? Math.min((now - this.lastRender) / 1000, 0.1) : 1 / 60;
+    this.lastRender = now;
     let moving = false;
+
+    if (alive) {
+      this.clock += dt;
+      this.actors.update(dt);
+      this.screens.update(this.clock);
+    }
 
     // camera
     const g = this.goal;
@@ -349,8 +419,9 @@ export class HouseEngine {
     this.renderer.render(this.scene, this.camera);
     updateOverlay(this.camera, this.width, this.height);
 
-    if (moving) this.invalidate();
-    else this.last = 0;
+    this.animating = moving;
+    if (moving || alive) this.schedule();
+    else this.lastRender = 0;
     if (!this.firstDone) {
       this.firstDone = true;
       requestAnimationFrame(() => this.opts.onFirstFrame?.());
@@ -365,6 +436,7 @@ export class HouseEngine {
   dispose() {
     cancelAnimationFrame(this.raf);
     this.ro.disconnect();
+    this.io.disconnect();
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.canvas.removeEventListener('pointerdown', this.onDown);
     this.canvas.removeEventListener('click', this.onClick);

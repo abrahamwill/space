@@ -1,6 +1,6 @@
 # Portfolio ("Space")
 
-The portfolio has two ways in: the fast view (the Home v3 design and its case studies) and the house view (an interactive 3D cutaway of the house). Milestones 1 and 2 are done.
+The portfolio has two ways in: the fast view (the Home v3 design and its case studies) and the house view (an interactive 3D cutaway of the house). Milestones 1–3 are done: the fast view, the 3D house, and ambient life in it.
 The design brief and the reference files are in `design/`. Read `design/portfolio-handoff.md` first.
 
 ```bash
@@ -34,6 +34,9 @@ Entry links: `?mode=focus` keeps the hero a still image until the visitor hovers
 | `enter.ts` | Steps inside from the home page with no page load: the hero canvas moves to a full-screen layer framed exactly where the hero was, then the camera eases into the house while the UI fades in over the page. Uses `pushState('/house')`; back, forward and "Exit house" run the reverse zoom into the hero. |
 | `HouseApp.tsx`, `Windows.tsx`, `store.ts`, `content.ts`, `house.css` | The `/house` UI: top bar, hotspots, windows, and zustand state. Content comes from `src/data/site.ts` and the work collection. |
 | `overlay.ts` | Pins DOM hotspots and labels to 3D points. Labels never scale with zoom. |
+| `life.ts` | **Ambient behaviour, as data and small state machines.** The character's waypoint graph and activities (turntable, window, lounge chair, sofa, studio desk, record shelf, coat rack, visiting the pet), and the pet's routine in the lab (sleep, wander, eat, happy). No three.js. |
+| `actors.ts` | The moving models: the character (legs with knees, arms, eyes), the pet and the spinning record, built from the same flat boxes/spheres as the room. Turns life.ts poses into joint angles, blending between postures. `LIVE` holds the moving hotspot positions. |
+| `screens.ts` | Tiny pixel animations on the studio monitor, the arcade and the three bench prototypes (canvas textures, ~12 fps). Screens stay lit in dark rooms. |
 
 **Rotating:** the rotate buttons (or Q/E) turn the view in 90° steps, so every piece of furniture can be seen from four sides. The default view is the sunken cutaway from the art. In the other three views the page surface and the walls nearest the camera (plus anything hung on them, and its hotspot) are cut away, because the near rim would otherwise hide exactly the furniture you rotated to see. Box sides take the art's light or dark colour depending on which side of the screen they face, so the lighting reads the same from every angle. Wall-mounted items are tagged in `layout.ts` with `on('-x', …)` etc.
 
@@ -66,7 +69,10 @@ Anything in `[brackets]` is a placeholder. Never invent metrics.
 
 `src/styles/global.css` mirrors `design/tokens.json`. Headings scale fluidly down to phone width. At 1280px and above they hit the token sizes exactly (H1 76, H2 48, lead 22).
 
-## Next: milestone 3
+**Ambient life:** the character and pet run on their own once the scene is live. It runs at 30 fps at 1.5× resolution in the hero, and 60 fps at full quality in the house. It stops while the canvas is off-screen or the tab is hidden, and the scene stays still with reduced motion. The posters show the starting pose, so the hero crossfade still lines up. To change routines, edit `ACTIVITIES` and the waypoint graph in `life.ts`; keep paths clear of furniture (there's no collision).
 
-- Ambient life: character and pet routines (small state machines over a hand-placed waypoint graph), a spinning turntable, and looping screens. Add an animation clock to `engine.ts` that only runs while the scene is visible, at about 30 fps in the hero.
+## Next: milestone 4
+
+- Click-to-task: clicking the turntable updates "now playing" right away. The character then walks over (capped at about 2 s, otherwise swap in place) and plays a record-swap clip, and the song changes at the swap. Rapid clicks keep only the latest. `CharacterBrain` needs an "interrupt with this activity" entry point; the turntable activity and the `onActivity` hook already exist.
+- The same pattern for the arcade, the sofa and the pet.
 - Swap primitives for Blender GLBs room by room: compressed, flat vertex colours, no textures.

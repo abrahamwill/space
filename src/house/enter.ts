@@ -11,6 +11,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import HouseApp from './HouseApp';
 import { useHouse } from './store';
 import { fitPoster, fitRect, posterAspect } from './camera';
+import { HERO_DPR, HERO_FPS } from './hero';
 import type { HouseEngine } from './engine';
 import type { HouseContent } from './content';
 
@@ -65,6 +66,8 @@ export function enter(engine: HouseEngine, heroHost: HTMLElement, content: House
   // Same picture, bigger canvas: frame the house on the hero's spot, then move the canvas full-screen.
   const rect = heroRect(heroHost);
   engine.setTilt(0);
+  engine.setMaxDpr(2); // full quality inside
+  engine.setAmbient(60);
   engine.setFrame((w, h) => fitRect(w, h, rect), true);
   engine.setHost(stage);
   engine.nextFrame().then(() => {
@@ -92,6 +95,8 @@ export function leave() {
   const done = () => {
     // Swap back into the hero: same framing, so nothing moves.
     s.engine.setFrame(fitPoster, true);
+    s.engine.setMaxDpr(HERO_DPR);
+    s.engine.setAmbient(HERO_FPS);
     const hero = s.heroHost.closest('.house');
     hero?.classList.replace('is-away', 'is-handoff');
     s.engine.setHost(s.heroHost);

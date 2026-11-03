@@ -228,3 +228,15 @@ export function spillGeometry(room: RoomId): THREE.BufferGeometry | null {
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   return g;
 }
+
+/** One moving part (character limb, pet body, record): flat mesh + outlines + sphere hulls, in local coordinates. */
+export function buildPart(prims: Prim[]): { batch: Batch; hull: THREE.BufferGeometry | null } {
+  const b = new RoomBuilder();
+  prims.forEach((p) => b.add(p));
+  const r = b.finish();
+  // cylinders in parts are short and squat, so the A silhouettes are good enough from every side
+  const lines = new Float32Array(r.base.lines.length + r.silA.length);
+  lines.set(r.base.lines);
+  lines.set(r.silA, r.base.lines.length);
+  return { batch: { mesh: r.base.mesh, lines }, hull: r.hull };
+}

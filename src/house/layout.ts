@@ -41,7 +41,7 @@ export const INK = '#1a1a1a';
 export const NIGHT = '#1f2433';
 export const GLOW = '#f6c86a';
 
-const P = {
+export const P = {
   floor: '#cf9c64', plank: '#b98652', lab: '#bdb6a8', wallX: '#dccbb0', wallY: '#ece0ca', top: '#fff4e6',
   wal: '#8f4f26', walT: '#a8622f', walD: '#6f3a1a',
   oli: '#5a6330', oliT: '#717c3d', oliD: '#434a22',
@@ -104,28 +104,6 @@ const fiddle = (cx: number, cy: number): Prim[] => [
   ...([[0.35, 0.1, 1.9, 0.5], [-0.3, 0.25, 2.4, 0.55], [0.25, -0.3, 2.9, 0.5], [-0.15, 0.1, 3.35, 0.48], [0.2, 0.25, 3.7, 0.38]] as const)
     .map(([dx, dy, dz, r]) => blob(cx + dx, cy + dy, dz, r, P.leaf, P.leaf2)),
 ];
-const person = (x: number, y: number): Prim[] => [
-  box(x, y, 0, 0.8, 0.8, 1.6, P.char, P.char, '#262628'),
-  box(x - 0.18, y - 0.18, 1.6, 1.16, 1.16, 1.3, P.mus, P.mus, '#b8861f'),
-  box(x - 0.04, y - 0.04, 2.9, 0.88, 0.88, 0.8, '#e9b48a', '#e9b48a', '#cf9670'),
-  box(x - 0.1, y - 0.1, 3.55, 1.08, 1.08, 0.32, INK, INK, INK),
-];
-
-/**
- * The 2D art paints the pet's eyes on top of its body. In 3D they'd sit inside the sphere,
- * so slide each one along the view direction until it sits on the surface facing the camera.
- */
-function eyeOn(c: V3, r: number, o: V3, er: number): Prim {
-  const S = Z_SQUASH;
-  const v = [Math.cos(ELEVATION) * Math.sin(AZIMUTH), Math.sin(ELEVATION), Math.cos(ELEVATION) * Math.cos(AZIMUTH)]; // world
-  const ow = [o[0], o[2] * S, o[1]];
-  const ov = ow[0] * v[0] + ow[1] * v[1] + ow[2] * v[2];
-  const oo = ow[0] ** 2 + ow[1] ** 2 + ow[2] ** 2;
-  const t = -ov + Math.sqrt(ov * ov - (oo - r * r));
-  const e = [ow[0] + t * v[0], ow[1] + t * v[1], ow[2] + t * v[2]];
-  // A ball's centre sits at world y = z * S, so convert the world offset back to plan z.
-  return { t: 'ball', cx: c[0] + e[0], cy: c[1] + e[2], z: c[2] + e[1] / S, r: er, fill: INK, ol: false };
-}
 
 // ---------- anchors: hotspot positions in plan units ----------
 export const ANCHORS = {
@@ -175,7 +153,6 @@ export function buildHouse(): Record<RoomId, Prim[]> {
     box(3.2, 3.3, 1.6, 5.9, 2.9, 0.22, P.walT, P.wal, P.walD),
     box(3.6, 3.5, 1.82, 2.1, 0.55, 1.45, P.cream, P.creamS, P.creamD),
     q([[3.75, 4.06, 1.98], [5.55, 4.06, 1.98], [5.55, 4.06, 3.12], [3.75, 4.06, 3.12]], P.char),
-    q([[3.95, 4.07, 2.6], [4.9, 4.07, 2.6], [4.9, 4.07, 2.9], [3.95, 4.07, 2.9]], P.mus, false),
   );
   [P.red, P.cob, P.mus].forEach((c, i) => studio.push(box(5.9 + i * 0.3, 4.2 + i * 0.42, 1.82 + i * 0.12, 2.0, 1.35, 0.12, c, c, shade(c, 0.8))));
   studio.push(box(8.3, 3.6, 1.82, 0.14, 0.14, 0.7, P.chr, P.chr, P.chrD), blob(8.37, 3.67, 2.65, 0.42, '#6fa3d8', '#b9d6f0'));
@@ -231,7 +208,6 @@ export function buildHouse(): Record<RoomId, Prim[]> {
     q([[2.11, 17.2, 0.2], [2.11, 19.0, 0.2], [2.11, 19.0, 1.0], [2.11, 17.2, 1.0]], P.walD),
     q([[2.11, 19.3, 0.2], [2.11, 21.2, 0.2], [2.11, 21.2, 1.0], [2.11, 19.3, 1.0]], '#4a4440'),
     box(0.45, 17.3, 1.2, 1.5, 1.9, 0.25, P.char, '#2a2a2c', '#1e1e20'),
-    ell(1.2, 18.2, 1.46, 0.6, 0.6, INK), ell(1.2, 18.2, 1.47, 0.2, 0.2, P.red, false),
     box(1.6, 18.9, 1.45, 0.14, 0.14, 0.5, P.chr, P.chr, P.chrD),
     cyl(1.1, 20.6, 1.2, 0.1, 0.5, P.red, P.red), blob(1.1, 20.6, 1.85, 0.38, P.red, '#e57a5e'),
   );
@@ -258,7 +234,6 @@ export function buildHouse(): Record<RoomId, Prim[]> {
     tube(2.6, 22.6, 0, 0.14, 0.14, 3.3), cyl(2.67, 22.67, 0, 0.6, 0.07, P.chr, P.chrD),
     tube(2.2, 22.62, 2.95, 0.95, 0.1, 0.1), box(2.05, 22.85, 1.9, 0.75, 0.5, 1.05, P.red, P.red, '#a3361f'),
   );
-  main.push(...person(6.0, 19.4));
 
   // ================= LAB =================
   lab.push(...on('-y', wallY(4, 18, 31)), ...on('-x', wallX(18, 4, 9)), ...on('+x', wallX(31, 4, 20)), ...on('+y', wallY(20, 18, 31)));
@@ -271,15 +246,13 @@ export function buildHouse(): Record<RoomId, Prim[]> {
     lab.push(...on('-y', decoY(4.02, a, b, z0, z1, c, false)));
   for (const [lx, ly] of [[21.2, 4.5], [25.8, 4.5], [21.2, 6.3], [25.8, 6.3]]) lab.push(tube(lx, ly, 0, 0.16, 0.16, 1.6));
   lab.push(box(21.0, 4.3, 1.6, 5.2, 2.3, 0.22, P.cream, P.creamS, P.creamD));
-  [P.cob, P.red, P.mus].forEach((c, i) => {
+  [0, 1, 2].forEach((i) => {
     lab.push(box(21.6 + i * 1.35, 5.1, 1.82, 0.85, 0.22, 1.3, INK, INK, INK));
-    lab.push(q([[21.7 + i * 1.35, 5.33, 1.94], [22.35 + i * 1.35, 5.33, 1.94], [22.35 + i * 1.35, 5.33, 3.0], [21.7 + i * 1.35, 5.33, 3.0]], c, false));
   });
   // arcade in Bauhaus red with a mustard control deck
   lab.push(
     box(18.3, 6.4, 0, 2.4, 2.4, 3.8, P.red, P.red, '#a3361f'),
     q([[20.71, 6.65, 2.2], [20.71, 8.55, 2.2], [20.71, 8.55, 3.4], [20.71, 6.65, 3.4]], INK),
-    q([[20.72, 6.85, 2.35], [20.72, 8.35, 2.35], [20.72, 8.35, 3.25], [20.72, 6.85, 3.25]], P.leaf2, false),
     box(20.7, 6.4, 1.6, 0.8, 2.4, 0.3, P.mus, P.mus, '#b8861f'),
   );
   // voice gadget on a chrome side table
@@ -289,13 +262,9 @@ export function buildHouse(): Record<RoomId, Prim[]> {
     cyl(22.8, 10.4, 1.62, 0.45, 0.8, P.cream, P.creamS),
     ell(22.8, 10.4, 2.43, 0.45, 0.45, P.cob, false), ell(22.8, 10.4, 2.44, 0.24, 0.24, '#b9d6f0', false),
   );
-  // pet on its bed, and a bowl
+  // the pet's bed and bowl (the pet itself lives in actors.ts)
   lab.push(
     ell(24.4, 12.9, 0.04, 1.6, 1.3, P.mus), ell(24.4, 12.9, 0.3, 1.2, 0.95, '#f0c96a'),
-    { t: 'ball', cx: 24.4, cy: 12.9, z: 1.0, r: 0.78, fill: P.cream, ol: true },
-    box(23.9, 12.45, 1.5, 0.26, 0.26, 0.6, P.cream, P.cream, P.creamD), box(24.65, 12.1, 1.5, 0.26, 0.26, 0.6, P.cream, P.cream, P.creamD),
-    eyeOn([24.4, 12.9, 1.0], 0.78, [0.2, 0.2, 0.05], 0.1),
-    eyeOn([24.4, 12.9, 1.0], 0.78, [0.5, -0.1, 0.05], 0.1),
     cyl(22.4, 13.8, 0, 0.42, 0.3, P.cob, '#1f3b80'),
   );
   lab.push(...fiddle(25.6, 8.6));
@@ -304,6 +273,22 @@ export function buildHouse(): Record<RoomId, Prim[]> {
 }
 
 /** `zoom` is relative to the whole-house view. The main room is big, so it zooms less. */
+/**
+ * Screens that play tiny looping animations (screens.ts). Corners in plan units, as seen from the
+ * front: bottom-left, bottom-right, top-right, top-left. `px` is the canvas size in pixels.
+ */
+export const SCREENS = {
+  monitor: { room: 'studio', px: [64, 36], corners: [[3.85, 4.07, 2.06], [5.45, 4.07, 2.06], [5.45, 4.07, 3.04], [3.85, 4.07, 3.04]] },
+  arcade: { room: 'lab', px: [60, 32], corners: [[20.725, 8.35, 2.35], [20.725, 6.85, 2.35], [20.725, 6.85, 3.25], [20.725, 8.35, 3.25]] },
+  bench0: { room: 'lab', px: [20, 30], corners: [[21.7, 5.335, 1.94], [22.35, 5.335, 1.94], [22.35, 5.335, 3.0], [21.7, 5.335, 3.0]] },
+  bench1: { room: 'lab', px: [20, 30], corners: [[23.05, 5.335, 1.94], [23.7, 5.335, 1.94], [23.7, 5.335, 3.0], [23.05, 5.335, 3.0]] },
+  bench2: { room: 'lab', px: [20, 30], corners: [[24.4, 5.335, 1.94], [25.05, 5.335, 1.94], [25.05, 5.335, 3.0], [24.4, 5.335, 3.0]] },
+} as const satisfies Record<string, { room: RoomId; px: readonly [number, number]; corners: readonly V3[] }>;
+export type ScreenId = keyof typeof SCREENS;
+
+/** The record on the turntable (spins). */
+export const PLATTER = { cx: 1.2, cy: 18.2, z: 1.46, r: 0.6 } as const;
+
 export const ROOMS: Record<RoomId, { label: string; centre: AnchorId; labelAnchor: AnchorId; zoom: number }> = {
   main: { label: 'Main room', centre: 'c_main', labelAnchor: 'lbl_main', zoom: 1.15 },
   studio: { label: 'Studio', centre: 'c_studio', labelAnchor: 'lbl_studio', zoom: 2.1 },

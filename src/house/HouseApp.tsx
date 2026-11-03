@@ -10,6 +10,7 @@ import { HouseEngine, webglAvailable } from './engine';
 import { fitHouse, fitRoom, azimuthFor, type Insets } from './camera';
 import { toWorld } from './geometry';
 import { track, setFlipEdge, setVisibleBand } from './overlay';
+import { LIVE } from './actors';
 import { ANCHORS, ROOMS, FACE_NORMAL, type AnchorId, type Face, type RoomId } from './layout';
 import { useHouse, isLit, type View } from './store';
 import { HOTSPOTS, ROOM_DEFAULT, type HouseContent } from './content';
@@ -54,7 +55,11 @@ function frameFor(view: View, item: string | null, rot: number) {
 /** A DOM element pinned to a point in the house. */
 function Pin({ anchor, className, children, hidden, clamp }: { anchor: AnchorId; className: string; children: React.ReactNode; hidden?: boolean; clamp?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => (ref.current ? track(ref.current, toWorld(ANCHORS[anchor])) : undefined), [anchor]);
+  // the character and the pet move, so their pins follow live positions
+  useLayoutEffect(
+    () => (ref.current ? track(ref.current, anchor in LIVE ? LIVE[anchor as keyof typeof LIVE] : toWorld(ANCHORS[anchor])) : undefined),
+    [anchor],
+  );
   return (
     <div ref={ref} className={`hx-pin ${className}`} hidden={hidden} data-clamp={clamp ? '1' : undefined}>
       {children}
@@ -132,6 +137,7 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
       },
     });
     e.setLit(lit, true);
+    e.setAmbient(60);
     engine.current = e;
     return () => {
       e.dispose();
@@ -209,7 +215,10 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
 
   const openHotspot = (id: string, room: RoomId, el: HTMLElement) => {
     lastHotspot.current = el;
-    if (id === 'pet') return setPetted((n) => n + 1);
+    if (id === 'pet') {
+      engine.current?.greetPet();
+      return setPetted((n) => n + 1);
+    }
     go(room, id);
   };
 
