@@ -45,7 +45,14 @@ How it looks:
 - **Rim:** the page surface is a depth-only plane at wall-top height with the floor plan cut out, which gives the sunken look.
 - **Dark rooms** mix toward night blue and show the warm doorway spill, the same way the 2D generator does.
 
-**Hero loading rules:** the hero shows `poster-lit.png` first. The 3D scene loads after `load`, then idle, then once the hero is visible, and crossfades in. The poster is rendered from the same scene and camera, so they line up pixel for pixel. Auto-load is skipped for Save-Data, 2g/3g connections, `deviceMemory ≤ 2`, reduced motion and `?mode=focus`; in those cases the scene loads when the visitor hovers over, focuses or touches the house.
+**Hero invitation:** the house never moves on hover. The page around it stays still, so moving the house would read as the object sliding about. Instead, things happen inside it:
+- **At rest:** the hero shows the arrival state, `poster-dim.png`. The main room is lit and warm light spills from the studio and lab doorways.
+- **On hover or keyboard focus:** the character stops, turns and waves, with a talking box ("Hi! Come on in, I'll show you around."). The pet bounces and the other rooms switch on one by one. The rooms go dark again about a second after the pointer leaves.
+- **On touch screens:** the same plays once, when the hero first comes into view.
+- **Cursor:** a red "enter" disc replaces the cursor over the house. It's experimental; set `CUSTOM_CURSOR = false` in `index.astro` to remove it.
+- **Code:** `src/house/hero.ts`.
+
+**Hero loading rules:** the hero shows `poster-dim.png` first. The 3D scene loads after `load`, then idle, then once the hero is visible, and crossfades in. The poster is rendered from the same scene and camera, so they line up pixel for pixel. Auto-load is skipped for Save-Data, 2g/3g connections, `deviceMemory ≤ 2`, reduced motion and `?mode=focus`; in those cases the scene loads when the visitor hovers over, focuses or touches the house.
 
 **Weight (gzip):** the hero loads 151 KB (three.js plus the engine) and 1.5 KB of loader. `/house` adds React and the UI, about 75 KB, and only loads when someone decides to step inside. The brief suggested React Three Fiber, but it bundles all of three.js and roughly doubled the hero download (about 330 KB), so the scene is plain three.js. Milestone 3 can load GLB models with `GLTFLoader` and use `AnimationMixer` directly in `engine.ts`.
 

@@ -255,6 +255,12 @@ export class HouseEngine {
     this.invalidate();
   }
 
+  /** Hero: the character turns and waves at the visitor (true) or carries on (false). */
+  greet(on: boolean) {
+    this.actors.greet(on);
+    this.invalidate();
+  }
+
   /** Someone clicked "Pet me". */
   greetPet() {
     this.actors.greetPet();

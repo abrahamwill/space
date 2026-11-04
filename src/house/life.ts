@@ -21,6 +21,8 @@ export interface CharacterPose {
   t: number;
   /** Walk cycle phase, advanced by distance so feet don't slide. */
   phase: number;
+  /** 0→1 blend into a wave at the viewer. */
+  wave: number;
 }
 
 export interface PetPose {
@@ -150,6 +152,8 @@ export function roomAt(x: number, y: number): RoomId {
   return 'main';
 }
 
+/** Facing the default camera, slightly turned (plan angle). */
+const VIEWER = PI / 4 + 0.3;
 const WALK_SPEED = 1.7; // plan units / s, pottering about
 const HURRY_SPEED = 2.6; // when asked to do something
 const TURN_SPEED = 7; // rad / s
@@ -172,13 +176,24 @@ export class CharacterBrain {
   constructor() {
     const s = N.start;
     // The poster shows the character standing on the rug, square to the room like the art (two sides showing).
-    this.pose = { x: s.x, y: s.y, heading: PI / 2, clip: 'idle', seat: 0, settle: 0, t: 0, phase: 0 };
+    this.pose = { x: s.x, y: s.y, heading: PI / 2, clip: 'idle', seat: 0, settle: 0, t: 0, phase: 0, wave: 0 };
     this.left = 3; // hold the poster pose a moment before wandering off
   }
 
   /** Sitting or crouching: getting up takes a moment. Standing poses are dropped at once when hurrying. */
   private get seated() {
     return !!this.activity.seat || this.activity.clip === 'crouch';
+  }
+
+  private waving = false;
+  private heldClip: Clip | null = null;
+
+  /**
+   * Someone's looking at the house (hover / first view on a phone): stop, turn to them and wave.
+   * Everything else pauses until `greet(false)`; then they carry on where they were.
+   */
+  greet(on: boolean) {
+    this.waving = on;
   }
 
   /** What they're doing or heading to do. */
@@ -244,6 +259,23 @@ export class CharacterBrain {
   update(dt: number) {
     const p = this.pose;
     p.t += dt;
+    p.wave += ((this.waving ? 1 : 0) - p.wave) * Math.min(1, dt * 6);
+    if (this.waving) {
+      const sitting = this.phase === 'act' && this.seated;
+      if (!sitting) {
+        // stand still facing the viewer (a little off square, so the face and a side both show)
+        if (this.heldClip === null) {
+          this.heldClip = p.clip;
+          this.setClip('idle');
+        }
+        this.turnTo(VIEWER, dt);
+      }
+      return;
+    }
+    if (this.heldClip !== null) {
+      this.setClip(this.heldClip);
+      this.heldClip = null;
+    }
     switch (this.phase) {
       case 'act': {
         this.left -= dt;

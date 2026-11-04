@@ -11,7 +11,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import HouseApp from './HouseApp';
 import { useHouse } from './store';
 import { fitPoster, fitRect, posterAspect } from './camera';
-import { HERO_DPR, HERO_FPS } from './hero';
+import { HERO_DPR, HERO_FPS, HERO_REST } from './hero';
 import type { HouseEngine } from './engine';
 import type { HouseContent } from './content';
 
@@ -66,6 +66,8 @@ export function enter(engine: HouseEngine, heroHost: HTMLElement, content: House
   // Same picture, bigger canvas: frame the house on the hero's spot, then move the canvas full-screen.
   const rect = heroRect(heroHost);
   engine.setTilt(0);
+  engine.greet(false); // they were waving at the hover; inside, they carry on with their day
+  heroHost.querySelector('.hero-bubble')?.classList.remove('is-on');
   engine.setMaxDpr(2); // full quality inside
   engine.setAmbient(60);
   engine.setFrame((w, h) => fitRect(w, h, rect), true);
@@ -89,7 +91,7 @@ export function leave() {
   useHouse.getState().reset();
 
   const rect = heroRect(s.heroHost);
-  s.engine.setLit({ main: true, studio: true, lab: true });
+  s.engine.setLit(HERO_REST); // back to the hero's resting light (matches the poster)
   s.engine.setFrame((w, h) => fitRect(w, h, rect), reduced(), 5);
 
   const done = () => {

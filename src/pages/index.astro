@@ -5,7 +5,8 @@ import Base from '../layouts/Base.astro';
 import Cover from '../components/Cover.astro';
 import { site, lab, about, houseHref } from '../data/site';
 import { getHouseContent, inlineJson } from '../data/houseContent';
-import houseLit from '../assets/house/poster-lit.png';
+// The hero rests in the arrival state (main room lit); the other rooms light up when someone looks.
+import houseDim from '../assets/house/poster-dim.png';
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const featured = work.slice(0, 3);
@@ -32,11 +33,11 @@ const houseContent = inlineJson(await getHouseContent());
       </div>
       <a class="house" href={houseHref} aria-label="Step inside the house">
         <Picture
-          src={houseLit}
+          src={houseDim}
           formats={['avif', 'webp']}
           widths={[720, 1080, 1440, 1800, 2336]}
           sizes="(max-width: 900px) 165vw, 1120px"
-          alt="My house, cut into the page: a main room with a turntable and sofa, a small studio behind it, and a lab to the right"
+          alt="My house, cut into the page: the main room lit, with a turntable and a sofa; the studio behind it and the lab to the right still dark, with light spilling from their doorways"
           loading="eager"
           fetchpriority="high"
           decoding="async"
@@ -188,6 +189,33 @@ const houseContent = inlineJson(await getHouseContent());
       );
     }
 
+    // ---- custom cursor over the house: a red "enter" disc. One switch to remove it. ----
+    const CUSTOM_CURSOR = true;
+    if (CUSTOM_CURSOR && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      const cur = document.createElement('div');
+      cur.className = 'house-cursor';
+      cur.setAttribute('aria-hidden', 'true');
+      cur.innerHTML =
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>';
+      document.body.append(cur);
+      link.classList.add('has-house-cursor');
+      const move = (e: PointerEvent) => (cur.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`);
+      link.addEventListener('pointerenter', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        move(e);
+        cur.classList.add('is-on');
+      });
+      link.addEventListener('pointermove', move);
+      link.addEventListener('pointerleave', () => cur.classList.remove('is-on', 'is-down'));
+      link.addEventListener('pointerdown', () => cur.classList.add('is-down'));
+      link.addEventListener('pointerup', () => cur.classList.remove('is-down'));
+      // gone the moment the house opens
+      new MutationObserver(() => document.documentElement.classList.contains('in-house') && cur.classList.remove('is-on', 'is-down')).observe(
+        document.documentElement,
+        { attributes: true, attributeFilter: ['class'] },
+      );
+    }
+
     // ---- stepping inside ----
     const webgl = (() => {
       try {
@@ -249,14 +277,13 @@ const houseContent = inlineJson(await getHouseContent());
   .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; padding-top: 8px; }
   .tour { font-weight: 600; font-size: 16px; }
 
+  /* The house never moves on hover (the page around it doesn't); things happen inside it instead. */
   .house {
+    position: relative;
     display: block;
     width: 150%;
     margin-left: -8%;
-    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .house:hover { transform: translateY(-6px); }
-  .house { position: relative; }
   .house :global(img) { width: 100%; height: auto; transition: opacity 0.6s ease; }
   /* Live 3D house: sits exactly over the poster, fades in once it has drawn a frame. */
   .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
@@ -265,6 +292,66 @@ const houseContent = inlineJson(await getHouseContent());
   /* while the canvas moves between the hero and the house, the poster holds the picture */
   .house.is-handoff :global(img) { opacity: 1; transition: none; }
   .house.is-away :global(img) { opacity: 0; transition: none; }
+
+  /* The character's talking box (hero.ts pins it above their head). */
+  .house :global(.hero-bubble) { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
+  .house :global(.hero-bubble p) {
+    position: absolute;
+    left: 0;
+    bottom: 14px;
+    transform: translate(-50%, 6px) scale(0.92);
+    transform-origin: 50% 100%;
+    width: max-content;
+    max-width: 220px;
+    margin: 0;
+    padding: 9px 13px;
+    background: var(--page);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.35;
+    box-shadow: 0 0 0 1px var(--rule);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1.3);
+  }
+  .house :global(.hero-bubble p::after) {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -7px;
+    width: 12px;
+    height: 12px;
+    background: var(--page);
+    box-shadow: 1px 1px 0 var(--rule);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .house :global(.hero-bubble.is-on p) { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  @media (prefers-reduced-motion: reduce) {
+    .house :global(.hero-bubble p) { transition: opacity 0.2s ease; transform: translate(-50%, 0); }
+  }
+
+  /* Custom cursor over the house (index script, CUSTOM_CURSOR). */
+  :global(.house-cursor) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    width: 56px;
+    height: 56px;
+    margin: -28px 0 0 -28px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--red);
+    color: var(--page);
+    pointer-events: none;
+    opacity: 0;
+    scale: 0.3;
+    transition: opacity 0.18s ease, scale 0.25s cubic-bezier(0.2, 0.7, 0.2, 1.2);
+  }
+  :global(.house-cursor.is-on) { opacity: 1; scale: 1; }
+  :global(.house-cursor.is-down) { scale: 0.86; }
+  :global(.has-house-cursor), :global(.has-house-cursor *) { cursor: none; }
 
   @media (max-width: 900px) {
     .hero { grid-template-columns: minmax(0, 1fr); gap: 24px; }

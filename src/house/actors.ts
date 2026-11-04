@@ -169,6 +169,12 @@ class Character {
   private apply(dt: number, snap = false) {
     const p = this.brain.pose;
     const g = this.targets(p);
+    // a wave at the viewer, layered over whatever posture they're in
+    const w = p.wave;
+    if (w > 0.001) {
+      g.arm[1] = lerp(g.arm[1], 2.75, w);
+      g.head = lerp(g.head, 0, w);
+    }
     const k = snap ? 1 : 1 - Math.exp(-dt * 12);
     const j = this.j;
     j.hip = lerp(j.hip, g.hip, k);
@@ -182,6 +188,7 @@ class Character {
       this.arm[i].rotation.z = j.arm[i];
     }
     this.head.rotation.y = j.head;
+    this.arm[1].rotation.x = Math.sin(p.t * 9) * 0.35 * w; // side to side while raised
     this.hips.position.y = j.hip * S;
     this.root.position.set(p.x, 0, p.y);
     this.root.rotation.y = -p.heading;
@@ -415,6 +422,12 @@ export class Actors {
     }
     if (task === 'pet') this.pet.brain.greet();
     this.character.brain.ask(task);
+  }
+
+  /** Someone's looking at the house from the home page: the character waves, the pet bounces. */
+  greet(on: boolean) {
+    this.character.brain.greet(on);
+    if (on) this.pet.brain.greet();
   }
 
   /** A click on "Pet me". */
