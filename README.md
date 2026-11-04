@@ -56,7 +56,7 @@ How it looks:
 
 **Weight (gzip):** the hero loads 151 KB (three.js plus the engine) and 1.5 KB of loader. `/house` adds React and the UI, about 75 KB, and only loads when someone decides to step inside. The brief suggested React Three Fiber, but it bundles all of three.js and roughly doubled the hero download (about 330 KB), so the scene is plain three.js. Milestone 3 can load GLB models with `GLTFLoader` and use `AnimationMixer` directly in `engine.ts`.
 
-**Posters:** after changing the layout or the colours, run `npm run build && npm run poster`. That rewrites `src/assets/house/poster-lit.png` (the hero) and `poster-dim.png` (the first paint of `/house`).
+**Posters:** after changing the layout or the colours, run `npm run build && npm run poster`. That rewrites `src/assets/house/poster-dim.png` (the hero, and the first paint of `/house`) and `poster-lit.png` (all rooms lit; not used right now, kept in case the hero goes back to fully lit).
 
 ## Filling in content
 
