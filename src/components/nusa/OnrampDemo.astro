@@ -1,0 +1,251 @@
+---
+/**
+ * Coded recreation of NusaFinance's on-ramp (Figma frame 390:9583), used as the case-study hero.
+ * Autoplays a purchase (type an amount, fill an address, CTA moves on). Any interaction hands over control.
+ */
+import Icon from './Icons.astro';
+import Logo from './Logo.astro';
+---
+<div class="nusa-ui od" data-onramp>
+  <div class="od-nav" aria-hidden="true">
+    <Logo height={22} />
+    <ul class="od-links">
+      <li><Icon name="home" size={15} />Dashboard</li>
+      <li><Icon name="db" size={15} />Lending</li>
+      <li><Icon name="swap" size={15} />Trade <Icon name="chev" size={13} /></li>
+      <li><Icon name="trend" size={15} />Earn <Icon name="chev" size={13} /></li>
+      <li class="on"><Icon name="grid" size={15} />Others <Icon name="chev" size={13} /></li>
+    </ul>
+    <div class="od-right">
+      <span class="od-pts"><Icon name="star" size={14} />1000 Pts</span>
+      <span class="od-pill"><Icon name="eth" size={15} />Ethereum <Icon name="chev" size={13} /></span>
+      <span class="od-pill"><Icon name="wallet" size={15} />0x123241da</span>
+      <span class="od-gear"><Icon name="gear" size={16} /></span>
+    </div>
+  </div>
+
+  <div class="od-body">
+    <div class="n-head">
+      <span class="n-tile"><Icon name="grid" size={20} /></span>
+      <p class="n-title">On-ramp</p>
+      <p class="n-sub">Buy IDRX and USDT with your fiat currency</p>
+    </div>
+
+    <div class="od-banner">
+      <img src="/images/work/nusa/coins.webp" alt="" width="56" height="56" loading="eager" />
+      <div>
+        <b>Looking to buy IDRX and USDT?</b>
+        <span>Nusa makes it simple with flexible payment options—fast, secure, and hassle-free. Get started today!</span>
+      </div>
+    </div>
+
+    <div class="od-card">
+      <label class="od-field od-pay" for="od-pay">
+        <span class="od-lbl">Pay</span>
+        <span class="od-row">
+          <input id="od-pay" class="od-amt" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" value="101,000" aria-describedby="od-rate" />
+          <span class="od-cur"><span class="od-flag" aria-hidden="true"></span>IDR</span>
+        </span>
+      </label>
+      <div class="od-rate" id="od-rate">1 IDRX = 1.01 IDR</div>
+      <div class="od-field od-buy">
+        <span class="od-lbl">Buy</span>
+        <span class="od-bal"><Icon name="wallet" size={14} />10.0512 IDRX</span>
+        <span class="od-row">
+          <output class="od-amt" for="od-pay" data-buy aria-live="polite">100,000</output>
+          <span class="od-token"><span class="od-x" aria-hidden="true">X</span>IDRX on Polygon <Icon name="chev" size={14} /></span>
+        </span>
+      </div>
+      <span class="pin" tabindex="0" style="right:-52px;top:calc(50% - 15px)" role="note" aria-label="Note 1">1<span class="bub">The rate sits on the seam between the two amounts: the one place that explains both numbers at once.</span></span>
+    </div>
+
+    <div class="od-addr">
+      <div class="od-addr-top">
+        <span>Wallet Address</span>
+        <div class="od-src">
+          <button type="button" class="n-chip" data-src="wallet"><Icon name="wallet" size={14} />My Wallet</button>
+          <button type="button" class="n-chip" data-src="saved"><Icon name="contact" size={14} />Saved Address</button>
+          <button type="button" class="n-chip" data-src="scan"><Icon name="scan" size={14} />Scan</button>
+        </div>
+      </div>
+      <input class="od-addr-in" data-addr type="text" placeholder="Destination Address" aria-label="Destination wallet address" autocomplete="off" spellcheck="false" />
+      <span class="od-hint" data-hint role="status"></span>
+      <span class="pin left" tabindex="0" style="left:-52px;top:10px" role="note" aria-label="Note 2">2<span class="bub">Three ways to fill an address: your connected wallet, one you saved, or a QR code. Nobody should have to paste a 42-character string by hand.</span></span>
+    </div>
+
+    <div class="od-cta-wrap">
+      <button type="button" class="n-btn od-cta" data-cta><span data-cta-label>Connect Wallet</span></button>
+      <span class="pin" tabindex="0" style="right:-52px;top:4px" role="note" aria-label="Note 3">3<span class="bub">One green gradient per screen, and only on the next step. Everything else stays grey, so the eye always knows where to go.</span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('[data-onramp]').forEach((root) => {
+    const pay = root.querySelector<HTMLInputElement>('#od-pay')!;
+    const buy = root.querySelector<HTMLOutputElement>('[data-buy]')!;
+    const rate = root.querySelector<HTMLElement>('.od-rate')!;
+    const addr = root.querySelector<HTMLInputElement>('[data-addr]')!;
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!;
+    const cta = root.querySelector<HTMLElement>('[data-cta-label]')!;
+    const payField = root.querySelector<HTMLElement>('.od-pay')!;
+    const walletBtn = root.querySelector<HTMLButtonElement>('[data-src="wallet"]')!;
+    const RATE = 1.01;
+    const ADDRESS = '0x123241da';
+
+    let stop = () => {};
+    const digits = (s: string) => s.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 12);
+    const fmt = (n: number, max = 0) => n.toLocaleString('en-US', { maximumFractionDigits: max });
+
+    const pulse = () => {
+      if (reduce) return;
+      rate.classList.remove('pulse');
+      void rate.offsetWidth;
+      rate.classList.add('pulse');
+    };
+    const setCta = () => {
+      const next = addr.value.trim() ? 'Login' : 'Connect Wallet';
+      if (cta.textContent === next) return;
+      cta.classList.add('swap');
+      setTimeout(() => { cta.textContent = next; cta.classList.remove('swap'); }, reduce ? 0 : 160);
+    };
+    const render = (raw: string) => {
+      const d = digits(raw);
+      const n = Number(d || 0);
+      pay.value = d ? fmt(n) : '';
+      buy.textContent = d ? fmt(n / RATE, 2) : '0';
+      pulse();
+    };
+
+    // Keep the caret in place while the field re-formats with thousands separators.
+    pay.addEventListener('input', () => {
+      const pos = pay.selectionStart ?? pay.value.length;
+      const before = digits(pay.value.slice(0, pos)).length;
+      render(pay.value);
+      let i = 0, seen = 0;
+      while (i < pay.value.length && seen < before) { if (/\d/.test(pay.value[i])) seen++; i++; }
+      pay.setSelectionRange(i, i);
+    });
+    addr.addEventListener('input', setCta);
+
+    let hintTimer = 0;
+    root.querySelectorAll<HTMLButtonElement>('[data-src]').forEach((b) => b.addEventListener('click', () => {
+      stop();
+      if (b.dataset.src === 'wallet') {
+        addr.value = ADDRESS; setCta(); hint.textContent = '';
+      } else {
+        hint.textContent = b.dataset.src === 'scan' ? 'In the app, Scan opens the camera to read a QR code.' : 'In the app, this opens your saved addresses.';
+        clearTimeout(hintTimer); hintTimer = window.setTimeout(() => { hint.textContent = ''; }, 2600);
+      }
+    }));
+
+    // ---------- Autoplay ----------
+    if (reduce) return;
+    let stopped = false, visible = false, timer = 0;
+    stop = () => { stopped = true; clearTimeout(timer); payField.classList.remove('typing'); walletBtn.classList.remove('press'); };
+    ['pointerdown', 'keydown', 'focusin'].forEach((ev) => root.addEventListener(ev, (e) => { if ((e as Event).isTrusted) stop(); }, { capture: true }));
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: .25 }).observe(root);
+
+    const steps: Array<[() => void, number]> = [];
+    const amounts = ['250000', '1010000', '505000'];
+    const plan = () => {
+      steps.length = 0;
+      for (const a of amounts) {
+        steps.push([() => { addr.value = ''; setCta(); render(''); payField.classList.add('typing'); }, 700]);
+        for (let i = 1; i <= a.length; i++) steps.push([() => render(a.slice(0, i)), 120]);
+        steps.push([() => payField.classList.remove('typing'), 700]);
+        steps.push([() => walletBtn.classList.add('press'), 260]);
+        steps.push([() => walletBtn.classList.remove('press'), 120]);
+        for (let i = 1; i <= ADDRESS.length; i++) steps.push([() => { addr.value = ADDRESS.slice(0, i); }, 45]);
+        steps.push([setCta, 2600]);
+      }
+    };
+    plan();
+    let k = 0;
+    const run = () => {
+      if (stopped) return;
+      if (!visible || document.hidden) { timer = window.setTimeout(run, 400); return; }
+      const [fn, delay] = steps[k];
+      fn();
+      k = (k + 1) % steps.length;
+      timer = window.setTimeout(run, delay);
+    };
+    timer = window.setTimeout(run, 900);
+  });
+</script>
+
+<style>
+  .od { background: var(--n-bg); min-height: 100%; }
+
+  /* Nav */
+  .od-nav { display: flex; align-items: center; gap: 28px; height: 60px; padding: 0 20px; border-bottom: 1px solid var(--n-line); }
+  .od-links { display: flex; gap: 22px; margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--n-t3); }
+  .od-links li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .od-links li.on { color: var(--n-green); }
+  .od-right { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .od-pill, .od-pts { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 11px; border-radius: 8px; background: var(--n-s1); color: var(--n-t1); white-space: nowrap; }
+  .od-pts { color: var(--n-green); border: 1px solid var(--n-line-2); background: transparent; }
+  .od-gear { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--n-s3); color: var(--n-t2); }
+  @media (max-width: 1100px) { .od-links { display: none; } }
+  @media (max-width: 640px) { .od-pts, .od-pill:first-of-type, .od-gear { display: none; } .od-nav { height: 52px; padding: 0 14px; } }
+  @media (max-width: 520px) {
+    .od .od-body { padding-top: 28px; }
+    .od .od-row { flex-wrap: wrap; row-gap: 12px; }
+    .od .od-amt { flex: 1 1 100%; font-size: 30px; }
+    .od .od-banner { align-items: flex-start; padding: 14px; gap: 12px; }
+    .od .od-banner img { width: 44px; height: 44px; }
+  }
+
+  /* Body */
+  .od-body { width: min(560px, 100% - 32px); margin: 0 auto; padding: 44px 0 56px; display: flex; flex-direction: column; gap: 16px; }
+  .od-body .n-head { margin-bottom: 10px; }
+  .od-banner { display: flex; align-items: center; gap: 18px; padding: 16px 20px; border-radius: 12px; background: var(--n-s1); }
+  .od-banner img { width: 56px; height: 56px; flex: none; }
+  .od-banner div { display: flex; flex-direction: column; gap: 6px; }
+  .od-banner b { font-weight: 500; font-size: 15px; }
+  .od-banner span { font-size: 12px; line-height: 1.6; color: var(--n-t2); }
+
+  .od-card { position: relative; padding: 10px; border-radius: 12px; background: var(--n-s1); display: flex; flex-direction: column; gap: 6px; }
+  .od-field { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 16px; padding: 18px 16px 20px; border-radius: 10px; background: var(--n-s2); border: 1px solid transparent; transition: border-color .2s; cursor: text; }
+  .od-pay { background: #141414; }
+  .od-pay:focus-within, .od-pay.typing { border-color: var(--n-green); }
+  .od-lbl { font-size: 14px; color: var(--n-t2); }
+  .od-bal { justify-self: end; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--n-t3); }
+  .od-row { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .od-amt { min-width: 0; flex: 1; padding: 0; border: 0; background: none; color: var(--n-t1); font: 500 32px/1.1 var(--n-font); letter-spacing: -.01em; font-variant-numeric: tabular-nums; outline: none; }
+  .od-amt::placeholder { color: var(--n-t4); }
+  .od-pay .od-amt:focus-visible { outline: none; }
+  .od-cur { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; }
+  .od-flag { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(#ff0000 50%, #fff 50%); box-shadow: 0 0 0 1px rgba(255, 255, 255, .15); }
+  .od-token { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 5px; border-radius: 999px; background: var(--n-s3); font-size: 14.5px; white-space: nowrap; }
+  .od-x { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1a4bd6; font: 800 15px/1 Georgia, serif; color: #fff; }
+  .od-rate { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%); padding: 5px 11px; border-radius: 8px; background: var(--n-s1); box-shadow: 0 0 0 4px var(--n-s1); border: 1px solid var(--n-line-2); font-size: 13px; color: var(--n-t2); white-space: nowrap; }
+  .od-rate.pulse { animation: od-pulse .5s var(--ease); }
+  @keyframes od-pulse { 40% { color: var(--n-green); border-color: var(--n-green); transform: translate(-50%, -50%) scale(1.06); } }
+
+  .od-addr { position: relative; padding: 16px; border-radius: 12px; background: var(--n-s1); display: flex; flex-direction: column; gap: 14px; }
+  .od-addr-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--n-t2); }
+  .od-src { display: flex; flex-wrap: wrap; gap: 6px; }
+  .od-src .n-chip { transition: background .15s, border-color .15s, color .15s; }
+  .od-src .n-chip:hover, .od-src .n-chip.press { border-color: var(--n-green); color: var(--n-green); background: var(--n-green-10); }
+  .od-addr-in { padding: 0; border: 0; background: none; color: var(--n-t1); font: 400 16px/1.4 var(--n-font); outline: none; }
+  .od-addr-in::placeholder { color: var(--n-t4); }
+  .od-addr-in:focus-visible { outline: none; }
+  .od-addr:focus-within { box-shadow: inset 0 0 0 1px var(--n-green); }
+  .od-hint { min-height: 0; font-size: 12px; color: var(--n-t3); }
+  .od-hint:empty { display: none; }
+
+  .od-cta-wrap { position: relative; }
+  .od-cta { min-height: 46px; }
+  .od-cta span { transition: opacity .16s, transform .16s; }
+  .od-cta span.swap { opacity: 0; transform: translateY(4px); }
+
+  /* Pins: room only beside the widget on wide windows. Hidden below that; the notes list under the hero carries them. */
+  .od .pin { display: none; }
+  @media (min-width: 1100px) { .od .pin { display: flex; } }
+  .od .pin { background: #fff; color: #151517; border-color: #101010; box-shadow: 0 0 0 4px rgba(255, 255, 255, .08), 0 6px 16px rgba(0, 0, 0, .5); }
+  .od .pin:hover, .od .pin:focus-visible { box-shadow: 0 0 0 4px rgba(0, 255, 130, .35), 0 6px 16px rgba(0, 0, 0, .5); }
+  .od .pin .bub { width: 240px; }
+</style>

@@ -1,0 +1,62 @@
+---
+/**
+ * A small Mac window that opens the shared window modal (desktop) or an inline panel (phones).
+ * The button carries the modal's content in data attributes; the home script reads them.
+ */
+import Peek from './Peek.astro';
+
+export interface WinData {
+  kind: 'proto' | 'pet' | 'voice';
+  file: string;
+  title: string;
+  desc: string;
+  cta?: string;
+  href?: string;
+}
+interface Props {
+  win: WinData;
+  /** Height of the picture area in px. */
+  h: number;
+  controls?: string;
+  class?: string;
+  style?: string;
+}
+const { win, h, controls, class: className, style } = Astro.props;
+---
+<div class:list={['pw', className]} style={style}>
+  <button
+    type="button"
+    class="pw-win"
+    aria-label={`Open ${win.title}`}
+    aria-haspopup="dialog"
+    aria-controls={controls}
+    data-win={JSON.stringify(win)}
+  >
+    <span class="bar pw-bar"><span class="lights" aria-hidden="true"><span></span><span></span><span></span></span><span class="fname">{win.file}</span></span>
+    <span class="pw-body" style={`height:${h}px`}>
+      <Peek kind={win.kind} />
+      <span class="pw-play" aria-hidden="true"><svg width="10" height="12" viewBox="0 0 10 12"><path d="M1 0 L10 6 L1 12 Z" fill="#151517"></path></svg></span>
+      <span class="pw-prog" aria-hidden="true"><i></i></span>
+    </span>
+  </button>
+</div>
+
+<style>
+  .pw { position: relative; }
+  .pw-win { display: block; width: 100%; padding: 0; margin: 0; border: 0; border-radius: 10px; overflow: hidden; background: #fff; cursor: pointer; text-align: left; font: inherit; color: inherit; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 8px 24px rgba(0, 0, 0, .12); transition: transform .45s var(--ease), box-shadow .3s ease; }
+  .pw-bar { height: 22px; padding: 0 8px; background: linear-gradient(#f6f6f6, #e2e2e4); border-bottom: .5px solid rgba(0, 0, 0, .2); }
+  .pw-bar :global(.lights) { gap: 5px; }
+  .pw-bar :global(.lights span) { width: 9px; height: 9px; }
+  .pw-bar :global(.fname) { font-size: 10.5px; margin-right: 30px; }
+  .pw-body { display: block; position: relative; overflow: hidden; background: #fff; }
+  .pw-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, .85); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+  .pw-prog { position: absolute; left: 8px; right: 8px; bottom: 6px; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .6); opacity: 0; transition: opacity .2s; overflow: hidden; }
+  .pw-prog i { display: block; height: 100%; width: 0; background: var(--blue); }
+  .pw-win:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+  @media (hover: hover) {
+    .pw-win:hover .pw-play, .pw-win:focus-visible .pw-play, .pw-win:hover .pw-prog, .pw-win:focus-visible .pw-prog { opacity: 1; }
+    .pw-win:hover .pw-prog i { animation: prog 6s linear infinite; }
+  }
+  @keyframes prog { from { width: 0; } to { width: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .pw-win { transition: none; } .pw-win:hover .pw-prog i { animation: none; width: 40%; } }
+</style>

@@ -1,0 +1,242 @@
+---
+/**
+ * "Shout me a Coffee": a working copy of the tip sheet (SOL/USDC, presets, input-in-SOL,
+ * total, Send) and its success and error endings, with the file's copy.
+ * Balances and the conversion rate are mock values (the rate is the file's own $120 ≈ 0.42 SOL).
+ */
+import './gm-ui.css';
+const SOL = '<svg viewBox="0 0 24 24" width="60%" height="60%" aria-hidden="true"><path d="M7 5h13l-3 3.5H4z" fill="#14F195"/><path d="M4 10.25h13l3 3.5H7z" fill="#7aa2f0"/><path d="M7 15.5h13l-3 3.5H4z" fill="#9945FF"/></svg>';
+const bits = Array.from({ length: 14 }, (_, i) => i);
+---
+<div class="tip gmui" data-gm-tip data-sol={SOL}>
+  <div class="tip-head">
+    <p class="tip-title" tabindex="-1" data-title>Shout me a Coffee</p>
+    <span class="tip-x" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </span>
+  </div>
+
+  <!-- Form -->
+  <div class="view" data-view="form">
+    <div class="seg" role="radiogroup" aria-label="Pay with" data-seg>
+      <span class="seg-thumb" aria-hidden="true"></span>
+      <button type="button" role="radio" aria-checked="true" data-cur="sol"><span class="coin sol" set:html={SOL} />SOL</button>
+      <button type="button" role="radio" aria-checked="false" tabindex="-1" data-cur="usdc"><span class="coin usdc">$</span>USDC</button>
+    </div>
+
+    <div class="bal">
+      <span>Balance: <b data-bal>4.512 SOL</b></span>
+      <span data-bal-usd>~ $1,461.23 USD</span>
+    </div>
+
+    <div class="amount">
+      <label class="amt-row">
+        <span class="amt-pre" data-pre>$</span>
+        <input data-amt type="text" inputmode="decimal" value="120" aria-label="Tip amount" autocomplete="off" />
+        <span class="amt-unit" data-unit>USD</span>
+      </label>
+      <div class="amt-sub">
+        <span data-conv>~ 0.42 SOL</span>
+        <button type="button" class="swap" data-swap aria-pressed="false">Input in SOL</button>
+      </div>
+    </div>
+
+    <div class="presets" role="group" aria-label="Quick amounts">
+      <button type="button" data-preset="5">$5</button>
+      <button type="button" data-preset="25">$25</button>
+      <button type="button" data-preset="50">$50</button>
+    </div>
+
+    <div class="total">
+      <span class="t-label">Total</span>
+      <span class="t-val"><span class="coin sol" data-tcoin set:html={SOL} /><b data-total>0.42 SOL</b><span class="t-usd" data-total-usd>($120 USD)</span></span>
+    </div>
+
+    <button type="button" class="gm-btn send" data-send>
+      <span class="send-label">Send</span>
+      <svg class="send-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12h7M12.5 8.5 16 12l-3.5 3.5"/></svg>
+      <span class="spin" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="see-error" data-error>Show the error state</button>
+  </div>
+
+  <!-- Success -->
+  <div class="view end" data-view="success" hidden>
+    <span class="burst" aria-hidden="true">{bits.map((b) => <i style={`--a:${(b * 360) / bits.length}deg;--r:${70 + (b % 3) * 22}px;--h:${b % 2 ? '#80FFD6' : '#C7FC6E'}`}></i>)}</span>
+    <span class="end-icon ok" aria-hidden="true"><svg viewBox="0 0 48 48" width="44" height="44" fill="none" stroke="#062018" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 25l7 7 15-16" pathLength="1"/></svg></span>
+    <p class="end-title" tabindex="-1" data-end-title>🎉 Thanks a ton!</p>
+    <p class="end-sub">Your support keeps the creativity brewing!</p>
+    <button type="button" class="gm-btn end-btn" data-back>Done</button>
+  </div>
+
+  <!-- Error -->
+  <div class="view end" data-view="error" hidden>
+    <span class="end-icon bad" aria-hidden="true"><svg viewBox="0 0 48 48" width="44" height="44" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M24 13v14" pathLength="1"/><path d="M24 35h.01"/></svg></span>
+    <p class="end-title" tabindex="-1" data-end-title>Oops! Something Went Wrong.</p>
+    <p class="end-sub">Please check your connection and try again</p>
+    <button type="button" class="gm-btn end-btn" data-back>Retry</button>
+  </div>
+
+  <p class="tip-mock">Mock balances and rate</p>
+  <p class="sr-only" aria-live="polite" data-live></p>
+</div>
+
+<script>
+  const RATE = 120 / 0.42; // USD per SOL, from the file's own example
+  const fmtUsd = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const fmtSol = (n: number) => (n >= 0.1 ? n.toFixed(2) : n.toFixed(3)).replace(/\.?0+$/, '') || '0';
+
+  document.querySelectorAll<HTMLElement>('[data-gm-tip]').forEach((root) => {
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const amt = $<HTMLInputElement>('[data-amt]');
+    const seg = $('[data-seg]');
+    const curBtns = [...seg.querySelectorAll<HTMLButtonElement>('button[data-cur]')];
+    const swap = $<HTMLButtonElement>('[data-swap]');
+    const send = $<HTMLButtonElement>('[data-send]');
+    const live = $('[data-live]');
+    const views = [...root.querySelectorAll<HTMLElement>('[data-view]')];
+    let cur: 'sol' | 'usdc' = 'sol';
+    let inSol = false;
+    let usd = 120;
+
+    const read = () => {
+      const n = parseFloat(amt.value.replace(/,/g, ''));
+      const v = Number.isFinite(n) && n > 0 ? n : 0;
+      usd = cur === 'sol' && inSol ? v * RATE : v;
+    };
+    const render = (writeInput = false) => {
+      seg.dataset.active = cur;
+      curBtns.forEach((b) => { const on = b.dataset.cur === cur; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+      const sol = usd / RATE;
+      $('[data-bal]').textContent = cur === 'sol' ? '4.512 SOL' : '1,461.23 USDC';
+      $('[data-bal-usd]').textContent = '~ $1,461.23 USD';
+      swap.hidden = cur !== 'sol';
+      swap.setAttribute('aria-pressed', String(inSol));
+      swap.textContent = inSol ? 'Input in USD' : 'Input in SOL';
+      const solMode = cur === 'sol' && inSol;
+      $('[data-pre]').textContent = solMode ? '' : '$';
+      $('[data-unit]').textContent = solMode ? 'SOL' : 'USD';
+      if (writeInput) amt.value = solMode ? fmtSol(sol) : fmtUsd(usd);
+      $('[data-conv]').textContent = cur === 'usdc' ? `= ${fmtUsd(usd)} USDC` : solMode ? `~ $${fmtUsd(usd)} USD` : `~ ${fmtSol(sol)} SOL`;
+      const tcoin = $('[data-tcoin]');
+      tcoin.className = `coin ${cur}`;
+      tcoin.innerHTML = cur === 'sol' ? (root.dataset.sol ?? '') : '$';
+      $('[data-total]').textContent = cur === 'sol' ? `${fmtSol(sol)} SOL` : `${fmtUsd(usd)} USDC`;
+      $('[data-total-usd]').textContent = `($${fmtUsd(usd)} USD)`;
+      root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((p) => p.classList.toggle('is-on', Number(p.dataset.preset) === Math.round(usd * 100) / 100));
+      send.disabled = usd <= 0;
+    };
+
+    const setCur = (c: 'sol' | 'usdc', focus = false) => {
+      cur = c; if (c === 'usdc') inSol = false;
+      render(true);
+      if (focus) curBtns.find((b) => b.dataset.cur === c)?.focus();
+    };
+    curBtns.forEach((b) => {
+      b.addEventListener('click', () => setCur(b.dataset.cur as 'sol' | 'usdc'));
+      b.addEventListener('keydown', (e) => {
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) { e.preventDefault(); setCur(cur === 'sol' ? 'usdc' : 'sol', true); }
+      });
+    });
+    swap.addEventListener('click', () => { inSol = !inSol; render(true); amt.focus(); });
+    amt.addEventListener('input', () => {
+      amt.value = amt.value.replace(/[^0-9.,]/g, '');
+      read(); render();
+    });
+    amt.addEventListener('blur', () => render(true));
+    root.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((p) => p.addEventListener('click', () => { usd = Number(p.dataset.preset); render(true); }));
+
+    const show = (name: string) => {
+      views.forEach((v) => { v.hidden = v.dataset.view !== name; });
+      root.dataset.state = name;
+      const target = name === 'form' ? $('[data-title]') : root.querySelector<HTMLElement>(`[data-view="${name}"] [data-end-title]`);
+      target?.focus({ preventScroll: true });
+      live.textContent = name === 'success' ? 'Tip sent. Thanks a ton!' : name === 'error' ? 'Something went wrong.' : '';
+    };
+    send.addEventListener('click', () => {
+      if (send.disabled || root.classList.contains('is-sending')) return;
+      root.classList.add('is-sending');
+      send.setAttribute('aria-busy', 'true');
+      setTimeout(() => { root.classList.remove('is-sending'); send.removeAttribute('aria-busy'); show('success'); }, 950);
+    });
+    $('[data-error]').addEventListener('click', () => show('error'));
+    root.querySelectorAll<HTMLButtonElement>('[data-back]').forEach((b) => b.addEventListener('click', () => show('form')));
+
+    render(true);
+  });
+</script>
+
+<style>
+  .tip {
+    position: relative; width: 100%; max-width: 400px;
+    display: flex; flex-direction: column; gap: 18px;
+    padding: 24px 22px 18px; border-radius: 26px;
+    background: #222;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .05), 0 40px 80px rgba(0, 0, 0, .3), 0 10px 24px rgba(0, 0, 0, .18);
+  }
+  .tip-head { display: flex; justify-content: space-between; align-items: center; }
+  .tip-title { margin: 0; font-weight: 600; font-size: 22px; letter-spacing: -.01em; color: #fff; outline: none; }
+  .tip-x { color: #fff; opacity: .9; }
+  .view { display: flex; flex-direction: column; gap: 16px; }
+  .view[hidden] { display: none; }
+
+  .seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 6px; border-radius: 999px; background: #161616; }
+  .seg-thumb { position: absolute; top: 6px; bottom: 6px; left: 6px; width: calc(50% - 6px); border-radius: 999px; background: #2b2b2b; transition: transform .35s var(--gm-ease); }
+  .seg[data-active='usdc'] .seg-thumb { transform: translateX(100%); }
+  .seg button { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border: 0; border-radius: 999px; background: transparent; color: var(--gm-soft); font: 500 16px 'Geist Variable', system-ui, sans-serif; cursor: pointer; }
+  .seg button[aria-checked='true'] { color: #fff; }
+
+  .bal { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--gm-soft); }
+  .bal b { color: #fff; font-weight: 500; }
+
+  .amount { padding: 16px 16px 12px; border-radius: 12px; background: var(--gm-field); }
+  .amt-row { display: flex; align-items: center; gap: 6px; cursor: text; }
+  .amt-pre { font-size: 22px; color: var(--gm-soft); }
+  .amt-row input { flex: 1; min-width: 0; border: 0; padding: 0; background: transparent; color: #fff; font: 400 24px 'Geist Variable', system-ui, sans-serif; outline: none; }
+  .amt-unit { font-size: 18px; color: var(--gm-soft); }
+  .amt-sub { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--gm-muted); }
+  .swap { min-height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: #333; color: #ddd; font: 500 12px 'Geist Variable', system-ui, sans-serif; cursor: pointer; }
+  .swap:hover { background: #3d3d3d; }
+
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .presets button { min-height: 44px; border: 0; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1px #444; color: #fff; font: 500 16px 'Geist Variable', system-ui, sans-serif; cursor: pointer; transition: box-shadow .2s, background .2s; }
+  .presets button:hover { background: #2a2a2a; }
+  .presets button.is-on { box-shadow: inset 0 0 0 1.5px var(--gm-mint); background: rgba(128, 255, 214, .07); }
+
+  .total { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; font-size: 15px; color: var(--gm-soft); }
+  .t-val { display: inline-flex; align-items: center; gap: 8px; }
+  .t-val b { color: #fff; font-weight: 600; font-size: 17px; }
+  .t-usd { color: var(--gm-muted); }
+
+  .send { position: relative; width: 100%; min-height: 54px; font-size: 18px; }
+  .spin { position: absolute; width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid rgba(7, 26, 19, .25); border-top-color: #071a13; opacity: 0; animation: rot .8s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .is-sending .send-label, .is-sending .send-ico { opacity: 0; }
+  .is-sending .spin { opacity: 1; }
+  .see-error { align-self: center; min-height: 32px; border: 0; background: none; color: var(--gm-muted); font: 400 13px 'Geist Variable', system-ui, sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .see-error:hover { color: #fff; }
+
+  .end { position: relative; align-items: center; text-align: center; padding: 26px 0 6px; }
+  .end-icon { position: relative; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; animation: pop .55s var(--gm-ease) both; }
+  .end-icon.ok { background: var(--gm-mint); box-shadow: 0 0 40px rgba(128, 255, 214, .35); }
+  .end-icon.bad { background: #ff4b4b; box-shadow: 0 0 40px rgba(255, 75, 75, .3); }
+  .end-icon path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .45s .25s var(--gm-ease) forwards; }
+  .end-icon.bad path + path { stroke-dasharray: none; animation: none; }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .end-title { margin: 6px 0 0; font-weight: 600; font-size: 22px; color: #fff; outline: none; }
+  .end-sub { margin: -8px 0 0; font-size: 15px; color: var(--gm-soft); }
+  .end-btn { width: 100%; min-height: 52px; margin-top: 10px; }
+  .burst { position: absolute; left: 50%; top: 68px; width: 0; height: 0; }
+  .burst i { position: absolute; width: 7px; height: 7px; border-radius: 2px; background: var(--h); opacity: 0; animation: fly .9s .15s var(--gm-ease) forwards; }
+  @keyframes fly { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--r) * -1)) scale(.6); } }
+
+  .tip-mock { margin: 0; text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #6b6b6b; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seg-thumb { transition: none; }
+    .end-icon, .burst i { animation: none; }
+    .burst { display: none; }
+    .end-icon path { animation: none; stroke-dashoffset: 0; }
+  }
+</style>

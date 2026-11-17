@@ -1,0 +1,73 @@
+/*
+  NusaFinance product tokens, taken from the NUSA Handoff Figma file (on-ramp frame 390:9583).
+  Only used inside elements with class="nusa-ui" on the NusaFinance case study.
+*/
+.nusa-ui {
+  --n-bg: #101010;
+  --n-s1: #181818;
+  --n-s2: #202020;
+  --n-s3: #282828;
+  --n-line: rgba(255, 255, 255, .07);
+  --n-line-2: rgba(255, 255, 255, .12);
+  --n-green: #00ff82;
+  --n-green-20: rgba(0, 255, 130, .2);
+  --n-green-10: rgba(0, 255, 130, .1);
+  --n-cta: linear-gradient(90deg, #31c48d, #057a55);
+  --n-t1: #ffffff;
+  --n-t2: #d1d5db;
+  --n-t3: #9ca3af;
+  --n-t4: #6b7280;
+  --n-red: #f05a4a;
+  --n-amber: #fbbf24;
+  --n-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter Variable', Inter, system-ui, sans-serif;
+  font-family: var(--n-font);
+  color: var(--n-t1);
+  -webkit-font-smoothing: antialiased;
+}
+.nusa-ui :focus-visible { outline: 2px solid var(--n-green); outline-offset: 2px; }
+.nusa-ui p { color: inherit; font-size: inherit; line-height: inherit; }
+
+/* Primary action: the one gradient on a screen */
+.nusa-ui .n-btn {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 44px; padding: 0 18px;
+  border: 0; border-radius: 8px;
+  background: var(--n-cta); color: #fff;
+  font: 500 16px/1 var(--n-font); cursor: pointer;
+}
+.nusa-ui .n-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .28) 50%, transparent 70%);
+  transform: translateX(-120%); transition: transform .7s var(--ease, ease);
+}
+.nusa-ui .n-btn:hover::after { transform: translateX(120%); }
+.nusa-ui .n-btn[disabled] { opacity: .45; cursor: default; }
+.nusa-ui .n-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 40px; padding: 0 18px; border-radius: 8px;
+  border: 1px solid var(--n-green); background: transparent; color: var(--n-green);
+  font: 500 15px/1 var(--n-font); cursor: pointer;
+}
+.nusa-ui .n-outline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 40px; padding: 0 18px; border-radius: 8px;
+  border: 1px solid var(--n-t2); background: transparent; color: var(--n-t1);
+  font: 500 15px/1 var(--n-font); cursor: pointer;
+}
+
+/* Page header: icon tile + title + one-line subtitle */
+.nusa-ui .n-head { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 14px; row-gap: 6px; }
+.nusa-ui .n-tile { display: grid; place-items: center; width: 44px; height: 38px; border-radius: 6px; background: #0f3d26; color: var(--n-green); }
+.nusa-ui .n-title { margin: 0; font-weight: 600; font-size: 36px; line-height: 1.1; letter-spacing: -.01em; color: var(--n-t1); }
+.nusa-ui .n-sub { grid-column: 1 / -1; margin: 0; font-size: 15px; line-height: 1.4; color: var(--n-t3); }
+
+.nusa-ui .n-chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px;
+  border: 1px solid var(--n-line-2); border-radius: 6px; background: var(--n-s2);
+  color: var(--n-t2); font: 400 12px/1 var(--n-font); cursor: pointer;
+}
+.nusa-ui .n-locked {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px;
+  background: var(--n-green-10); color: var(--n-green); font: 600 9px/1.2 var(--n-font); letter-spacing: .06em; text-transform: uppercase;
+}

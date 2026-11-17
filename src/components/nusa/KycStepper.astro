@@ -1,0 +1,66 @@
+---
+/** The e-KYC tracker from the Figma file (Upload KTP → Face Comparison → Liveness Test), coded and looping. */
+import Icon from './Icons.astro';
+const steps = [
+  { icon: 'id', label: 'Upload KTP', hint: 'Photo of the Indonesian ID card' },
+  { icon: 'face', label: 'Face Comparison', hint: 'A selfie matched against the ID' },
+  { icon: 'user', label: 'Liveness Test', hint: 'A short check that a real person is there' },
+] as const;
+---
+<div class="ky nusa-ui" data-kyc>
+  <div class="ky-top">
+    <span class="ky-badge"><Icon name="id" size={22} /></span>
+    <div><b>Verify your Account</b><span>Complete your KYC to unlock exclusive features and unlimited amount of crypto purchases.</span></div>
+  </div>
+  <ol class="ky-steps" role="list">
+    {steps.map((s, i) => (
+      <li class:list={['ky-step', { on: i === 0 }]} style={`--i:${i}`}>
+        <span class="ky-dot" aria-hidden="true"><span class="ky-ic"><Icon name={s.icon} size={16} /></span><span class="ky-ok"><Icon name="check" size={14} /></span></span>
+        <span class="ky-label">{s.label}</span>
+        <span class="ky-hint">{s.hint}</span>
+      </li>
+    ))}
+    <li class="ky-line" aria-hidden="true"><span></span></li>
+  </ol>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-kyc]').forEach((root) => {
+    const items = [...root.querySelectorAll<HTMLElement>('.ky-step')];
+    const line = root.querySelector<HTMLElement>('.ky-line span')!;
+    const set = (k: number) => {
+      items.forEach((el, i) => { el.classList.toggle('done', i < k); el.classList.toggle('on', i === k); });
+      line.style.transform = `scaleX(${Math.min(k, items.length - 1) / (items.length - 1)})`;
+    };
+    if (reduce) { set(items.length); return; }
+    let k = 0, visible = false;
+    set(0);
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: .4 }).observe(root);
+    setInterval(() => { if (!visible || document.hidden) return; k = (k + 1) % (items.length + 2); set(Math.min(k, items.length)); }, 1300);
+  });
+</script>
+
+<style>
+  .ky { display: flex; flex-direction: column; gap: 22px; padding: 22px; border-radius: 14px; background: #181818; box-shadow: 0 0 0 1px rgba(255, 255, 255, .05), 0 24px 60px rgba(0, 0, 0, .2); }
+  .ky-top { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 10px; background: #202020; }
+  .ky-badge { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 10px; background: var(--n-green-10); color: var(--n-green); }
+  .ky-top div { display: flex; flex-direction: column; gap: 4px; }
+  .ky-top b { font-weight: 500; font-size: 14px; }
+  .ky-top span { font-size: 12px; line-height: 1.5; color: var(--n-t3); }
+  .ky-steps { position: relative; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .ky-step { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+  .ky-dot { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #282828; color: var(--n-t3); box-shadow: 0 0 0 4px #181818; transition: background .3s, color .3s; }
+  .ky-dot > span { position: absolute; display: grid; place-items: center; transition: opacity .25s, transform .25s; }
+  .ky-ok { opacity: 0; transform: scale(.5); }
+  .ky-step.on .ky-dot { background: var(--n-green-20); color: var(--n-green); box-shadow: 0 0 0 4px #181818, 0 0 0 5px var(--n-green); }
+  .ky-step.done .ky-dot { background: #31c48d; color: #fff; }
+  .ky-step.done .ky-ic { opacity: 0; transform: scale(.5); }
+  .ky-step.done .ky-ok { opacity: 1; transform: none; }
+  .ky-label { font-size: 13px; font-weight: 500; color: var(--n-t2); }
+  .ky-step.on .ky-label { color: var(--n-green); }
+  .ky-hint { font-size: 11px; line-height: 1.4; color: var(--n-t4); }
+  .ky-line { position: absolute; left: calc(100% / 6); right: calc(100% / 6); top: 16px; height: 2px; background: #282828; z-index: 0; }
+  .ky-line span { display: block; height: 100%; background: #31c48d; transform: scaleX(0); transform-origin: left; transition: transform .6s var(--ease); }
+  @media (prefers-reduced-motion: reduce) { .ky-line span, .ky-dot, .ky-dot > span { transition: none; } }
+</style>

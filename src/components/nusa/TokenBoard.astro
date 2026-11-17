@@ -1,0 +1,211 @@
+---
+/**
+ * NusaFinance's visual system as a coded board: surfaces, accent, action, text, type, radii,
+ * plus the page-header pattern every module shares. Values come from the Figma file.
+ */
+import Icon from './Icons.astro';
+
+const surfaces = [
+  { hex: '#101010', name: 'Page' },
+  { hex: '#181818', name: 'Card' },
+  { hex: '#202020', name: 'Field' },
+  { hex: '#282828', name: 'Raised' },
+];
+const text = [
+  { hex: '#FFFFFF', use: 'Amounts, titles' },
+  { hex: '#D1D5DB', use: 'Labels' },
+  { hex: '#9CA3AF', use: 'Subtitles, meta' },
+  { hex: '#6B7280', use: 'Placeholders' },
+];
+const type = [
+  { size: 48, weight: 600, sample: 'On-ramp', spec: '48 · Semibold' },
+  { size: 36, weight: 500, sample: '101,000', spec: '36 · Medium' },
+  { size: 16, weight: 400, sample: 'Buy IDRX and USDT with your fiat currency', spec: '16 · Regular' },
+  { size: 14, weight: 500, sample: 'Wallet Address', spec: '14 · Medium' },
+  { size: 12, weight: 400, sample: 'Max Transaction Cost', spec: '12 · Regular' },
+];
+const heads = [
+  { icon: 'grid', title: 'On-ramp', sub: 'Buy IDRX and USDT with your fiat currency' },
+  { icon: 'grid', title: 'Off-ramp', sub: 'Sell your IDRX and USDT and receive fiat currency' },
+  { icon: 'trend', title: 'Staking', sub: 'Stake your assets and earn incentives.' },
+  { icon: 'db', title: 'Lending Market', sub: 'Earn your margin through borrow and supply market' },
+  { icon: 'trend', title: 'Liquidity Pools', sub: 'Earn yield from trading fees by providing liquidity, using your LP position as margin.' },
+  { icon: 'bank', title: 'Governance', sub: 'Lock your tokens and earn platform rewards.' },
+] as const;
+---
+<div class="tb nusa-ui">
+  <div class="tb-grid">
+    <!-- Surfaces -->
+    <section class="tb-cell tb-surf" aria-labelledby="tb-surf-h">
+      <h3 class="tb-h" id="tb-surf-h">Surfaces</h3>
+      <p class="tb-p">Four greys build depth. No borders needed: a card is simply one step lighter than what it sits on.</p>
+      <div class="tb-stack" data-reveal>
+        {surfaces.map((s, i) => (
+          <div class="tb-layer" style={`--c:${s.hex};--i:${i}`}>
+            <span>{s.name}</span><code>{s.hex}</code>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Accent -->
+    <section class="tb-cell tb-acc" aria-labelledby="tb-acc-h">
+      <h3 class="tb-h" id="tb-acc-h">One signal colour</h3>
+      <p class="tb-p">Spring green marks what's live: the active nav item, an APR, a focused field, a selected option.</p>
+      <div class="tb-swatches">
+        <div class="tb-sw big" style="--c:#00ff82"><code>#00FF82</code></div>
+        <div class="tb-sw" style="--c:rgba(0,255,130,.2)"><code>20%</code></div>
+        <div class="tb-sw" style="--c:rgba(0,255,130,.1)"><code>10%</code></div>
+      </div>
+      <div class="tb-acc-demo" aria-hidden="true">
+        <span class="tb-apr"><svg width="12" height="16" viewBox="0 0 12 16"><path d="M7 0 0 9h5l-1 7 8-10H7l1-6Z" fill="#fbbf24" /></svg>+20.6%</span>
+        <span class="n-locked"><Icon name="lock" size={9} />Locked</span>
+        <span class="tb-focus">101,000</span>
+      </div>
+    </section>
+
+    <!-- Action -->
+    <section class="tb-cell tb-act" aria-labelledby="tb-act-h">
+      <h3 class="tb-h" id="tb-act-h">One way forward</h3>
+      <p class="tb-p">The gradient is reserved for the primary action. Secondary actions are outlined in green; cancels in grey.</p>
+      <div class="tb-btns">
+        <button type="button" class="n-btn" tabindex="-1" aria-hidden="true">Stake</button>
+        <div class="tb-btn-row" aria-hidden="true">
+          <span class="n-ghost">Claim</span>
+          <span class="n-outline">Cancel</span>
+        </div>
+        <code class="tb-code">#31C48D → #057A55</code>
+      </div>
+    </section>
+
+    <!-- Text -->
+    <section class="tb-cell tb-text" aria-labelledby="tb-text-h">
+      <h3 class="tb-h" id="tb-text-h">Text on dark</h3>
+      <ul class="tb-text-list" role="list">
+        {text.map((t) => (
+          <li style={`--c:${t.hex}`}><span class="tb-t-sample">1,294 IDRX</span><code>{t.hex}</code><span class="tb-t-use">{t.use}</span></li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Type -->
+    <section class="tb-cell tb-type" aria-labelledby="tb-type-h">
+      <h3 class="tb-h" id="tb-type-h">Type: SF Pro Text</h3>
+      <ul class="tb-type-list" role="list">
+        {type.map((t) => (
+          <li><span class="tb-type-s" style={`font-size:${t.size}px;font-weight:${t.weight}`}>{t.sample}</span><code>{t.spec}</code></li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- Radii -->
+    <section class="tb-cell tb-rad" aria-labelledby="tb-rad-h">
+      <h3 class="tb-h" id="tb-rad-h">Corners</h3>
+      <div class="tb-radii">
+        <div><span style="border-radius:8px"></span><code>8 · controls</code></div>
+        <div><span style="border-radius:12px"></span><code>12 · cards</code></div>
+        <div><span style="border-radius:999px;height:36px"></span><code>Pill · filters</code></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Header rail -->
+  <section class="tb-rail" aria-labelledby="tb-rail-h" data-rail>
+    <div class="tb-rail-text">
+      <h3 class="tb-h" id="tb-rail-h">Every page opens the same way</h3>
+      <p class="tb-p">An icon tile, a title, and one line that says what you can do here. Six products, one way in.</p>
+    </div>
+    <ol class="tb-heads" role="list">
+      {heads.map((h, i) => (
+        <li class:list={['n-head', { on: i === 0 }]}>
+          <span class="n-tile"><Icon name={h.icon} size={18} /></span>
+          <p class="n-title">{h.title}</p>
+          <p class="n-sub">{h.sub}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-rail]').forEach((rail) => {
+    const items = [...rail.querySelectorAll<HTMLElement>('.tb-heads li')];
+    if (reduce) { items.forEach((i) => i.classList.add('on')); return; }
+    let k = 0, visible = false;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: .3 }).observe(rail);
+    setInterval(() => {
+      if (!visible || document.hidden) return;
+      items[k].classList.remove('on');
+      k = (k + 1) % items.length;
+      items[k].classList.add('on');
+    }, 1600);
+  });
+</script>
+
+<style>
+  .tb { padding: clamp(18px, 3vw, 32px); border-radius: 18px; background: #0b0b0b; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .5), 0 30px 70px rgba(0, 0, 0, .18); display: flex; flex-direction: column; gap: 16px; }
+  .tb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .tb-cell { display: flex; flex-direction: column; gap: 12px; padding: 22px; border-radius: 12px; background: var(--n-s1); min-width: 0; }
+  .tb-h { margin: 0; font: 600 15px/1.3 var(--n-font); letter-spacing: 0; color: var(--n-t1); }
+  .tb-p { margin: 0; font-size: 13px !important; line-height: 1.55 !important; color: var(--n-t3) !important; }
+  code { font-family: var(--mono, ui-monospace, monospace); font-size: 11px; color: var(--n-t3); }
+
+  .tb-surf { grid-row: span 2; }
+  .tb-stack { position: relative; margin-top: auto; height: 260px; perspective: 900px; }
+  .tb-layer { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 16px 13px; border-radius: 12px; background: var(--c); box-shadow: 0 -1px 0 rgba(255, 255, 255, .05) inset, 0 -10px 24px rgba(0, 0, 0, .35); font-size: 13px; color: var(--n-t2); transform: translateY(calc(var(--i) * -42px)) scale(calc(1 - (3 - var(--i)) * .02)); transition: transform .9s var(--ease) calc(var(--i) * 90ms); }
+  .tb-layer:first-child { box-shadow: 0 0 0 1px rgba(255, 255, 255, .06); }
+  .tb-layer code { color: var(--n-t3); }
+  :global(.js) .tb-stack:not(.is-in) .tb-layer { transform: translateY(0) scale(.96); }
+  @media (prefers-reduced-motion: reduce) { .tb-layer { transition: none; } :global(.js) .tb-stack:not(.is-in) .tb-layer { transform: translateY(calc(var(--i) * -42px)); } }
+
+  .tb-swatches { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; }
+  .tb-sw { height: 64px; border-radius: 8px; background: var(--c); display: flex; align-items: flex-end; padding: 8px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .05); }
+  .tb-sw.big code { color: #053d22; font-weight: 500; }
+  .tb-sw code { color: var(--n-t2); }
+  .tb-acc-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .tb-apr { display: inline-flex; align-items: center; gap: 5px; color: var(--n-green); font-size: 14px; font-weight: 500; }
+  .tb-focus { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--n-green); background: #141414; font-size: 14px; }
+
+  .tb-btns { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+  .tb-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tb-code { align-self: flex-start; }
+
+  .tb-text-list, .tb-type-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+  .tb-text-list li { display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 10px; padding: 9px 0; border-top: 1px solid var(--n-line); }
+  .tb-text-list li:first-child { border-top: 0; }
+  .tb-t-sample { color: var(--c); font-size: 18px; font-weight: 500; }
+  .tb-t-use { grid-column: 1 / -1; font-size: 11.5px; color: var(--n-t4); }
+
+  .tb-type { grid-column: span 2; }
+  .tb-type-list li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid var(--n-line); min-width: 0; }
+  .tb-type-list li:first-child { border-top: 0; padding-top: 0; }
+  .tb-type-s { line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; color: var(--n-t1); }
+  .tb-type-list code { flex: none; }
+
+  .tb-radii { display: flex; flex-direction: column; gap: 10px; }
+  .tb-radii div { display: flex; align-items: center; gap: 12px; }
+  .tb-radii span { width: 72px; height: 44px; flex: none; background: var(--n-s3); border: 1px solid var(--n-line-2); }
+
+  .tb-rail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 24px; align-items: center; padding: 22px; border-radius: 12px; background: var(--n-s1); }
+  .tb-rail-text { display: flex; flex-direction: column; gap: 10px; }
+  .tb-heads { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; }
+  .tb-heads li { opacity: .32; transition: opacity .5s var(--ease); min-width: 0; }
+  .tb-heads li.on { opacity: 1; }
+  .tb-heads .n-title { font-size: 22px; }
+  .tb-heads .n-sub { font-size: 12.5px; }
+  .tb-heads .n-tile { width: 36px; height: 32px; }
+
+  @media (max-width: 980px) {
+    .tb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tb-surf { grid-row: auto; }
+    .tb-type { grid-column: 1 / -1; }
+    .tb-rail { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .tb-grid { grid-template-columns: minmax(0, 1fr); }
+    .tb-heads { grid-template-columns: minmax(0, 1fr); }
+    .tb-type-s { white-space: normal; }
+    .tb-type-list li:first-child .tb-type-s { font-size: 40px !important; }
+  }
+</style>

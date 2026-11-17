@@ -1,0 +1,14 @@
+---
+/** NusaFinance wordmark, redrawn as SVG for the coded demos (the Figma logo is a raster). */
+interface Props { height?: number }
+const { height = 22 } = Astro.props;
+---
+<span class="nlogo" style={`--h:${height}px`} aria-label="nusa">
+  <svg viewBox="0 0 40 28" aria-hidden="true"><path d="M2 26 11 2h8.5l-9 24Z" fill="#00ff82" /><path d="M12.5 2h8l7 15.5L33 2h5l-9 24h-6.4Z" fill="#00ff82" /></svg>
+  <span>nusa</span>
+</span>
+
+<style>
+  .nlogo { display: inline-flex; align-items: center; gap: 6px; height: var(--h); color: #00ff82; font: 600 calc(var(--h) * .78)/1 var(--n-font, system-ui); letter-spacing: -.02em; }
+  .nlogo svg { height: 100%; width: auto; }
+</style>

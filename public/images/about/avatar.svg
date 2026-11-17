@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Abraham's character from the house, smiling">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffecd6"/>
+      <stop offset="1" stop-color="#ffd2a8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".42" r=".55">
+      <stop offset="0" stop-color="#fff6ea" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#fff6ea" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1" fill="#000" fill-opacity=".06"/>
+    </pattern>
+  </defs>
+
+  <rect width="240" height="240" fill="url(#bg)"/>
+  <rect width="240" height="240" fill="url(#dots)"/>
+  <rect width="240" height="240" fill="url(#glow)"/>
+
+  <g stroke="#151517" stroke-width="3.5" stroke-linejoin="round">
+    <!-- shirt -->
+    <path d="M42 186 h156 v60 H42 Z" fill="#e0a72e"/>
+    <path d="M168 187.5 h28.5 v57 H168 Z" fill="#b8861f" stroke="none"/>
+    <path d="M42 186 h156 v60 H42 Z" fill="none"/>
+    <!-- neck -->
+    <path d="M100 168 h40 v20 h-40 Z" fill="#cf9670"/>
+    <!-- head -->
+    <path d="M66 70 h108 v104 H66 Z" fill="#e9b48a"/>
+    <path d="M152 71.5 h20.5 v101 H152 Z" fill="#cf9670" stroke="none"/>
+    <path d="M66 70 h108 v104 H66 Z" fill="none"/>
+    <!-- hair: a block on top, wider than the head, like the 3D model -->
+    <path d="M52 40 h136 v46 H52 Z" fill="#151517"/>
+    <path d="M62 50 h46" stroke="#3a3a3e" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- eyes, a little happy squint -->
+  <rect x="92" y="108" width="11" height="16" rx="2.5" fill="#151517"/>
+  <rect x="133" y="108" width="11" height="16" rx="2.5" fill="#151517"/>
+  <rect x="95" y="110" width="3.5" height="4" rx="1" fill="#fff" opacity=".9"/>
+  <rect x="136" y="110" width="3.5" height="4" rx="1" fill="#fff" opacity=".9"/>
+
+  <!-- cheeks -->
+  <ellipse cx="86" cy="142" rx="9" ry="5.5" fill="#ff8f86" opacity=".45"/>
+  <ellipse cx="150" cy="142" rx="9" ry="5.5" fill="#ff8f86" opacity=".45"/>
+
+  <!-- smile -->
+  <path d="M101 138 Q118 158 137 138 Z" fill="#7a2f1c" stroke="#151517" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M106 140.5 h26 q-3 5 -13 6 q-10 -1 -13 -6 Z" fill="#fff"/>
+</svg>
