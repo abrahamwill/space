@@ -2,15 +2,20 @@
 // Values in [brackets] are placeholders. Never replace them with guessed facts or metrics.
 
 export const site = {
-  name: '[Your name]',
+  name: 'Abraham Williams',
   role: 'Senior Product Designer, Gokomodo',
   description:
     'Senior product designer. I design practical tools for farmers and field teams, and prototype them in code.',
-  email: '[email]',
-  emailHref: '#', // TODO(owner): 'mailto:you@example.com'
-  linkedin: '#', // TODO(owner): LinkedIn URL
+  email: 'abrahamwilliams.lt@gmail.com', // TODO(owner): switch to the domain address once it's bought
+  emailHref: 'mailto:abrahamwilliams.lt@gmail.com',
+  linkedin: 'https://www.linkedin.com/in/abrahamwill/',
   cv: '#', // TODO(owner): put the PDF in /public and link it, e.g. '/cv.pdf'
   year: '[Year]',
+  basedIn: 'Jakarta',
+  /** Mobile menu status tile. */
+  status: 'Open to new roles',
+  /** Playlist URL. Leave empty to hide the playlist link. */
+  playlist: '', // TODO(owner): playlist URL
 };
 
 /** Where "Step inside" goes. Milestone 2 replaces the page with the 3D house. */

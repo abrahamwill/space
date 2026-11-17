@@ -1,0 +1,131 @@
+---
+/**
+ * Brand to interface: the palette as used in the product, and a headline specimen showing
+ * how mint marks the one or two words that carry each screen. Headlines are the file's own copy.
+ */
+import './gm-ui.css';
+
+const swatches = [
+  { name: 'Mint', hex: '#80FFD6', use: 'The action colour: primary buttons, the check, the key word in a heading.', ink: '#062018' },
+  { name: 'Ink', hex: '#000C08', use: 'The ground. Pages fade from near-black into it.', ink: '#ffffff' },
+  { name: 'Lime', hex: '#C7FC6E', use: 'A rare second accent in the file, kept off actions.', ink: '#1b2606' },
+  { name: 'Greys', hex: '#B0B0B0 · #999999 · #404040', use: 'Body text, secondary text, lines and empty states.', ink: '#111', grey: true },
+];
+
+type Word = [string, boolean?];
+const heads: { label: string; where: string; words: Word[] }[] = [
+  { label: 'Claim', where: 'Onboarding · claim your link', words: [['Start', true], ['by'], ['creating'], ['your'], ['personal'], ['link', true]] },
+  { label: 'Add links', where: 'Onboarding · links and media', words: [['Great!'], ['Time'], ['to'], ['add'], ['links', true], ['and'], ['media', true], ['into'], ['your'], ['page']] },
+  { label: 'Leaderboard', where: 'Profile · top tippers', words: [['Top'], ['Tippers'], ['for'], ['Luke', true], ['Moradavis', true]] },
+];
+---
+<div class="gm-brand" data-gm-heads>
+  <ul class="swatches" role="list">
+    {swatches.map((s) => (
+      <li class="sw">
+        <span class:list={['chip', { grey: s.grey }]} style={s.grey ? '' : `background:${s.hex}`} aria-hidden="true">
+          {s.grey && (<><i style="background:#B0B0B0"></i><i style="background:#999999"></i><i style="background:#404040"></i></>)}
+        </span>
+        <span class="sw-text">
+          <b>{s.name}</b>
+          <code>{s.hex}</code>
+          <span>{s.use}</span>
+        </span>
+      </li>
+    ))}
+  </ul>
+
+  <div class="specimen gmui">
+    <div class="spec-top">
+      <span class="spec-where" aria-live="polite" data-where>{heads[0].where}</span>
+      <span class="spec-font">Geist · 600</span>
+    </div>
+    <div class="spec-stage">
+      {heads.map((h, hi) => (
+        <p class:list={['hd', { 'is-on': hi === 0 }]} id={`gm-hd-${hi}`} role="tabpanel" aria-label={h.where} data-hd={hi}>
+          {h.words.map(([w, hl], i) => (<><span class:list={['w', { hl }]} style={`--d:${i}`}>{w}</span>{' '}</>))}
+        </p>
+      ))}
+    </div>
+    <div class="spec-tabs" role="tablist" aria-label="Headlines from the product">
+      {heads.map((h, hi) => (
+        <button type="button" role="tab" id={`gm-hdt-${hi}`} aria-controls={`gm-hd-${hi}`} aria-selected={hi === 0 ? 'true' : 'false'} tabindex={hi === 0 ? 0 : -1} data-tab={hi} data-where={h.where}>{h.label}</button>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-gm-heads]').forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-hd]')];
+    const where = root.querySelector<HTMLElement>('[data-where]');
+    let cur = 0, auto = !reduce, visible = false, timer = 0;
+
+    const show = (i: number, focus = false) => {
+      cur = (i + tabs.length) % tabs.length;
+      tabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === cur)); t.tabIndex = k === cur ? 0 : -1; });
+      panels.forEach((p, k) => p.classList.toggle('is-on', k === cur));
+      if (where) where.textContent = tabs[cur].dataset.where ?? '';
+      if (focus) tabs[cur].focus();
+    };
+    const stop = () => { auto = false; clearInterval(timer); };
+
+    tabs.forEach((t, k) => {
+      t.addEventListener('click', () => { stop(); show(k); });
+      t.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault(); stop(); show(cur + (e.key === 'ArrowRight' ? 1 : -1), true);
+        }
+      });
+    });
+
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(root);
+    timer = window.setInterval(() => { if (auto && visible && !document.hidden) show(cur + 1); }, 4200);
+  });
+</script>
+
+<style>
+  .gm-brand { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; align-items: stretch; }
+  .swatches { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .sw { display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 12px; background: #fff; box-shadow: var(--hair); }
+  .chip { flex: none; width: 64px; height: 64px; border-radius: 12px; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .18); }
+  .chip.grey { display: grid; grid-template-rows: repeat(3, 1fr); overflow: hidden; }
+  .sw-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .sw-text b { font-weight: 600; font-size: 15px; }
+  .sw-text code { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .sw-text span { font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+
+  .specimen {
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; gap: 24px; justify-content: space-between;
+    padding: clamp(22px, 3vw, 36px); border-radius: 18px;
+    background: radial-gradient(90% 80% at 85% 0%, #14201c 0%, #0b0c0c 60%), #0b0c0c;
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .4), 0 24px 60px rgba(0, 0, 0, .18);
+    min-height: 380px;
+  }
+  .spec-top { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--gm-muted); }
+  .spec-stage { display: grid; align-items: center; flex: 1; }
+  .hd { grid-area: 1 / 1; margin: 0; font-weight: 600; font-size: clamp(32px, 3.4vw, 50px); line-height: 1.08; letter-spacing: -.035em; color: #fff; text-wrap: balance; visibility: hidden; }
+  .hd.is-on { visibility: visible; }
+  .hd .w { display: inline-block; opacity: 0; transform: translateY(.35em); transition: opacity .35s var(--gm-ease), transform .5s var(--gm-ease), color .5s ease; transition-delay: calc(var(--d) * 45ms); }
+  .hd.is-on .w { opacity: 1; transform: none; }
+  .hd .w.hl { position: relative; }
+  .hd.is-on .w.hl { color: var(--gm-mint); transition-delay: calc(var(--d) * 45ms), calc(var(--d) * 45ms), calc(var(--d) * 45ms + 520ms); }
+  .hd .w.hl::after { content: ''; position: absolute; left: 0; right: 0; bottom: .02em; height: .08em; border-radius: 2px; background: var(--gm-mint); opacity: .35; transform: scaleX(0); transform-origin: left; transition: transform .5s var(--gm-ease); }
+  .hd.is-on .w.hl::after { transform: scaleX(1); transition-delay: calc(var(--d) * 45ms + 600ms); }
+
+  .spec-tabs { display: inline-flex; align-self: flex-start; gap: 4px; padding: 4px; border-radius: 999px; background: #161616; box-shadow: inset 0 0 0 1px #262626; }
+  .spec-tabs button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--gm-muted); font: 500 14px 'Geist Variable', system-ui, sans-serif; cursor: pointer; transition: background .2s, color .2s; }
+  .spec-tabs button:hover { color: #fff; }
+  .spec-tabs button[aria-selected='true'] { background: #2a2a2a; color: #fff; }
+
+  @media (max-width: 860px) {
+    .gm-brand { grid-template-columns: minmax(0, 1fr); }
+    .specimen { min-height: 300px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hd .w, .hd .w.hl::after { transition: none; }
+  }
+</style>

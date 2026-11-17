@@ -301,7 +301,7 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
         {ROOM_ORDER.filter((r) => r !== here).map((r) => (
           <Pin key={r} anchor={ROOMS[r].labelAnchor} className="hx-roomlabel" hidden={view !== 'overview'} clamp>
             <button type="button" onClick={() => go(r, ROOM_DEFAULT[r])}>
-              <span className="label">{ROOMS[r].label}</span>
+              <span className="hx-roomlabel-name">{ROOMS[r].label}</span>
               <span className="hx-roomlabel-sub">{r === 'studio' ? 'selected work →' : r === 'lab' ? 'experiments →' : 'about me →'}</span>
             </button>
           </Pin>
@@ -403,18 +403,20 @@ export default function HouseApp({ content, engine: external, onExit, leaving = 
       {item && WINDOW_TITLES[item] && (
         <aside ref={windowRef} className="hx-window" aria-labelledby="hx-window-title">
           <div className="hx-window-bar">
-            <h2 id="hx-window-title" className="label" tabIndex={-1}>{WINDOW_TITLES[item]}</h2>
-            <button
-              type="button"
-              className="hx-close"
-              aria-label="Close window"
-              onClick={() => {
-                close();
-                lastHotspot.current?.focus();
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-            </button>
+            <span className="hx-lights">
+              <button
+                type="button"
+                className="hx-close"
+                aria-label="Close window"
+                onClick={() => {
+                  close();
+                  lastHotspot.current?.focus();
+                }}
+              />
+              <i aria-hidden="true" />
+              <i aria-hidden="true" />
+            </span>
+            <h2 id="hx-window-title" tabIndex={-1}>{WINDOW_TITLES[item]}</h2>
           </div>
           <div className="hx-window-body">
             <WindowBody id={item} content={content} deck={deck} />

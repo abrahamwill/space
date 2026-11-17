@@ -1,0 +1,190 @@
+---
+/**
+ * Hero stage for /work/gm-xyz: the public profile in a phone, a "gm.xyz/" name reel,
+ * tip toasts arriving, the social orbit turning behind, the 3D logo floating.
+ * Everything pauses off-screen; reduced motion shows a still composition.
+ */
+import Phone from '../case2/Phone.astro';
+import './gm-ui.css';
+
+// Names from the landing page's rotator.
+const names = ['michael', 'mary', 'james', 'robert', 'jessica', 'david', 'joseph', 'daniel'];
+// Mock tippers (wallet stubs from the file's leaderboard) and the tip sheet's preset amounts.
+const SOL = '<svg viewBox="0 0 24 24" width="60%" height="60%" aria-hidden="true"><path d="M7 5h13l-3 3.5H4z" fill="#14F195"/><path d="M4 10.25h13l3 3.5H7z" fill="#7aa2f0"/><path d="M7 15.5h13l-3 3.5H4z" fill="#9945FF"/></svg>';
+const tips = [
+  { from: '0x262…f67', amount: '0.42 SOL', coin: 'sol' },
+  { from: '0x215…fa1', amount: '25 USDC', coin: 'usdc' },
+  { from: '0x315…86a', amount: '50 USDC', coin: 'usdc' },
+  { from: '0x52s…l05', amount: '0.09 SOL', coin: 'sol' },
+  { from: '0x16s…l21', amount: '5 USDC', coin: 'usdc' },
+];
+---
+<div class="gm-stage gmui" data-gm-stage>
+  <div class="st-glow" aria-hidden="true"></div>
+  <div class="st-dots" aria-hidden="true"></div>
+
+  <div class="st-copy">
+    <p class="st-tag">Links that connect, engage, and earn</p>
+    <p class="st-link">
+      <span class="st-prefix">gm.xyz/</span><span class="st-names" aria-hidden="true"><span class="st-reel" data-reel>{[...names, names[0]].map((n) => <span>{n}</span>)}</span></span>
+      <span class="sr-only">gm.xyz slash your name</span>
+    </p>
+    <p class="st-sub">One link for your socials, projects and NFTs, with a coffee button that takes tips in SOL or USDC.</p>
+  </div>
+
+  <div class="st-center">
+    <span class="st-orbit-wrap" aria-hidden="true"><img class="st-orbit" src="/images/work/gm-xyz/orbit.webp" alt="" width="686" height="685" decoding="async" /></span>
+    <Phone src="/images/work/gm-xyz/profile.webp" alt="A public gm.xyz profile: avatar, name, a Shout me a Coffee button, media tiles and a list of social links." width={422} height={1568} screen={560} auto hint={false} class="st-phone" />
+  </div>
+
+  <div class="st-side">
+    <img class="st-logo" src="/images/work/gm-xyz/logo-3d.webp" alt="gm.xyz logo" width="599" height="599" decoding="async" />
+    <ol class="st-toasts" aria-hidden="true" data-toasts>
+      {tips.map((t, i) => (
+        <li class="toast" data-i={i}>
+          {t.coin === 'sol' ? <span class="coin sol" set:html={SOL} /> : <span class="coin usdc">$</span>}
+          <span class="toast-text"><b>{t.from}</b><span>sent a coffee</span></span>
+          <span class="toast-amt">+{t.amount}</span>
+        </li>
+      ))}
+    </ol>
+  </div>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-gm-stage]').forEach((stage) => {
+    let visible = false;
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      stage.classList.toggle('is-paused', !visible);
+    }).observe(stage);
+
+    // Toasts: newest on top, three at most.
+    const toasts = [...stage.querySelectorAll<HTMLElement>('.toast')];
+    let order: number[] = [];
+    const place = () => {
+      toasts.forEach((t, i) => {
+        const slot = order.indexOf(i);
+        t.style.setProperty('--slot', String(slot));
+        t.classList.toggle('on', slot > -1 && slot < 3);
+        t.classList.toggle('out', slot >= 3);
+      });
+    };
+    if (reduce) {
+      order = [0, 1];
+      place();
+      return;
+    }
+    let next = 0;
+    const pushToast = () => {
+      order = [next, ...order.filter((i) => i !== next)].slice(0, 4);
+      next = (next + 1) % toasts.length;
+      place();
+    };
+    pushToast();
+
+    // Name reel: one name per step; the last row repeats the first so the loop is seamless.
+    const reel = stage.querySelector<HTMLElement>('[data-reel]');
+    const count = reel ? reel.children.length - 1 : 0;
+    let idx = 0;
+    const stepReel = () => {
+      if (!reel) return;
+      idx += 1;
+      reel.style.transition = '';
+      reel.style.setProperty('--idx', String(idx));
+      if (idx === count) {
+        setTimeout(() => {
+          reel.style.transition = 'none';
+          idx = 0;
+          reel.style.setProperty('--idx', '0');
+        }, 650);
+      }
+    };
+
+    let tReel = 0, tToast = 0, last = performance.now();
+    const loop = (t: number) => {
+      requestAnimationFrame(loop);
+      const dt = t - last; last = t;
+      if (!visible || document.hidden) return;
+      tReel += dt; tToast += dt;
+      if (tReel > 1700) { tReel = 0; stepReel(); }
+      if (tToast > 2600) { tToast = 0; pushToast(); }
+    };
+    requestAnimationFrame(loop);
+  });
+</script>
+
+<style>
+  .gm-stage {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px;
+    min-height: 700px; padding: 56px clamp(24px, 4vw, 56px);
+    border-radius: 24px;
+    background: radial-gradient(120% 90% at 50% 0%, #0f1714 0%, #070807 55%, #040404 100%);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .5), 0 30px 80px rgba(0, 0, 0, .25);
+  }
+  .st-glow { position: absolute; inset: auto 10% -30% 10%; height: 70%; z-index: -1; background: radial-gradient(closest-side, rgba(128, 255, 214, .22), transparent); filter: blur(10px); animation: glow 7s ease-in-out infinite alternate; }
+  .st-dots { position: absolute; inset: 0; z-index: -1; background-image: radial-gradient(rgba(128, 255, 214, .14) 1px, transparent 1.4px); background-size: 18px 18px; -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 50%, #000 20%, transparent 80%); mask-image: radial-gradient(ellipse 60% 55% at 50% 50%, #000 20%, transparent 80%); }
+  @keyframes glow { to { opacity: .55; transform: scale(1.08); } }
+
+  /* Left: name reel */
+  .st-copy { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 18px; align-self: center; }
+  .st-tag { margin: 0; font-size: 13px; letter-spacing: .02em; color: var(--gm-muted); }
+  .st-link { margin: 0; display: flex; align-items: center; font-weight: 600; font-size: clamp(34px, 3.2vw, 50px); letter-spacing: -.03em; line-height: 1; }
+  .st-prefix { color: var(--gm-mint); }
+  .st-names { --row: 1.15em; position: relative; display: inline-block; height: calc(var(--row) * 3); overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); }
+  .st-reel { --idx: 0; display: flex; flex-direction: column; transform: translateY(calc(var(--row) * (1 - var(--idx)))); transition: transform .6s var(--gm-ease); }
+  .st-reel span { height: var(--row); line-height: var(--row); color: #fff; }
+  .st-sub { margin: 0; max-width: 300px; font-size: 15px; line-height: 1.55; color: var(--gm-soft); }
+
+  /* Centre: phone over the orbit */
+  .st-center { position: relative; display: grid; place-items: center; }
+  .st-orbit-wrap { position: absolute; z-index: 0; display: grid; place-items: center; width: 600px; height: 600px; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 6%, #000 42%); mask-image: linear-gradient(90deg, transparent 6%, #000 42%); }
+  .st-orbit { width: 560px; max-width: none; height: auto; opacity: .85; animation: spin 90s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .st-center :global(.st-phone) { position: relative; box-shadow: inset 0 0 0 1.5px #2b2b2f, 0 0 0 1px rgba(0, 0, 0, .6), 0 40px 90px rgba(0, 0, 0, .6), 0 0 60px rgba(128, 255, 214, .12); }
+
+  /* Right: logo + toasts */
+  .st-side { position: relative; z-index: 1; align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  .st-logo { width: 132px; height: auto; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .5)); animation: bob 5.5s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-12px) rotate(-4deg); } }
+  .st-toasts { position: relative; width: min(270px, 100%); height: 220px; margin: 0; padding: 0; list-style: none; }
+  .toast {
+    --slot: 0;
+    position: absolute; right: 0; top: 0; width: 100%;
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    border-radius: 16px; background: rgba(30, 30, 30, .78); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), 0 14px 30px rgba(0, 0, 0, .35);
+    opacity: 0; transform: translateY(-14px) scale(.96);
+    transition: transform .55s var(--gm-ease), opacity .45s var(--gm-ease);
+  }
+  .toast.on { opacity: calc(1 - var(--slot) * .28); transform: translateY(calc(var(--slot) * 70px)) scale(calc(1 - var(--slot) * .04)); }
+  .toast.out { opacity: 0; transform: translateY(220px) scale(.88); }
+  .toast .coin { width: 30px; height: 30px; }
+  .toast-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .toast-text b { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .toast-text span { font-size: 11px; color: var(--gm-muted); }
+  .toast-amt { font-weight: 600; font-size: 14px; color: var(--gm-mint); white-space: nowrap; }
+
+  .gm-stage.is-paused *, .gm-stage.is-paused { animation-play-state: paused !important; }
+
+  @media (max-width: 1180px) {
+    .gm-stage { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; min-height: 0; padding: 40px 20px 32px; gap: 36px; }
+    .st-copy { align-items: center; }
+    .st-link { justify-content: center; }
+    .st-sub { max-width: 340px; }
+    .st-orbit-wrap { -webkit-mask-image: radial-gradient(closest-side, #000 80%, transparent); mask-image: radial-gradient(closest-side, #000 80%, transparent); }
+    .st-orbit { width: 520px; }
+    .st-side { align-self: auto; align-items: center; width: 100%; }
+    .st-logo { display: none; }
+    .st-toasts { height: 150px; }
+  }
+  @media (max-width: 520px) {
+    .st-orbit { width: 440px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .st-glow, .st-orbit, .st-logo { animation: none; }
+    .toast { transition: opacity .3s; }
+  }
+</style>

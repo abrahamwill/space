@@ -1,6 +1,11 @@
 # Portfolio ("Space")
 
-The portfolio has two ways in: the fast view (the Home v3 design and its case studies) and the house view (an interactive 3D cutaway of the house). Milestones 1–4 are done: the fast view, the 3D house, ambient life, and click-to-task.
+The portfolio has two ways in: the fast view (home and case studies) and the house view (an interactive 3D cutaway of the house). Milestones 1–4 are done: the fast view, the 3D house, ambient life, and click-to-task.
+
+**Design: "2b" playful Mac** (from the space-kit handoff, Nov 2026): Inter + IBM Plex Mono, one blue, Mac windows, dotted page. The home is `src/pages/index.astro` on `src/layouts/Space.astro`; case studies built by hand use `src/layouts/CaseShell.astro` (NusaFinance, gm.xyz); shared tokens are in `src/styles/case.css`; the house UI is `src/house/house.css`.
+
+**Fallback to the previous (Bauhaus, red and mustard) home:** it's tagged `old-home-bauhaus` and kept on the branch `archive/old-home`. To go back, deploy that branch, or restore files from it with `git checkout old-home-bauhaus -- <path>`.
+
 The design brief and the reference files are in `design/`. Read `design/portfolio-handoff.md` first.
 
 ```bash

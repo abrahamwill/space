@@ -1,0 +1,237 @@
+---
+/**
+ * Case study: gm.xyz (freelance, now shut down). Hand-built page on the shared case shell.
+ * Screens come from the Techtonix Figma file (mock data). Coded demos live in src/components/gm/.
+ * [Bracketed] text in .tbc chips is for the owner to confirm before publishing.
+ */
+import CaseShell from '../../layouts/CaseShell.astro';
+import Win from '../../components/case2/Win.astro';
+import Phone from '../../components/case2/Phone.astro';
+import GmStage from '../../components/gm/GmStage.astro';
+import GmHeadlines from '../../components/gm/GmHeadlines.astro';
+import GmClaim from '../../components/gm/GmClaim.astro';
+import GmTip from '../../components/gm/GmTip.astro';
+import GmViewers from '../../components/gm/GmViewers.astro';
+
+const img = (f: string) => `/images/work/gm-xyz/${f}`;
+const onboarding = [
+  { src: 'connect-wallet.webp', w: 546, h: 1568, alt: 'A profile dimmed behind a sheet asking to connect a Phantom wallet to start creating a gm link.', cap: 'Connect a Phantom wallet' },
+  { src: 'claim.webp', w: 724, h: 1568, alt: 'Start by creating your personal link: a gm.xyz/ field with a mint check and a Create my Link button.', cap: 'Claim gm.xyz/yourname' },
+  { src: 'add-links.webp', w: 506, h: 1568, alt: 'Great! Time to add links and media into your page: empty slots for social media and media, with an Add menu.', cap: 'Add links and media' },
+  { src: 'edit-profile.webp', w: 446, h: 1568, alt: 'The owner view of a profile with drag handles on the links and delete, edit and done buttons.', cap: 'Arrange your own page' },
+];
+---
+<CaseShell
+  title="gm.xyz"
+  description="Case study: gm.xyz, a link-in-bio for Web3 with one link for socials, projects and NFTs, and a coffee button that takes tips in SOL or USDC."
+  crumb="gm.xyz"
+  next={{ href: '/work/nusa', title: 'NusaFinance', line: 'Freelance · a rupiah front door to DeFi.' }}
+>
+  <!-- Hero -->
+  <section class="sec hero">
+    <span class="dotfade"></span>
+    <div class="col z stack" style="gap:26px">
+      <a class="back" href="/#studio">← All work</a>
+      <span class="kick">Case study · Freelance · gm.xyz · <span class="tbc">[Year]</span> · Shut down</span>
+      <h1>One gm link for your whole Web3 self</h1>
+      <p class="lede">gm.xyz was a link-in-bio for Web3: one gm.xyz link for your socials, projects and NFTs, with a coffee button that takes tips in SOL or USDC. I designed the web app, mobile first. The service has since shut down.</p>
+      <dl class="meta">
+        <div><dt>Role</dt><dd>Product designer, freelance, for <span class="tbc">[client]</span></dd></div>
+        <div><dt>Scope</dt><dd>117 mobile and 55 desktop frames</dd></div>
+        <div><dt>Built on</dt><dd>Solana · Phantom · SOL and USDC</dd></div>
+        <div><dt>Status</dt><dd>Shut down</dd></div>
+      </dl>
+    </div>
+    <div class="wide z hero-stage" data-reveal>
+      <GmStage />
+    </div>
+    <p class="cap z"><b>A gm page at work.</b> The public profile scrolls in the phone while tips arrive. The names come from the landing page's rotator; the wallets and amounts are the file's mock data.</p>
+  </section>
+
+  <!-- 1 · The idea -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The idea</span><h2>A profile page that can get paid</h2></div>
+      <p>People in Web3 live across X, Discord, Telegram and GitHub, and their work sits in projects and NFTs. gm.xyz gave them one address, gm.xyz/yourname, that holds all of it, plus a coffee button so anyone who likes the work can say thanks in SOL or USDC.</p>
+    </div>
+    <div class="wide idea" data-reveal>
+      <Win title="gm.xyz · Landing" src={img('landing.webp')} alt="The gm.xyz landing page: a bento grid with the headline Links that connect, engage, and earn, link and volume counters, a gm.xyz/ name list and four feature cards." width={1066} height={1574} dark class="idea-landing" />
+      <div class="idea-side">
+        <Win title="gm.xyz/lukemoradavis · Desktop" src={img('profile-desktop.webp')} alt="A gm.xyz profile on desktop: avatar, name and Shout me a Coffee on the left; Links and Projects tabs with media tiles and link rows on the right." width={1536} height={915} dark />
+        <ul class="features" role="list">
+          <li><b>Link hub for all socials and groups</b><span>Every account and community behind one link.</span></li>
+          <li><b>Highlight your projects</b><span>Work and portfolios, so the Web3 crowd can back them.</span></li>
+          <li><b>Showcase your photos and NFTs</b><span>Images, art and collectibles right on the profile.</span></li>
+          <li><b>Send and receive coffee as tips</b><span>In SOL or USDC, from a single button.</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="cap">The landing page sells the four things a page holds. Feature names are the landing page's own.</p>
+  </section>
+
+  <!-- 2 · Brand to interface -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Brand to interface</span><h2>One mint, one job</h2></div>
+      <p>The brand board is small: a logo, a mint, an ink and Futura. In the product I gave the mint a single job. It marks what to do next or the word that matters: the main button, the check, the key word in a heading. Everything else is near-black and grey, set in Geist, so the mint is never decoration.</p>
+    </div>
+    <div class="mid z" style="margin-top:48px" data-reveal>
+      <GmHeadlines />
+    </div>
+    <p class="cap z">Three headlines from the file. Pick one: the plain words land first, then the mint finds the ones that carry the screen.</p>
+    <div class="col z brand-board" data-reveal>
+      <Win title="gm.xyz · Brand guidelines" src={img('brand.webp')} alt="The gm.xyz brand board: three logo tiles, mint #80FFD6 and ink #000C08, Futura, and the 3D logo on a mint dot pattern." width={787} height={513} />
+    </div>
+  </section>
+
+  <!-- 3 · Claim your name -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Claim your name</span><h2>The first screen is the product</h2></div>
+      <p>After connecting a wallet, the first thing you do is pick your link. The screen asks for one thing, shows the finished address as you type, and states its only rule in plain words. Try it.</p>
+    </div>
+    <div class="mid" style="margin-top:48px" data-reveal>
+      <GmClaim />
+    </div>
+
+    <div class="col stack" style="margin-top:96px">
+      <p>From there, onboarding is a short run of single-purpose screens. Each one ends on the next step, so a new page is live in a few minutes and can be edited in place later.</p>
+      <div class="flow" aria-label="Onboarding steps">
+        <span>Connect Phantom wallet</span><i>→</i><span>Claim your link</span><i>→</i><span>Name, profession and bio</span><i>→</i><span>Links and media</span><i>→</i><span>Projects</span><i>→</i><span>Success</span>
+      </div>
+    </div>
+    <div class="wide phones" data-reveal>
+      {onboarding.map((p) => (
+        <figure class="ph">
+          <Phone src={img(p.src)} alt={p.alt} width={p.w} height={p.h} screen={560} />
+          <figcaption>{p.cap}</figcaption>
+        </figure>
+      ))}
+    </div>
+    <div class="wide" style="margin-top:72px" data-reveal>
+      <Win title="Figma · Registration flow" src={img('flow-map.webp')} alt="The registration flow in Figma: columns for connect wallet, link creation, add links, edit links, add projects, edit project and success, wired together." width={1583} height={974} />
+    </div>
+    <p class="cap">The registration flow in the file, including the edit paths that loop back into it.</p>
+  </section>
+
+  <!-- 4 · Tip jar -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The tip jar</span><h2>A tip should feel like buying a coffee, not signing a transaction</h2></div>
+      <p>Most people tipping are fans, not traders. So the sheet starts in dollars and converts to SOL as you type, offers three round amounts, and shows the total in both currencies right above Send. The crypto view is one tap away, behind “Input in SOL”, not the default. Send something.</p>
+    </div>
+    <div class="mid z tipjar" data-reveal>
+      <div class="tip-col"><GmTip /></div>
+      <figure class="ph lb">
+        <Phone src={img('leaderboard.webp')} alt="Top Tippers for Luke Moradavis: a podium for the top three tippers by wallet address and a ranked list below." width={575} height={1568} screen={560} />
+        <figcaption>Every tip lands on the creator's leaderboard: a podium for the top three, the full list, and a History tab.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5 · One profile, three visitors -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">One profile, three visitors</span><h2>The page changes with who's looking</h2></div>
+      <p>A gm page is mostly seen by other people, and they arrive in different states. The file designs three. The profile never changes; only the header and the last call to action do, so each visitor gets the one next step that makes sense for them.</p>
+    </div>
+    <div class="mid" style="margin-top:48px" data-reveal>
+      <GmViewers />
+    </div>
+  </section>
+
+  <!-- 6 · In numbers -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">In the file</span><h2>Small product, fully drawn</h2></div>
+      <p>Every flow exists at phone size first and again for desktop, with its empty, error and success states.</p>
+    </div>
+    <div class="mid z" style="margin-top:40px" data-reveal>
+      <div class="stats">
+        <div class="stat"><b data-count="117">117</b><span>mobile frames, 393 wide</span></div>
+        <div class="stat"><b data-count="55">55</b><span>desktop frames</span></div>
+        <div class="stat"><b data-count="2">2</b><span>currencies for tips, SOL and USDC</span></div>
+        <div class="stat"><b data-count="1">1</b><span>link per person</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · Looking back -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Looking back</span><h2><span class="tbc wrap">[What a shut-down product taught me]</span></h2></div>
+      <p>gm.xyz has since shut down. <span class="tbc wrap">[Why it closed, if you want to say]</span></p>
+      <p><span class="tbc wrap">[What you'd keep: e.g. the one-job mint, or the dollar-first tip sheet]</span></p>
+      <p><span class="tbc wrap">[What you'd do differently next time]</span></p>
+      <p class="fine">Screens are from the project's Figma file with its mock data: “Luke Moradavis” and the wallet addresses are placeholders. The coded demos rebuild the designs in the browser; their balances and the SOL rate are mock values.</p>
+    </div>
+  </section>
+</CaseShell>
+
+<script>
+  // Count the stats up once when they scroll in.
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        const el = e.target as HTMLElement;
+        const to = Number(el.dataset.count);
+        const t0 = performance.now();
+        const step = (t: number) => {
+          const p = Math.min(1, (t - t0) / 1100);
+          el.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    }, { threshold: .6 });
+    document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => io.observe(el));
+  }
+</script>
+
+<style>
+  .hero { padding-top: clamp(48px, 6vw, 70px); }
+  .hero-stage { margin-top: 64px; }
+
+  .idea { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: start; margin-top: 56px; }
+  .idea-side { display: flex; flex-direction: column; gap: 24px; }
+  .features { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .features li { display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 12px; background: #fff; box-shadow: var(--hair); }
+  .features b { font-weight: 600; font-size: 15px; }
+  .features span { font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+
+  .brand-board { margin-top: 56px; }
+
+  .phones { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin-top: 48px; justify-items: center; }
+  .ph { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .ph figcaption { font-size: 14px; line-height: 1.5; color: var(--muted); text-align: center; max-width: 280px; }
+
+  .tipjar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: clamp(28px, 6vw, 80px); align-items: center; justify-items: center; margin-top: 56px; }
+  .tip-col { width: 100%; display: flex; justify-content: center; }
+  .lb figcaption { max-width: 300px; }
+
+  .tbc.wrap { display: inline; white-space: normal; padding: 1px 8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; line-height: 1.6; }
+  .fine { margin-top: 12px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 1.5; color: var(--muted); }
+
+  @media (max-width: 1060px) {
+    .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 48px; }
+  }
+  @media (max-width: 900px) {
+    .idea { grid-template-columns: minmax(0, 1fr); }
+    .tipjar { grid-template-columns: minmax(0, 1fr); row-gap: 56px; }
+  }
+  @media (max-width: 620px) {
+    .features { grid-template-columns: minmax(0, 1fr); }
+    .phones {
+      display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; justify-items: initial;
+      width: 100%; padding: 0 var(--gutter) 12px; scroll-padding: 0 var(--gutter);
+    }
+    .phones .ph { flex: 0 0 auto; scroll-snap-align: start; }
+    .phones :global(.phone) { width: 260px; }
+  }
+</style>

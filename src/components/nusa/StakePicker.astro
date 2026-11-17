@@ -1,0 +1,181 @@
+---
+/**
+ * Coded "Stake IDRX" dialog (Figma frame 104:7532) with live, illustrative maths.
+ * Durations and APRs are from the design. The reward is simple interest, no compounding or fees.
+ */
+import Icon from './Icons.astro';
+
+const options = [
+  { m: 1, label: '1 Month', apr: 3.8, locked: false },
+  { m: 3, label: '3 Month', apr: 4, locked: false },
+  { m: 6, label: '6 Month', apr: 4.32, locked: false },
+  { m: 12, label: '1 Year', apr: 4.56, locked: false },
+  { m: 6, label: '6 Month', apr: 5, locked: true },
+  { m: 12, label: '1 Year', apr: 10, locked: true },
+];
+---
+<div class="sp nusa-ui" data-stake>
+  <div class="sp-head"><span>Stake IDRX</span><span class="sp-x" aria-hidden="true"><Icon name="x" size={18} /></span></div>
+
+  <div class="sp-view" data-view="form">
+    <fieldset class="sp-dur">
+      <legend>Duration</legend>
+      <p class="sp-help">You can unstake at anytime. For <span class="n-locked"><Icon name="lock" size={9} />Locked</span> types, you can't unstake until the end of the duration.</p>
+      <div class="sp-grid">
+        {options.map((o, i) => (
+          <label class="sp-opt">
+            <input type="radio" name="sp-dur" value={i} data-m={o.m} data-apr={o.apr} data-locked={o.locked ? '1' : '0'} checked={i === 0} />
+            <span class="sp-opt-top">{o.label}<span class="sp-box" aria-hidden="true"><Icon name="check" size={12} /></span></span>
+            <span class="sp-apr">APR: {o.apr}%{o.locked && <span class="n-locked"><Icon name="lock" size={9} />Locked</span>}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+
+    <div class="sp-amt">
+      <label for="sp-amount">Amount</label>
+      <p class="sp-help">Enter the amount of IDRX you want to stake</p>
+      <div class="sp-field">
+        <span class="sp-token"><span class="sp-xi" aria-hidden="true">X</span>IDRX</span>
+        <span class="sp-row"><input id="sp-amount" type="text" inputmode="decimal" autocomplete="off" value="1,000" /><span class="sp-unit">IDRX</span></span>
+      </div>
+    </div>
+
+    <dl class="sp-out" aria-live="polite">
+      <div><dt>Est. reward at the end</dt><dd><b data-reward>3.17</b> IDRX</dd></div>
+      <div><dt>Unstake</dt><dd data-unstake>Anytime</dd></div>
+    </dl>
+
+    <button type="button" class="n-btn" data-go>Stake</button>
+    <p class="sp-note">Illustrative maths: simple interest on the design's APRs, no compounding or fees.</p>
+  </div>
+
+  <div class="sp-view sp-done" data-view="done" hidden>
+    <svg class="sp-check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" /><path d="m15 27 7.5 7.5L37.5 19" /></svg>
+    <p class="sp-done-t">Stake Success</p>
+    <p class="sp-done-s">Successfully staked IDRX</p>
+    <div class="sp-done-row"><span>Staked Amount</span><b><span class="sp-xi sm" aria-hidden="true">X</span><span data-staked>1,000</span> IDRX</b></div>
+    <button type="button" class="n-btn" data-back>Stake again</button>
+  </div>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-stake]').forEach((root) => {
+    const radios = [...root.querySelectorAll<HTMLInputElement>('input[name="sp-dur"]')];
+    const amount = root.querySelector<HTMLInputElement>('#sp-amount')!;
+    const reward = root.querySelector<HTMLElement>('[data-reward]')!;
+    const unstake = root.querySelector<HTMLElement>('[data-unstake]')!;
+    const go = root.querySelector<HTMLButtonElement>('[data-go]')!;
+    const form = root.querySelector<HTMLElement>('[data-view="form"]')!;
+    const done = root.querySelector<HTMLElement>('[data-view="done"]')!;
+    const staked = root.querySelector<HTMLElement>('[data-staked]')!;
+    const back = root.querySelector<HTMLButtonElement>('[data-back]')!;
+
+    const num = () => Number(amount.value.replace(/,/g, '')) || 0;
+    const fmt = (n: number, d = 2) => n.toLocaleString('en-US', { maximumFractionDigits: d });
+    let shown = 0, raf = 0;
+    const animateTo = (to: number) => {
+      cancelAnimationFrame(raf);
+      if (reduce) { reward.textContent = fmt(to); shown = to; return; }
+      const from = shown, t0 = performance.now();
+      const step = (t: number) => {
+        const p = Math.min(1, (t - t0) / 420), e = 1 - Math.pow(1 - p, 3);
+        shown = from + (to - from) * e;
+        reward.textContent = fmt(shown);
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    };
+    const update = () => {
+      const r = radios.find((x) => x.checked)!;
+      const m = Number(r.dataset.m), apr = Number(r.dataset.apr);
+      animateTo((num() * apr * m) / 1200);
+      if (r.dataset.locked === '1') {
+        const d = new Date(); d.setMonth(d.getMonth() + m);
+        unstake.textContent = `After ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      } else unstake.textContent = 'Anytime';
+      go.disabled = num() <= 0;
+    };
+    radios.forEach((r) => r.addEventListener('change', update));
+    amount.addEventListener('input', () => {
+      const clean = amount.value.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1');
+      const [i, d] = clean.split('.');
+      const int = i ? Number(i.slice(0, 10)).toLocaleString('en-US') : '';
+      amount.value = d !== undefined ? `${int || '0'}.${d.slice(0, 4)}` : int;
+      update();
+    });
+    go.addEventListener('click', () => {
+      if (go.disabled) return;
+      go.classList.add('busy');
+      go.textContent = 'Confirm in your wallet…';
+      setTimeout(() => {
+        staked.textContent = fmt(num(), 4);
+        root.style.minHeight = `${root.offsetHeight}px`; // keep the page from jumping
+        form.hidden = true; done.hidden = false;
+        go.classList.remove('busy'); go.textContent = 'Stake';
+        back.focus();
+      }, reduce ? 0 : 900);
+    });
+    back.addEventListener('click', () => { done.hidden = true; form.hidden = false; go.focus(); });
+    update();
+  });
+</script>
+
+<style>
+  .sp { width: 100%; max-width: 520px; padding: 20px 22px 22px; border-radius: 14px; background: #181818; box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 30px 70px rgba(0, 0, 0, .3); }
+  .sp-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--n-line); font-size: 15px; font-weight: 500; }
+  .sp-x { color: var(--n-t2); }
+  .sp-view { display: flex; flex-direction: column; gap: 18px; }
+  .sp-view[hidden] { display: none; }
+  .sp-dur { margin: 0; padding: 0; border: 0; min-width: 0; }
+  .sp-dur legend, .sp-amt label { padding: 0; font-size: 15px; font-weight: 500; color: var(--n-t1); }
+  .sp-help { margin: 4px 0 12px !important; font-size: 11.5px !important; line-height: 1.6 !important; color: var(--n-t3) !important; }
+  .sp-help .n-locked { vertical-align: 1px; }
+  .sp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .sp-opt { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid var(--n-line-2); background: transparent; cursor: pointer; transition: background .2s, border-color .2s; }
+  .sp-opt:hover { border-color: rgba(255, 255, 255, .25); }
+  .sp-opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .sp-opt-top { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .sp-box { margin-left: auto; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--n-t3); color: transparent; transition: background .2s, border-color .2s, color .2s; }
+  .sp-apr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; color: var(--n-t3); }
+  .sp-opt-top { white-space: nowrap; }
+  .sp-opt:has(input:checked) { background: #2a2a2a; border-color: transparent; }
+  .sp-opt:has(input:checked) .sp-box { background: #31c48d; border-color: #31c48d; color: #fff; }
+  .sp-opt:has(input:focus-visible) { outline: 2px solid var(--n-green); outline-offset: 2px; }
+
+  .sp-field { display: flex; flex-direction: column; gap: 16px; padding: 16px 18px; border-radius: 14px; background: #101010; }
+  .sp-field:focus-within { box-shadow: inset 0 0 0 1px var(--n-green); }
+  .sp-token { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; }
+  .sp-xi { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1a4bd6; color: #fff; font: 800 15px/1 Georgia, serif; }
+  .sp-xi.sm { width: 18px; height: 18px; font-size: 11px; }
+  .sp-row { display: flex; align-items: baseline; gap: 10px; }
+  .sp-row input { flex: 1; min-width: 0; padding: 0; border: 0; background: none; color: var(--n-t1); font: 500 32px/1.1 var(--n-font); outline: none; font-variant-numeric: tabular-nums; }
+  .sp-unit { font-size: 30px; color: var(--n-t4); }
+
+  .sp-out { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sp-out div { padding: 12px 14px; border-radius: 8px; background: #202020; }
+  .sp-out dt { font-size: 11.5px; color: var(--n-t3); margin-bottom: 4px; }
+  .sp-out dd { margin: 0; font-size: 15px; color: var(--n-t1); font-variant-numeric: tabular-nums; }
+  .sp-out b { color: var(--n-green); font-weight: 600; }
+  .n-btn.busy { opacity: .75; pointer-events: none; }
+  .sp-note { margin: -6px 0 0 !important; font-size: 11px !important; color: var(--n-t4) !important; text-align: center; }
+
+  .sp { display: flex; flex-direction: column; }
+  .sp-done { flex: 1; justify-content: center; align-items: center; text-align: center; padding: 12px 0 2px; gap: 10px; }
+  .sp-check { width: 76px; height: 76px; margin-bottom: 8px; }
+  .sp-check circle { fill: #31c48d; transform-origin: center; animation: sp-pop .45s var(--ease) both; }
+  .sp-check path { fill: none; stroke: #fff; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: sp-draw .45s .25s var(--ease) forwards; }
+  @keyframes sp-pop { from { transform: scale(.4); opacity: 0; } }
+  @keyframes sp-draw { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .sp-check circle { animation: none; } .sp-check path { animation: none; stroke-dashoffset: 0; } }
+  .sp-done-t { font-size: 18px !important; font-weight: 500; color: var(--n-t1) !important; }
+  .sp-done-s { font-size: 13px !important; color: var(--n-t3) !important; }
+  .sp-done-row { align-self: stretch; display: flex; justify-content: space-between; align-items: center; margin: 14px 0 6px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--n-line-2); font-size: 12.5px; color: var(--n-t2); }
+  .sp-done-row b { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--n-t1); }
+
+  @media (max-width: 480px) {
+    .sp { padding: 16px; }
+    .sp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>

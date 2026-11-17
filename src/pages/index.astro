@@ -1,130 +1,311 @@
 ---
+/**
+ * Home, in the 2b "playful Mac" style (space-kit design/source/home-desktop.dc.html).
+ * The hero keeps the live 3D house from milestones 2–4: poster first, 3D after load, step in place.
+ */
 import { Picture } from 'astro:assets';
 import { getCollection } from 'astro:content';
-import Base from '../layouts/Base.astro';
-import Cover from '../components/Cover.astro';
-import { site, lab, about, houseHref } from '../data/site';
+import Space from '../layouts/Space.astro';
+import PeekWin, { type WinData } from '../components/home/PeekWin.astro';
+import NowPlaying from '../components/home/NowPlaying.astro';
+import { site, lab, houseHref } from '../data/site';
 import { getHouseContent, inlineJson } from '../data/houseContent';
 // The hero rests in the arrival state (main room lit); the other rooms light up when someone looks.
 import houseDim from '../assets/house/poster-dim.png';
 
-const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
-const featured = work.slice(0, 3);
-const publishedCount = work.filter((w) => w.data.published).length;
-const pad = (n: number) => String(n).padStart(2, '0');
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order).slice(0, 3);
+const [lead, ...rest] = work;
 const houseContent = inlineJson(await getHouseContent());
+const metaLine = (w: (typeof work)[number]) => [w.data.company, w.data.year, w.data.role].join(' · ');
+
+const wins: Record<'proto' | 'pet' | 'voice', WinData> = {
+  proto: { kind: 'proto', file: 'Prototype Hub', title: 'Prototype Hub', desc: lab[0].body },
+  pet: { kind: 'pet', file: 'Pet game', title: 'A cozy pet game', desc: lab[1].body },
+  voice: { kind: 'voice', file: 'Voice AI', title: 'Learning voice AI', desc: lab[2].body },
+};
+const labItems = [
+  { win: wins.proto, line: lab[0].status },
+  { win: wins.pet, line: 'Built on weekends. Not launched yet.' },
+  { win: wins.voice, line: 'Conversational AI, bit by bit.' },
+];
+const tags = [
+  ['Product', '#0a6cff'],
+  ['Research', '#34c759'],
+  ['Prototypes', '#ff9f0a'],
+  ['Games', '#ff375f'],
+  ['Voice AI', '#af52de'],
+];
+const info = [
+  {
+    id: 'general', title: 'General', rows: [
+      ['Kind', 'Senior product designer'],
+      ['At', 'Gokomodo, since 2021'],
+      ['Studied', 'Computer Science, Universitas Indonesia'],
+      ['Based in', site.basedIn],
+    ],
+  },
+  {
+    id: 'more', title: 'More info', rows: [
+      ['Known for', "Leading research and design of GokoMart's farmer app, store portal and backoffice, for farmers in Kalimantan and Sumatra"],
+      ['Building', 'Prototype Hub, and a cozy pet game'],
+      ['Learning', 'Conversational and voice AI, bit by bit'],
+    ],
+  },
+];
+const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
 ---
-<Base>
+<Space>
   <script type="application/json" id="house-content" set:html={houseContent} />
-  <!-- Hero: the house is the point. Nothing else competes. -->
-  <div class="hero-wrap">
-    <section id="top" class="container hero">
+
+  <!-- ============ Menu bar ============ -->
+  <header slot="header" class="mb">
+    <nav class="mb-nav" aria-label="Main">
+      <a class="mb-name" href="#top">Abraham</a>
+      <a href="#work">Work</a>
+      <a href="#lab">Lab</a>
+      <a href="#about">About</a>
+    </nav>
+    <a class="mb-logo" href="#top" aria-label="Back to the top">
+      <svg width="30" height="26" viewBox="0 0 30 26" aria-hidden="true"><path d="M3 12 L15 2 L27 12 V24 H3 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><g class="mb-eyes"><rect x="10" y="13" width="3" height="5" rx="1.5" fill="currentColor"></rect><rect x="17" y="13" width="3" height="5" rx="1.5" fill="currentColor"></rect></g></svg>
+      <span class="mb-logo-name">Abraham</span>
+    </a>
+    <div class="mb-end">
+      <div class="np">
+        <button type="button" class="np-btn" aria-label="Now playing" aria-expanded="false" aria-controls="np-pop" data-pop-btn>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 10 V8 a6 6 0 0 1 12 0 V10"></path><rect x="1.5" y="9.5" width="3" height="5" rx="1"></rect><rect x="11.5" y="9.5" width="3" height="5" rx="1"></rect></svg>
+        </button>
+        <div id="np-pop" class="np-pop" data-pop><NowPlaying playlist /></div>
+      </div>
+      <time class="mb-time" data-clock>--:--</time>
+      <a class="mb-hi" href="#say-hi">Say hi</a>
+      <button type="button" class="mb-menu" aria-label="Menu" aria-expanded="false" aria-controls="cc-menu" data-menu-btn>
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="2" width="7" height="7" rx="2" fill="currentColor"></rect><rect x="11" y="2" width="7" height="7" rx="2" fill="currentColor" opacity=".55"></rect><rect x="2" y="11" width="7" height="7" rx="2" fill="currentColor" opacity=".55"></rect><rect x="11" y="11" width="7" height="7" rx="2" fill="currentColor"></rect></svg>
+      </button>
+    </div>
+    <!-- Phones: a Control Center–style menu -->
+    <div id="cc-menu" class="ccm" data-menu hidden>
+      <a class="ccm-tile" href="#work"><span class="ccm-ic" style="background:linear-gradient(#8fd0ff,#3b9cf0)"><svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9 H11 L13 11 H25 V22 H3 Z"></path></svg></span>Work</a>
+      <a class="ccm-tile" href="#lab"><span class="ccm-ic" style="background:linear-gradient(#b4f0a8,#33b35a)"><svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6 H20 M10 6 V13 L5 22 H23 L18 13 V6"></path></svg></span>Lab</a>
+      <a class="ccm-tile" href="#about"><span class="ccm-ic" style="background:linear-gradient(#ffd38a,#f59a1b)"><svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="14" cy="10" r="4"></circle><path d="M6 23 c1-5 4-7 8-7 s7 2 8 7"></path></svg></span>About</a>
+      <a class="ccm-tile" href="#say-hi"><span class="ccm-ic" style="background:linear-gradient(#ffffff,#d9d9df)"><svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#3a3a40" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="20" height="14" rx="2"></rect><path d="M4 8 L14 15 L24 8"></path></svg></span>Say hi</a>
+      <div class="ccm-wide"><NowPlaying /></div>
+      <div class="ccm-wide ccm-status"><span class="ccm-dot" aria-hidden="true"></span>{site.status}</div>
+    </div>
+  </header>
+
+  <!-- ============ Hero ============ -->
+  <section id="top" class="hero">
+    <div class="hero-in">
       <div class="hero-copy">
-        <span class="role muted">{site.role}</span>
-        <h1 class="h1">Welcome to my space.</h1>
-        <p class="hero-text">
-          I design practical tools for farmers and field teams, and prototype them in code. Have a look
-          around the house, or take the short tour below.
-        </p>
-        <div class="actions">
-          <a class="btn" href={houseHref}>Step inside</a>
-          <a class="tour quiet" href="#studio">Take the short tour ↓</a>
+        <h1 class="hero-title">Welcome to my space.</h1>
+        <p class="hero-text">I'm Abraham, a senior product designer. Everything I make and love lives here: product work, side projects, and the things I do for fun.</p>
+        <div class="hero-actions">
+          <a class="aqua" href={houseHref}>Step in</a>
+          <a class="ghost" href="#work">Just the highlights</a>
+          <a class="hero-skim" href="#work">Just the highlights ↓</a>
         </div>
       </div>
-      <a class="house" href={houseHref} aria-label="Step inside the house">
-        <Picture
-          src={houseDim}
-          formats={['avif', 'webp']}
-          widths={[720, 1080, 1440, 1800, 2336]}
-          sizes="(max-width: 900px) 165vw, 1120px"
-          alt="My house, cut into the page: the main room lit, with a turntable and a sofa; the studio behind it and the lab to the right still dark, with light spilling from their doorways"
-          loading="eager"
-          fetchpriority="high"
-          decoding="async"
-        />
-        <div class="house-live" data-house-live aria-hidden="true"></div>
-      </a>
-    </section>
-  </div>
 
-  <!-- 01 · The studio -->
-  <section id="studio" class="container studio">
-    <div class="section-head">
-      <div class="section-title">
-        <span class="label">01 · The studio</span>
-        <h2 class="h2">First stop is the studio, where the work lives. Here are three projects I'd put on first.</h2>
+      <div class="stage" data-stage>
+        <img class="grid" src="/images/iso-grid.webp" alt="" width="2880" height="1720" decoding="async" />
+        <a class="house fx" href={houseHref} aria-label="Step into my space">
+          <Picture
+            src={houseDim}
+            formats={['avif', 'webp']}
+            widths={[720, 1080, 1440, 1800, 2336]}
+            sizes="(max-width: 900px) 120vw, 900px"
+            alt="My house, cut into the page: the main room lit, with a turntable and a sofa; the studio behind it and the lab to the right still dark, with light spilling from their doorways"
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+          <div class="house-live" data-house-live aria-hidden="true"></div>
+        </a>
+
+        <div class="hero-wins" data-panel-host>
+          <PeekWin win={wins.pet} h={110} class="fx hw hw-pet" controls="win-modal" />
+          <PeekWin win={wins.proto} h={112} class="fx hw hw-proto" controls="win-modal" />
+          <div class="panel" data-panel hidden></div>
+        </div>
+
+        <button type="button" class="stk fx stk-key" data-drag aria-label="House key, decoration. Drag it, or focus it and use the arrow keys.">
+          <span class="keyobj"><svg width="168" height="78" viewBox="0 0 168 78" aria-hidden="true"><g transform="rotate(-8 84 39)"><rect x="4" y="16" width="78" height="44" rx="6" fill="#f4e7c3" stroke="rgba(0,0,0,.18)"/><circle cx="16" cy="38" r="4" fill="#f3f3f5" stroke="rgba(0,0,0,.25)"/><text x="28" y="34" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing=".8" fill="#7a6a3c">KEY NO. 01</text><text x="28" y="49" font-family="Inter, sans-serif" font-weight="600" font-size="12" letter-spacing="-.2" fill="#151517">My space</text><path d="M82 38 C 90 38, 92 30, 100 30" fill="none" stroke="#8a8a90" stroke-width="1.5"/><circle cx="106" cy="30" r="7" fill="none" stroke="#9a9aa2" stroke-width="2.2"/><circle cx="122" cy="34" r="11" fill="#e1aa3f" stroke="#b9852a" stroke-width="1.2"/><circle cx="122" cy="34" r="4" fill="#f3f3f5" stroke="#b9852a" stroke-width="1"/><path d="M131 38 L162 50 L160 55 L156 53.5 L154.5 58 L150 56.3 L151.5 52 L147 50.3 L145.5 54.5 L141 52.8 L143 46 L129 42 Z" fill="#e1aa3f" stroke="#b9852a" stroke-width="1.2" stroke-linejoin="round"/></g></svg></span>
+        </button>
+        <button type="button" class="stk fx stk-pet" data-drag aria-label="The pet from my game, decoration. Drag it, or focus it and use the arrow keys.">
+          <span class="petobj">
+            <span class="petheart" aria-hidden="true"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M2 0h3v1h2V0h3v1h1v1h1v3h-1v1h-1v1H9v1H8v1H7v1H5V9H4V8H3V7H2V6H1V5H0V2h1V1h1z" fill="#ff4f8b"/></svg></span>
+            <svg class="petsvg" width="60" height="50" viewBox="0 0 12 10" shape-rendering="crispEdges" aria-hidden="true">
+              <path fill="#ffad5c" d="M2 0h1v1H2zM9 0h1v1H9zM1 1h2v1H1zM9 1h2v1H9zM1 2h10v1H1zM0 3h12v5H0zM1 8h10v1H1zM2 9h2v1H2zM8 9h2v1H8z"/>
+              <path fill="#ff8fa8" d="M1 6h1v1H1zM10 6h1v1h-1z"/>
+              <path fill="#7a3b12" d="M5 6h2v1H5z"/>
+              <path class="eye" fill="#151517" d="M3 4h1v2H3z"/>
+              <path class="eye" fill="#151517" d="M8 4h1v2H8z"/>
+            </svg>
+            <span class="petshadow"></span>
+          </span>
+        </button>
       </div>
-      {publishedCount > 3 && <a class="shelf" href="/work">The whole shelf →</a>}
-    </div>
-    <div class="cards">
-      {featured.map((w, i) => {
-        const inner = (
-          <>
-            <Cover variant={w.data.cover} label={`Studio ${pad(i + 1)}`} />
-            <div class="card-text">
-              <span class="card-title">{w.data.summary}</span>
-              <span class="card-meta muted">{w.data.company} · {w.data.role} · {w.data.year}</span>
-            </div>
-          </>
-        );
-        return w.data.published ? (
-          <a class="card quiet" href={`/work/${w.id}`}>{inner}</a>
-        ) : (
-          <div class="card is-placeholder">{inner}</div>
-        );
-      })}
     </div>
   </section>
 
-  <!-- 02 · The lab -->
-  <section id="lab" class="lab">
-    <div class="container split">
-      <div class="split-title">
-        <span class="label lab-label">02 · The lab</span>
-        <h2 class="h2">Next door is the lab, full of things I'm still figuring out.</h2>
+  <!-- ============ The work ============ -->
+  <section id="work" class="sec home-sec">
+    <span id="studio" class="anchor" aria-hidden="true"></span>
+    <span class="dotfade"></span>
+    <div class="head z">
+      <span class="pillk">The work</span>
+      <h2 class="big-h2">Things I've shipped</h2>
+      <p class="head-p">Product work from Gokomodo and beyond. Each one opens into a short case study.</p>
+    </div>
+    <div class="wide z grp" data-reveal>
+      {lead && (() => {
+        const Tag = lead.data.published ? 'a' : 'div';
+        return (
+          <Tag class:list={['wcard', 'wcard-lead', { 'is-soon': !lead.data.published }]} href={lead.data.published ? `/work/${lead.id}` : undefined}>
+            <div class="bar wbar"><span class="lights" aria-hidden="true"><span></span><span></span><span></span></span><span class="fname">{lead.data.short ?? lead.data.company}</span></div>
+            {lead.data.thumb ? (
+              <div class="wthumb wthumb-lead"><img src={lead.data.thumb} alt="" loading="lazy" decoding="async" style={`object-position:${lead.data.thumbPosition}`} /></div>
+            ) : (
+              <div class="wthumb wthumb-lead mock" aria-hidden="true">
+                <div class="mphone"><span class="mphone-top"></span><span class="mlist">
+                  {[...mockRows, ...mockRows, ...mockRows, ...mockRows].map((c) => (
+                    <span class="mrow"><span class="mic" style={`background:${c}`}></span><span class="mlines"><i></i><i></i></span><span class="mrp">Rp</span></span>
+                  ))}
+                </span></div>
+              </div>
+            )}
+            <div class="wtext">
+              <div class="wtext-main">
+                <span class="wmeta">{metaLine(lead)}</span>
+                <span class="wtitle">{lead.data.title}</span>
+                <span class="wline">{lead.data.summary}</span>
+              </div>
+              {lead.data.published && <span class="more">Read →</span>}
+            </div>
+          </Tag>
+        );
+      })()}
+      <div class="wside">
+        {rest.map((w) => {
+          const Tag = w.data.published ? 'a' : 'div';
+          return (
+            <Tag class:list={['wcard', { 'is-soon': !w.data.published }]} href={w.data.published ? `/work/${w.id}` : undefined}>
+              <div class="bar wbar"><span class="lights" aria-hidden="true"><span></span><span></span><span></span></span><span class="fname">{w.data.short ?? w.data.company}</span></div>
+              <div class="wthumb">
+                {w.data.thumb ? <img src={w.data.thumb} alt="" loading="lazy" decoding="async" style={`object-position:${w.data.thumbPosition}`} /> : <span class="wthumb-empty">Coming soon</span>}
+              </div>
+              <div class="wtext wtext-sm">
+                <div class="wtext-main">
+                  <span class="wmeta">{metaLine(w)}</span>
+                  <span class="wtitle">{w.data.title}</span>
+                  <span class="wline">{w.data.summary}</span>
+                </div>
+                {w.data.published && <span class="more">Read →</span>}
+              </div>
+            </Tag>
+          );
+        })}
       </div>
-      <ul class="lab-list" role="list">
-        {lab.map((item) => (
-          <li class="lab-item">
-            <span class={`mark mark-${item.mark}`} aria-hidden="true"></span>
-            <div class="lab-text">
-              <h3 class="lab-title">{item.title}</h3>
-              <p class="lab-body">{item.body}</p>
-            </div>
-            <span class="lab-status">{item.status}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   </section>
 
-  <!-- 03 · The main room -->
-  <section id="about" class="container split about">
-    <div class="split-title">
-      <span class="label">03 · The main room</span>
-      <h2 class="h2">And this is where I live, off the clock.</h2>
+  <!-- ============ The lab ============ -->
+  <section id="lab" class="sec home-sec lab" data-anim>
+    <span class="dotfade"></span>
+    <div class="head z">
+      <span class="pillk">The lab</span>
+      <h2 class="big-h2">Things I'm figuring out</h2>
+      <p class="head-p">Side projects, experiments, and a game that isn't launched yet. Hover to peek, click to open.</p>
     </div>
-    <div class="about-body">
-      <p class="lead">{about.body}</p>
-      <ul class="rows facts" role="list">
-        {about.facts.map((f) => (
-          <li><span>{f.what}</span><span class="muted">{f.when}</span></li>
+    <ul class="lab-row z" role="list">
+      {labItems.map((it) => (
+        <li class="lab-item" data-panel-host data-reveal>
+          <PeekWin win={it.win} h={190} class="fx lw" controls="win-modal" />
+          <div class="lab-cap"><span class="lab-t">{it.win.title}</span><span class="lab-l">{it.line}</span></div>
+          <div class="panel" data-panel hidden></div>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <!-- ============ About ============ -->
+  <section id="about" class="sec home-sec about">
+    <span class="dotfade"></span>
+    <div class="head z"><span class="pillk">About</span></div>
+    <div class="about-in z" data-reveal>
+      <article class="info" aria-label={`${site.name} info`}>
+        <div class="bar ibar"><span class="lights" aria-hidden="true"><span></span><span></span><span></span></span><span class="fname">{site.name} Info</span></div>
+        <div class="ihead">
+          <img class="iphoto" src="/images/about/avatar.svg" alt="My character from the house, smiling" width="240" height="240" loading="lazy" decoding="async" />
+          <span class="iname-wrap"><span class="iname">{site.name}</span><span class="irole">Senior product designer</span><span class="imod">Modified: <time data-mactime>today</time></span></span>
+        </div>
+        <ul class="itags" role="list" aria-label="Tags">
+          {tags.map(([t, c]) => <li class="itag"><i style={`background:${c}`}></i>{t}</li>)}
+        </ul>
+        {info.map((s) => (
+          <div class="isec">
+            <button type="button" class="ihd" aria-expanded="true" aria-controls={`info-${s.id}`} data-disclose>
+              <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2 L7 5 L3 8" fill="none" stroke="#6e6e73" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>{s.title}
+            </button>
+            <div class="ibody" id={`info-${s.id}`}>
+              <dl class="igrid">{s.rows.map(([k, v]) => (<><dt>{k}</dt><dd>{v}</dd></>))}</dl>
+            </div>
+          </div>
         ))}
-      </ul>
+        <div class="isec">
+          <button type="button" class="ihd" aria-expanded="true" aria-controls="info-comments" data-disclose>
+            <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 2 L7 5 L3 8" fill="none" stroke="#6e6e73" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Comments
+          </button>
+          <div class="ibody" id="info-comments"><p class="icomment">Everything I make and love lives here. Make yourself at home.</p></div>
+        </div>
+      </article>
+      <NowPlaying heading playlist class="about-cc" />
     </div>
   </section>
-</Base>
+
+  <!-- ============ Say hi ============ -->
+  <footer id="say-hi" class="sec home-sec sayhi">
+    <span class="dotfade"></span>
+    <div class="head z">
+      <span class="pillk">Say hi</span>
+      <h2 class="huge-h2">Thanks for stopping by</h2>
+      <p class="head-p">Hiring, collaborating, or just want to talk about records? The door's open.</p>
+      <div class="sayhi-btns"><a class="aqua" href={site.emailHref}>Say hi</a><a class="ghost" href={site.linkedin}>LinkedIn</a></div>
+    </div>
+    <nav class="dock z" aria-label="Dock">
+      <a class="ic" href="#work" style="background:linear-gradient(#8fd0ff,#3b9cf0)"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9 H11 L13 11 H25 V22 H3 Z"></path></svg><span class="tip">Work</span></a>
+      <a class="ic" href="#lab" style="background:linear-gradient(#b4f0a8,#33b35a)"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6 H20 M10 6 V13 L5 22 H23 L18 13 V6"></path></svg><span class="tip">Lab</span></a>
+      <a class="ic" href={houseHref} style="background:linear-gradient(#ffd38a,#f59a1b)"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13 L14 5 L23 13 V23 H5 Z"></path><path d="M11 23 V17 H17 V23"></path></svg><span class="tip">My space</span></a>
+      <a class="ic" href="#about" style="background:linear-gradient(#ff9fb6,#f0436b)"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="3"></circle><circle cx="20" cy="18" r="3"></circle><path d="M12 20 V7 L23 5 V18"></path></svg><span class="tip">Music</span></a>
+      <a class="ic" href={site.emailHref} style="background:linear-gradient(#ffffff,#d9d9df)"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#3a3a40" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="20" height="14" rx="2"></rect><path d="M4 8 L14 15 L24 8"></path></svg><span class="tip">Say hi</span></a>
+    </nav>
+    <p class="copy z">© 2026 {site.name} · {site.email}</p>
+  </footer>
+
+  <!-- ============ Window modal (desktop) ============ -->
+  <dialog id="win-modal" class="wm" aria-labelledby="wm-title">
+    <div class="bar wm-bar">
+      <span class="lights"><button type="button" class="wm-close" aria-label="Close window" data-close></button><span></span><span></span></span>
+      <span class="fname" data-wm-file></span>
+    </div>
+    <div class="wm-media" data-wm-media></div>
+    <div class="wm-foot">
+      <div class="wm-text"><h3 id="wm-title" data-wm-title></h3><p data-wm-desc></p></div>
+      <div class="wm-actions"><a class="aqua wm-cta" data-wm-cta hidden></a><button type="button" class="ghost wm-btn" data-close>Close</button></div>
+    </div>
+  </dialog>
+
+  <div class="step-pill" aria-hidden="true">Step in →</div>
+</Space>
 
 <script>
   /**
-   * The live house in the hero, and stepping inside without a page load.
+   * The live house in the hero, and stepping inside without a page load (unchanged from milestone 4,
+   * except the cursor, which is now the kit's glass "Step in →" pill).
    *
    * Auto-load only when it's cheap and wanted: after the page is idle AND the hero is on screen.
    * Never on Save-Data, slow connections, low-memory devices, reduced motion, or ?mode=focus;
    * there it waits for intent (hover/focus/touch).
-   *
-   * Any link to /house on this page enters the house in place: the hero's canvas zooms up into
-   * the house view (src/house/enter.ts). Modified clicks and browsers without WebGL just navigate.
    */
   import type { HouseEngine } from '../house/engine';
   import type { HouseContent } from '../house/content';
@@ -164,7 +345,6 @@ const houseContent = inlineJson(await getHouseContent());
         })
       : Promise.resolve();
     const loadEnter = () => preamble.then(() => import('../house/enter'));
-
     const warm = () => {
       start();
       loadEnter();
@@ -189,28 +369,19 @@ const houseContent = inlineJson(await getHouseContent());
       );
     }
 
-    // ---- custom cursor over the house: a red "enter" disc. One switch to remove it. ----
-    const CUSTOM_CURSOR = true;
-    if (CUSTOM_CURSOR && matchMedia('(hover: hover) and (pointer: fine)').matches) {
-      const cur = document.createElement('div');
-      cur.className = 'house-cursor';
-      cur.setAttribute('aria-hidden', 'true');
-      cur.innerHTML =
-        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>';
-      document.body.append(cur);
-      link.classList.add('has-house-cursor');
-      const move = (e: PointerEvent) => (cur.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`);
+    // ---- "Step in →" glass pill follows the cursor over the house ----
+    const pill = document.querySelector<HTMLElement>('.step-pill');
+    if (pill && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      link.classList.add('has-pill');
+      const move = (e: PointerEvent) => (pill.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0) translate(-50%, -50%)`);
       link.addEventListener('pointerenter', (e) => {
         if (e.pointerType !== 'mouse') return;
         move(e);
-        cur.classList.add('is-on');
+        pill.classList.add('is-on');
       });
       link.addEventListener('pointermove', move);
-      link.addEventListener('pointerleave', () => cur.classList.remove('is-on', 'is-down'));
-      link.addEventListener('pointerdown', () => cur.classList.add('is-down'));
-      link.addEventListener('pointerup', () => cur.classList.remove('is-down'));
-      // gone the moment the house opens
-      new MutationObserver(() => document.documentElement.classList.contains('in-house') && cur.classList.remove('is-on', 'is-down')).observe(
+      link.addEventListener('pointerleave', () => pill.classList.remove('is-on'));
+      new MutationObserver(() => document.documentElement.classList.contains('in-house') && pill.classList.remove('is-on')).observe(
         document.documentElement,
         { attributes: true, attributeFilter: ['class'] },
       );
@@ -228,7 +399,6 @@ const houseContent = inlineJson(await getHouseContent());
     const content = () => JSON.parse(document.getElementById('house-content')!.textContent!) as HouseContent;
     const isHouseLink = (t: EventTarget | null) => (t as Element | null)?.closest?.('a[href="/house"]');
 
-    // Get the UI code moving as soon as someone looks like they'll go in.
     for (const ev of ['pointerover', 'focusin'] as const)
       document.addEventListener(ev, (e) => isHouseLink(e.target) && webgl && warm(), { passive: true });
 
@@ -255,181 +425,442 @@ const houseContent = inlineJson(await getHouseContent());
   }
 </script>
 
+<script>
+  /** Menu bar, windows, drag, Get Info, and pausing animation off screen. */
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const narrow = matchMedia('(max-width: 700px)');
+
+  // ---- clock + "Modified" date (Asia/Jakarta) ----
+  const clock = document.querySelector<HTMLElement>('[data-clock]');
+  const mac = document.querySelector<HTMLElement>('[data-mactime]');
+  const tick = () => {
+    try {
+      const tz = { timeZone: 'Asia/Jakarta' } as const;
+      if (clock) clock.textContent = new Date().toLocaleTimeString('en-GB', { ...tz, hour: '2-digit', minute: '2-digit' });
+      if (mac) mac.textContent = new Date().toLocaleString('en-GB', { ...tz, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(/,/g, '');
+    } catch {}
+  };
+  tick();
+  setInterval(tick, 20000);
+
+  // ---- popovers: now playing (desktop) and the Control Center menu (phones) ----
+  const pairs: Array<[HTMLElement | null, HTMLElement | null]> = [
+    [document.querySelector('[data-pop-btn]'), document.querySelector('[data-pop]')],
+    [document.querySelector('[data-menu-btn]'), document.querySelector('[data-menu]')],
+  ];
+  const closeAll = (except?: HTMLElement | null) =>
+    pairs.forEach(([b, p]) => {
+      if (!b || !p || b === except) return;
+      b.setAttribute('aria-expanded', 'false');
+      p.classList.remove('is-open');
+      if (p.hasAttribute('data-menu')) p.hidden = true;
+    });
+  pairs.forEach(([btn, pop]) => {
+    if (!btn || !pop) return;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      closeAll(btn);
+      btn.setAttribute('aria-expanded', String(open));
+      pop.classList.toggle('is-open', open);
+      if (pop.hasAttribute('data-menu')) pop.hidden = !open;
+    });
+    pop.addEventListener('click', (e) => {
+      if ((e.target as Element).closest('a')) closeAll();
+      else e.stopPropagation();
+    });
+  });
+  document.addEventListener('click', () => closeAll());
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const open = pairs.find(([b]) => b?.getAttribute('aria-expanded') === 'true');
+    if (open) {
+      closeAll();
+      open[0]?.focus();
+    }
+  });
+
+  // ---- record player pause/play (visual only) ----
+  document.querySelectorAll<HTMLButtonElement>('[data-vinyl-toggle]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const cc = b.closest('.cc');
+      const stopped = cc?.classList.toggle('is-stopped');
+      b.setAttribute('aria-label', stopped ? 'Play' : 'Pause');
+      b.innerHTML = stopped
+        ? '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5 L13 8 L4 13.5 Z" fill="#1d1d1f"></path></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3 V13 M11 3 V13" stroke="#1d1d1f" stroke-width="2.4" stroke-linecap="round"></path></svg>';
+    }),
+  );
+
+  // ---- windows: modal on desktop, inline panel on phones ----
+  type Win = { kind: string; file: string; title: string; desc: string; cta?: string; href?: string };
+  const modal = document.getElementById('win-modal') as HTMLDialogElement | null;
+  let opener: HTMLElement | null = null;
+  const fill = (root: ParentNode, w: Win, media: Element | null) => {
+    const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s);
+    const f = q('[data-wm-file]'); if (f) f.textContent = w.file;
+    const t = q('[data-wm-title]'); if (t) t.textContent = w.title;
+    const d = q('[data-wm-desc]'); if (d) d.textContent = w.desc;
+    const c = q<HTMLAnchorElement>('[data-wm-cta]');
+    if (c) { c.hidden = !w.href; if (w.href) { c.href = w.href; c.textContent = w.cta ?? 'Open'; } }
+    const m = q('[data-wm-media]');
+    if (m) m.replaceChildren(...(media ? [media.cloneNode(true)] : []));
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-win]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const w = JSON.parse(btn.dataset.win!) as Win;
+      const media = btn.querySelector('.peek');
+      const hostEl = btn.closest<HTMLElement>('[data-panel-host]');
+      const panel = hostEl?.querySelector<HTMLElement>('[data-panel]');
+      if (narrow.matches && panel) {
+        const same = panel.dataset.for === w.title && !panel.hidden;
+        hostEl!.querySelectorAll('[data-win]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+        if (same) { panel.hidden = true; return; }
+        panel.dataset.for = w.title;
+        panel.innerHTML = `<p class="panel-t" data-wm-title></p><p class="panel-d" data-wm-desc></p><a class="aqua panel-cta" data-wm-cta hidden></a>`;
+        fill(panel, w, null);
+        panel.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        if (!panel.id) panel.id = `panel-${Math.random().toString(36).slice(2, 8)}`;
+        btn.setAttribute('aria-controls', panel.id);
+        return;
+      }
+      if (!modal) return;
+      opener = btn;
+      fill(modal, w, media);
+      modal.showModal();
+    }),
+  );
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || (e.target as Element).closest('[data-close]')) modal.close();
+    });
+    modal.addEventListener('close', () => opener?.focus());
+  }
+
+  // ---- draggable key and pet: pointer, or focus + arrow keys (8px; Shift = 32px) ----
+  document.querySelectorAll<HTMLElement>('[data-drag]').forEach((el) => {
+    let x = 0, y = 0;
+    const apply = () => el.style.setProperty('--dx', `${x}px`), applyY = () => el.style.setProperty('--dy', `${y}px`);
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('is-drag');
+      const sx = e.clientX - x, sy = e.clientY - y;
+      const move = (ev: PointerEvent) => { x = ev.clientX - sx; y = ev.clientY - sy; apply(); applyY(); };
+      const up = () => { el.classList.remove('is-drag'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+    });
+    el.addEventListener('keydown', (e) => {
+      const s = e.shiftKey ? 32 : 8;
+      const d: Record<string, [number, number]> = { ArrowLeft: [-s, 0], ArrowRight: [s, 0], ArrowUp: [0, -s], ArrowDown: [0, s] };
+      if (!d[e.key]) return;
+      e.preventDefault();
+      x += d[e.key][0]; y += d[e.key][1]; apply(); applyY();
+    });
+  });
+
+  // ---- Get Info disclosures ----
+  document.querySelectorAll<HTMLButtonElement>('[data-disclose]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const open = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', String(open));
+      const body = document.getElementById(b.getAttribute('aria-controls')!);
+      if (body) body.hidden = !open;
+    }),
+  );
+
+  // ---- pause looping animations while their section is off screen ----
+  if (!reduce) {
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('is-paused', !e.isIntersecting)));
+    document.querySelectorAll('.hero, .lab, .about, .mb').forEach((s) => io.observe(s));
+  }
+
+  // ---- reveal on scroll ----
+  const rio = new IntersectionObserver(
+    (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); rio.unobserve(e.target); } }),
+    { rootMargin: '0px 0px -8% 0px' },
+  );
+  document.querySelectorAll('[data-reveal]').forEach((el) => rio.observe(el));
+</script>
+
 <style>
-  /* ---------- Hero ---------- */
-  .hero-wrap { overflow-x: clip; }
-  .hero {
-    display: grid;
-    grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
-    align-items: center;
-    padding-top: clamp(40px, 6vw, 72px);
-    padding-bottom: 40px;
+  /* ============ Menu bar ============ */
+  .mb { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 22px; font-size: 14px; background: color-mix(in srgb, var(--page) 80%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px); box-shadow: 0 .5px 0 rgba(0, 0, 0, .08); }
+  .mb-nav { display: flex; align-items: center; gap: 20px; }
+  .mb-nav a { color: var(--muted); text-decoration: none; }
+  .mb-nav a:hover { color: var(--ink); }
+  .mb-nav .mb-name { color: var(--ink); font-weight: 600; }
+  .mb-logo { position: absolute; left: 50%; top: 7px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; }
+  .mb-logo-name { display: none; font-weight: 600; }
+  .mb-eyes { transform-box: fill-box; transform-origin: center; animation: eyes 4s infinite; }
+  .mb-end { display: flex; align-items: center; gap: 14px; }
+  .mb-time { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .mb-hi { font-weight: 500; color: var(--blue); text-decoration: none; }
+  .mb-hi:hover { color: var(--blue-ink); }
+  .np { position: relative; }
+  .np-btn, .mb-menu { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 0; border-radius: 6px; background: none; color: var(--ink); cursor: pointer; padding: 0; }
+  .np-btn:hover, .np-btn[aria-expanded='true'] { background: rgba(0, 0, 0, .07); }
+  .np-pop { position: absolute; top: 36px; right: -70px; opacity: 0; transform: translateY(-4px); pointer-events: none; transition: opacity .18s, transform .18s; z-index: 70; }
+  .np-pop.is-open { opacity: 1; transform: none; pointer-events: auto; }
+  @media (hover: hover) { .np:hover .np-pop { opacity: 1; transform: none; pointer-events: auto; } }
+  .mb-menu { display: none; }
+  .ccm { position: absolute; top: 54px; right: 12px; z-index: 80; width: min(330px, calc(100vw - 24px)); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-radius: 22px; background: rgba(236, 236, 240, .86); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .18), 0 20px 50px rgba(0, 0, 0, .22); animation: pop .22s var(--ease); }
+  .ccm[hidden] { display: none; }
+  .ccm-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-height: 84px; padding: 12px; border-radius: 16px; background: rgba(255, 255, 255, .72); color: var(--ink); font-weight: 600; font-size: 15px; text-decoration: none; }
+  .ccm-ic { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4); }
+  .ccm-wide { grid-column: 1 / -1; }
+  .ccm-wide :global(.cc) { width: 100%; box-shadow: none; background: rgba(255, 255, 255, .72); }
+  .ccm-status { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 16px; background: rgba(255, 255, 255, .72); font-size: 14px; color: var(--ink-2); }
+  .ccm-dot { width: 9px; height: 9px; flex: none; border-radius: 50%; background: #34c759; box-shadow: 0 0 0 3px rgba(52, 199, 89, .2); }
+  @media (max-width: 700px) {
+    .mb { height: 52px; padding: 0 14px; }
+    .mb-nav, .mb-time, .np { display: none; }
+    .mb-logo { position: static; transform: none; }
+    .mb-logo-name { display: inline; }
+    .mb-menu { display: flex; width: 44px; height: 44px; }
+    .mb-hi { min-height: 44px; display: inline-flex; align-items: center; }
   }
-  .hero-copy {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-  }
-  .role { font-size: 14px; }
-  .hero-text { max-width: 380px; color: var(--ink-soft); }
-  .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; padding-top: 8px; }
-  .tour { font-weight: 600; font-size: 16px; }
 
-  /* The house never moves on hover (the page around it doesn't); things happen inside it instead. */
-  .house {
-    position: relative;
-    display: block;
-    width: 150%;
-    margin-left: -8%;
-  }
-  .house :global(img) { width: 100%; height: auto; transition: opacity 0.6s ease; }
-  /* Live 3D house: sits exactly over the poster, fades in once it has drawn a frame. */
-  .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
-  .house.is-live .house-live { opacity: 1; }
-  .house.is-live :global(img) { opacity: 0; }
-  /* while the canvas moves between the hero and the house, the poster holds the picture */
-  .house.is-handoff :global(img) { opacity: 1; transition: none; }
-  .house.is-away :global(img) { opacity: 0; transition: none; }
+  /* ============ Buttons ============ */
+  .aqua, .ghost { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border-radius: 999px; font-size: 16px; text-decoration: none; transition: transform .12s, opacity .15s; }
+  .aqua { padding: 0 24px; background: linear-gradient(#6fb6ff, #1a74f0 55%, #2f86ff); color: #fff; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 1px 2px rgba(0, 0, 0, .25), 0 0 0 .5px rgba(0, 0, 0, .25); }
+  .aqua:hover { opacity: .88; color: #fff; }
+  .ghost { padding: 0 22px; background: linear-gradient(#fff, #ececef); color: var(--ink); font-weight: 500; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 1px 2px rgba(0, 0, 0, .12); border: 0; font-family: inherit; cursor: pointer; }
+  .ghost:hover { opacity: .85; color: var(--ink); }
+  .aqua:active, .ghost:active { transform: scale(.97); }
 
-  /* The character's talking box (hero.ts pins it above their head). */
+  /* ============ Hero ============ */
+  .hero { position: relative; overflow-x: clip; }
+  .hero-in { position: relative; width: min(1320px, 100% - 2 * var(--gutter)); margin-inline: auto; display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); align-items: center; gap: 0 20px; min-height: min(820px, calc(100svh - 40px)); padding: 48px 0 72px; }
+  .hero-copy { position: relative; z-index: 4; display: flex; flex-direction: column; gap: 24px; }
+  .hero-title { font-size: clamp(56px, 4.4vw + 20px, 84px); line-height: .95; letter-spacing: -.05em; }
+  .hero-text { max-width: 400px; font-size: 18px; line-height: 1.5; color: var(--muted); }
+  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .hero-skim { display: none; }
+
+  .stage { position: relative; aspect-ratio: 860 / 645; margin-right: -4%; }
+  .grid { position: absolute; left: -22%; top: -12%; width: 144%; max-width: none; height: auto; z-index: 0; pointer-events: none; opacity: .9; -webkit-mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); }
+  .house { position: absolute; left: -2%; right: -2%; top: 50%; transform: translateY(-50%); z-index: 2; display: block; }
+  .house :global(img) { display: block; width: 100%; height: auto; transition: opacity .6s ease; }
+  .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+  .house:global(.is-live) .house-live { opacity: 1; }
+  .house:global(.is-live) :global(img) { opacity: 0; }
+  .house:global(.is-handoff) :global(img) { opacity: 1; transition: none; }
+  .house:global(.is-away) :global(img) { opacity: 0; transition: none; }
+  .house:global(.has-pill), .house:global(.has-pill) * { cursor: none; }
+
+  /* Character's talking box (hero.ts pins it above their head). */
   .house :global(.hero-bubble) { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
-  .house :global(.hero-bubble p) {
-    position: absolute;
-    left: 0;
-    bottom: 14px;
-    transform: translate(-50%, 6px) scale(0.92);
-    transform-origin: 50% 100%;
-    width: max-content;
-    max-width: 220px;
-    margin: 0;
-    padding: 9px 13px;
-    background: var(--page);
-    color: var(--ink);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.35;
-    box-shadow: 0 0 0 1px var(--rule);
-    opacity: 0;
-    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1.3);
-  }
-  .house :global(.hero-bubble p::after) {
-    content: '';
-    position: absolute;
-    left: 50%;
-    bottom: -7px;
-    width: 12px;
-    height: 12px;
-    background: var(--page);
-    box-shadow: 1px 1px 0 var(--rule);
-    transform: translateX(-50%) rotate(45deg);
-  }
+  .house :global(.hero-bubble p) { position: absolute; left: 0; bottom: 14px; transform: translate(-50%, 6px) scale(.92); transform-origin: 50% 100%; width: max-content; max-width: 220px; margin: 0; padding: 8px 12px; border-radius: 12px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 500; line-height: 1.35; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 8px 20px rgba(0, 0, 0, .12); opacity: 0; transition: opacity .2s ease, transform .25s cubic-bezier(.2, .7, .2, 1.3); }
+  .house :global(.hero-bubble p::after) { content: ''; position: absolute; left: 50%; bottom: -6px; width: 12px; height: 12px; background: #fff; transform: translateX(-50%) rotate(45deg); box-shadow: .5px .5px 0 rgba(0, 0, 0, .15); }
   .house :global(.hero-bubble.is-on p) { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  @media (prefers-reduced-motion: reduce) {
-    .house :global(.hero-bubble p) { transition: opacity 0.2s ease; transform: translate(-50%, 0); }
-  }
 
-  /* Custom cursor over the house (index script, CUSTOM_CURSOR). */
-  :global(.house-cursor) {
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 40;
-    width: 56px;
-    height: 56px;
-    margin: -28px 0 0 -28px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: var(--red);
-    color: var(--page);
-    pointer-events: none;
-    opacity: 0;
-    scale: 0.3;
-    transition: opacity 0.18s ease, scale 0.25s cubic-bezier(0.2, 0.7, 0.2, 1.2);
-  }
-  :global(.house-cursor.is-on) { opacity: 1; scale: 1; }
-  :global(.house-cursor.is-down) { scale: 0.86; }
-  :global(.has-house-cursor), :global(.has-house-cursor *) { cursor: none; }
+  .step-pill { position: fixed; left: 0; top: 0; z-index: 55; padding: 10px 16px; border-radius: 999px; background: rgba(255, 255, 255, .6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 6px 18px rgba(0, 0, 0, .18); font-weight: 600; font-size: 14px; color: var(--ink); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  .step-pill:global(.is-on) { opacity: 1; }
+  :global(html.in-house) .step-pill { display: none; }
 
+  /* Floating windows and objects over the house */
+  .hero-wins { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+  .hero-wins :global(.pw) { pointer-events: auto; }
+  .stage :global(.hw) { position: absolute; z-index: 5; }
+  .stage :global(.hw-pet) { left: 75%; top: -5%; width: 184px; }
+  .stage :global(.hw-proto) { left: 4.5%; top: 80%; width: 196px; }
+  .stage :global(.hw:hover), .stage :global(.hw:focus-within) { z-index: 30; }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .stage :global(.hw:hover .pw-win) { transform: scale(1.25) rotate(-1deg); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 24px 60px rgba(0, 0, 0, .28); }
+  }
+  /* Hovering a window dims everything else in the hero */
+  .stage :global(.fx) { transition: opacity .35s ease, filter .35s ease; }
+  .stage:has(:global(.hw:hover)) :global(.fx:not(:hover)) { opacity: .2; filter: saturate(.4); }
+  .panel { display: none; }
+
+  .stk { position: absolute; z-index: 6; padding: 0; margin: 0; border: 0; background: none; cursor: grab; touch-action: none; font: inherit; color: inherit; translate: var(--dx, 0) var(--dy, 0); transition: transform .15s; }
+  .stk:hover { transform: scale(1.08) rotate(-3deg); }
+  .stk:global(.is-drag) { cursor: grabbing; transform: scale(1.1) rotate(-3deg); transition: none; }
+  .stk-key { left: 76%; top: 86%; }
+  .stk-pet { left: 64%; top: 8%; }
+  .keyobj { display: block; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .14)); }
+  .stk-key:hover .keyobj svg { animation: jingle .5s ease-in-out; }
+  .petobj { position: relative; display: block; width: 60px; height: 62px; }
+  .petsvg { position: relative; display: block; animation: bob 1.6s ease-in-out infinite; }
+  .petsvg .eye { transform-box: fill-box; transform-origin: center; animation: blinkpet 4s infinite; }
+  .petshadow { position: absolute; left: 10px; right: 10px; bottom: 2px; height: 5px; border-radius: 50%; background: rgba(0, 0, 0, .12); animation: shad 1.6s ease-in-out infinite; }
+  .petheart { position: absolute; left: 24px; top: -6px; opacity: 0; }
+  .stk-pet:hover .petheart, .stk-pet:focus-visible .petheart { animation: rise 1.2s ease-out infinite; }
+  .hero:global(.is-paused) .petsvg, .hero:global(.is-paused) .petshadow, .hero:global(.is-paused) .eye { animation-play-state: paused; }
+
+  @media (max-width: 1100px) {
+    .hero-in { grid-template-columns: minmax(0, 400px) minmax(0, 1fr); }
+    .stage { margin-right: -10%; }
+  }
   @media (max-width: 900px) {
-    .hero { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-    .house { width: 165%; margin-left: -6%; margin-block: -8px -16px; }
+    .hero-in { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 36px 0 40px; gap: 8px; }
+    .stage { aspect-ratio: auto; margin: 0 -6%; }
+    .house { position: relative; left: auto; right: auto; top: auto; transform: none; margin: 4% 0 2%; }
+    .grid { top: -30%; }
+    .stk { display: none; }
+    .hero-wins { position: static; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; padding: 0 6%; pointer-events: auto; }
+    .stage :global(.hw) { position: static; width: auto; }
+    .stage:has(:global(.hw:hover)) :global(.fx:not(:hover)) { opacity: 1; filter: none; }
+    .panel:not([hidden]) { display: block; grid-column: 1 / -1; }
+  }
+  @media (max-width: 700px) {
+    .hero-title { font-size: 52px; }
+    .hero-actions { flex-direction: column; align-items: stretch; gap: 14px; }
+    .hero-actions .ghost { display: none; }
+    .hero-skim { display: inline-flex; align-self: center; font-weight: 600; font-size: 15px; color: var(--blue); text-decoration: none; min-height: 44px; align-items: center; }
+    .hero-actions .aqua { width: 100%; }
   }
 
-  /* ---------- Shared section heads ---------- */
-  .section-head {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 24px;
-    border-top: 2px solid var(--ink);
-    padding-top: 24px;
-  }
-  .section-title { display: flex; flex-direction: column; gap: 14px; max-width: 760px; }
-  .shelf { font-weight: 600; font-size: 15px; }
+  /* ============ Shared section heads ============ */
+  .home-sec { padding-top: clamp(100px, 10vw, 130px); }
+  .anchor { position: absolute; top: 0; }
+  .head { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 0 var(--gutter); }
+  .head .pillk { align-self: center; }
+  .big-h2 { font-size: clamp(40px, 2.4vw + 26px, 56px); line-height: 1; letter-spacing: -.045em; }
+  .huge-h2 { font-size: clamp(44px, 3.6vw + 24px, 72px); line-height: 1; letter-spacing: -.05em; }
+  .head-p { max-width: 520px; font-size: 17px; line-height: 1.5; color: var(--muted); }
 
-  .split {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 48px 64px;
-  }
-  .split-title { flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-  .split > :last-child { flex: 1 1 560px; min-width: 0; }
-
-  /* ---------- Studio ---------- */
-  .studio {
-    display: flex;
-    flex-direction: column;
-    gap: 64px;
-    padding-top: var(--section-y);
-    padding-bottom: var(--section-y-lg);
-  }
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-    gap: 56px 40px;
-  }
-  .card { display: flex; flex-direction: column; gap: 20px; color: var(--ink); }
-  .card-text { display: flex; flex-direction: column; gap: 8px; }
-  .card-title { font-weight: 600; font-size: 21px; line-height: 1.25; letter-spacing: -0.01em; }
-  .card-meta { font-size: 14px; }
-  .card :global(.cover) { transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1); }
-  a.card:hover :global(.cover) { transform: translateY(-6px); }
-  a.card:hover .card-title { color: var(--red); }
-
-  /* ---------- Lab ---------- */
-  .lab { background: var(--ink); color: var(--page); }
-  .lab .split { padding-block: var(--section-y); }
-  .lab-label { color: var(--mustard); }
-  .lab-list { margin: 0; padding: 0; list-style: none; }
-  .lab-item {
-    display: grid;
-    grid-template-columns: 28px minmax(0, 1fr) auto;
-    gap: 8px 20px;
-    align-items: baseline;
-    padding: 26px 0;
-    border-top: 1px solid var(--on-ink-rule);
-  }
-  .lab-item:last-child { border-bottom: 1px solid var(--on-ink-rule); }
-  .lab-text { display: flex; flex-direction: column; gap: 6px; }
-  .lab-title { font-weight: 600; font-size: 22px; line-height: 1.3; }
-  .lab-body { font-size: 16px; line-height: 1.5; color: var(--on-ink-muted); }
-  .lab-status { font-size: 13px; color: var(--on-ink-muted); white-space: nowrap; }
-  .mark { display: block; width: 14px; height: 14px; }
-  .mark-circle { border-radius: 50%; background: var(--red); }
-  .mark-square { background: var(--cobalt); }
-  .mark-triangle { width: 16px; background: var(--mustard); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-  @media (max-width: 560px) {
-    .lab-item { grid-template-columns: 28px minmax(0, 1fr); }
-    .lab-status { grid-column: 2; }
+  /* ============ Work ============ */
+  .grp { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 28px; margin-top: 56px; }
+  .wcard { display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; background: #fff; text-decoration: none; color: var(--ink); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .06), 0 14px 34px rgba(0, 0, 0, .1); transition: transform .45s var(--ease), opacity .35s, box-shadow .3s; }
+  a.wcard:hover { transform: translateY(-6px); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .22), 0 6px 14px rgba(0, 0, 0, .08), 0 30px 60px rgba(0, 0, 0, .16); color: var(--ink); }
+  .grp:has(a.wcard:hover) .wcard:not(:hover) { opacity: .35; transform: scale(.985); }
+  .wcard.is-soon { opacity: .7; }
+  .wcard-lead { grid-column: span 3; }
+  .wside { grid-column: span 2; display: flex; flex-direction: column; gap: 28px; }
+  .wbar { height: 28px; }
+  .wbar :global(.fname) { font-size: 11.5px; }
+  .wthumb { position: relative; height: 170px; overflow: hidden; background: #0d0d0e; }
+  .wthumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
+  a.wcard:hover .wthumb img { transform: scale(1.04); }
+  .wthumb-lead { flex: 1; min-height: 380px; }
+  .wthumb-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #eef0f6; font-size: 12px; color: var(--muted-2); }
+  .mock { background: linear-gradient(160deg, #e9f6ec, #f6f1e6); }
+  .mphone { position: absolute; left: 50%; top: 34px; width: 190px; height: 360px; margin-left: -95px; border-radius: 26px; box-shadow: 0 0 0 7px #151517, 0 24px 50px rgba(0, 0, 0, .2); overflow: hidden; background: #fff; }
+  .mphone-top { display: block; height: 18px; background: #2bb673; }
+  .mlist { display: block; animation: scrolllist 9s linear infinite; }
+  .mrow { display: flex; gap: 6px; align-items: center; padding: 6px 8px; border-bottom: 1px solid #eee; }
+  .mic { width: 22px; height: 22px; border-radius: 6px; }
+  .mlines { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .mlines i { display: block; height: 4px; width: 80%; border-radius: 2px; background: #222; }
+  .mlines i + i { height: 3px; width: 50%; background: #ccc; }
+  .mrp { font-size: 7px; padding: 2px 4px; border-radius: 4px; background: #e8f2ff; color: var(--blue); }
+  .wtext { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 20px 22px 22px; }
+  .wtext-sm { padding: 16px 18px 18px; }
+  .wtext-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .wmeta { font-size: 12px; color: var(--muted-2); }
+  .wtitle { font-weight: 600; font-size: 24px; letter-spacing: -.03em; line-height: 1.15; text-wrap: balance; }
+  .wtext-sm .wtitle { font-size: 19px; letter-spacing: -.02em; }
+  .wline { font-size: 15px; line-height: 1.5; color: var(--muted); max-width: 460px; }
+  .wtext-sm .wline { font-size: 14px; }
+  .more { flex: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; color: var(--blue); }
+  @media (max-width: 960px) {
+    .grp { grid-template-columns: minmax(0, 1fr); }
+    .wcard-lead, .wside { grid-column: auto; }
+    .wthumb-lead { min-height: 320px; }
+    .wthumb { height: 210px; }
   }
 
-  /* ---------- About ---------- */
-  .about { padding-block: var(--section-y-lg); }
-  .about-body { display: flex; flex-direction: column; gap: 36px; }
-  .facts { margin: 0; padding: 0; list-style: none; font-size: 15px; }
-  .facts li { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; }
+  /* ============ Lab ============ */
+  .lab-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px 56px; margin: 64px 0 0; padding: 0 var(--gutter); list-style: none; }
+  .lab-item { width: 300px; max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .lab-item :global(.lw) { width: 100%; }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) { .lab-item :global(.lw:hover .pw-win) { transform: scale(1.08); } }
+  .lab-row:has(:global(.lw:hover)) :global(.lw:not(:hover)) { opacity: .45; filter: saturate(.5); }
+  .lab-row :global(.lw) { transition: opacity .35s ease, filter .35s ease; }
+  .lab-cap { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .lab-t { font-weight: 600; font-size: 17px; }
+  .lab-l { font-size: 14px; color: var(--muted); max-width: 280px; }
+  .panel :global(.panel-t) { font-weight: 600; font-size: 17px; color: var(--ink); }
+  .panel :global(.panel-d) { font-size: 15px; line-height: 1.5; color: var(--muted); margin-top: 4px; }
+  .panel :global(.panel-cta) { margin-top: 12px; min-height: 40px; font-size: 14px; }
+  .lab-item .panel:not([hidden]) { display: block; width: 100%; padding: 14px 16px; border-radius: 12px; background: #fff; box-shadow: var(--hair); animation: fadeup .25s var(--ease); }
+  .hero-wins .panel:not([hidden]) { padding: 14px 16px; border-radius: 12px; background: #fff; box-shadow: var(--hair); animation: fadeup .25s var(--ease); }
+
+  /* ============ About ============ */
+  .about-in { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 40px; margin-top: 30px; padding: 0 var(--gutter); }
+  .info { width: 590px; max-width: 100%; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 24px 60px rgba(0, 0, 0, .12); padding-bottom: 10px; }
+  .ibar { height: 28px; }
+  .ibar :global(.fname) { font-size: 11.5px; }
+  .ihead { display: flex; gap: 16px; align-items: center; padding: 18px 22px 14px; }
+  .iphoto { flex: none; width: 76px; height: 76px; border-radius: 16px; object-fit: cover; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .15); }
+  .iname-wrap { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .iname { font-weight: 600; font-size: 22px; letter-spacing: -.03em; }
+  .irole { font-size: 14px; color: var(--ink-2); }
+  .imod { font-size: 12px; color: #8a8a90; }
+  .itags { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 22px 14px; margin: 0; list-style: none; }
+  .itag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 7px; border-radius: 999px; background: #f5f5f7; font-size: 12px; color: var(--ink-2); }
+  .itag i { width: 9px; height: 9px; border-radius: 50%; }
+  .isec { margin: 0 12px; border-top: .5px solid rgba(0, 0, 0, .12); }
+  .ihd { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 40px; padding: 8px 10px; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; text-align: left; border-radius: 6px; }
+  .ihd:hover { background: #f5f5f7; }
+  .ihd svg { transition: transform .2s; }
+  .ihd[aria-expanded='true'] svg { transform: rotate(90deg); }
+  .ibody { padding: 0 10px 12px 26px; animation: fade .2s ease-out; }
+  .ibody[hidden] { display: none; }
+  .igrid { display: grid; grid-template-columns: 84px 1fr; column-gap: 14px; row-gap: 7px; margin: 0; font-size: 14px; line-height: 1.45; }
+  .igrid :global(dt) { color: #8a8a90; text-align: right; }
+  .igrid :global(dd) { margin: 0; color: var(--ink); }
+  .icomment { padding: 10px 12px; border-radius: 8px; background: #f5f5f7; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+  .about :global(.about-cc) { margin-top: 50px; }
+  @media (max-width: 700px) {
+    .about :global(.about-cc) { margin-top: 0; width: 100%; }
+    .igrid { grid-template-columns: 74px 1fr; }
+  }
+
+  /* ============ Say hi ============ */
+  .sayhi { padding-bottom: 34px; }
+  .sayhi .head { gap: 22px; }
+  .sayhi-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .dock { display: flex; align-items: flex-end; gap: 10px; width: max-content; max-width: calc(100% - 32px); margin: 90px auto 0; padding: 10px 14px; border-radius: 22px; background: rgba(255, 255, 255, .6); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .18), 0 10px 30px rgba(0, 0, 0, .1); }
+  .ic { position: relative; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 14px; transform-origin: bottom; transition: transform .2s var(--ease); text-decoration: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 2px 6px rgba(0, 0, 0, .18); }
+  .ic .tip { position: absolute; bottom: 68px; left: 50%; transform: translateX(-50%) scale(.67); padding: 3px 8px; border-radius: 6px; background: rgba(30, 30, 32, .85); color: #fff; font-size: 12px; white-space: nowrap; opacity: 0; transition: opacity .15s; pointer-events: none; }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .ic:hover, .ic:focus-visible { transform: scale(1.5) translateY(-6px); }
+    .ic:has(+ .ic:hover), .ic:hover + .ic { transform: scale(1.22) translateY(-2px); }
+  }
+  .ic:hover .tip, .ic:focus-visible .tip { opacity: 1; }
+  .copy { margin-top: 30px; text-align: center; font-size: 12px; color: #8a8a92; }
+  @media (max-width: 420px) { .ic { width: 48px; height: 48px; } .dock { gap: 8px; } }
+
+  /* ============ Window modal ============ */
+  .wm { width: min(640px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 30px 80px rgba(0, 0, 0, .35); color: var(--ink); }
+  .wm[open] { animation: pop .32s var(--ease); }
+  .wm::backdrop { background: rgba(0, 0, 0, .4); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .wm-bar { height: 30px; }
+  .wm-bar :global(.lights) span, .wm-close { width: 12px; height: 12px; }
+  .wm-close { border: 0; padding: 0; border-radius: 50%; background: #ff5f57; cursor: pointer; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .25); }
+  .wm-media { position: relative; height: 320px; overflow: hidden; background: #f6f6f8; }
+  .wm-foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 24px; padding: 20px 24px; }
+  .wm-text { display: flex; flex-direction: column; gap: 6px; max-width: 400px; }
+  .wm-text h3 { font-size: 24px; letter-spacing: -.03em; }
+  .wm-text p { font-size: 15px; line-height: 1.5; color: var(--muted); }
+  .wm-actions { display: flex; gap: 10px; }
+  .wm-cta, .wm-btn { min-height: 40px; padding: 0 18px; font-size: 14px; white-space: nowrap; }
+  .wm-cta[hidden] { display: none; }
+
+  @keyframes eyes { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  @keyframes jingle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(4deg); } }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes shad { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.8); } }
+  @keyframes blinkpet { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+  @keyframes rise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-40px) scale(1); opacity: 0; } }
+  @keyframes scrolllist { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+  @keyframes pop { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeup { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mb-eyes, .petsvg, .petsvg .eye, .petshadow, .mlist { animation: none; }
+    .stk:hover, .stk-key:hover .keyobj svg { transform: none; animation: none; }
+    .stk-pet:hover .petheart { animation: none; }
+    a.wcard:hover, a.wcard:hover .wthumb img { transform: none; }
+    .grp:has(a.wcard:hover) .wcard:not(:hover) { transform: none; }
+    .wm[open], .ccm { animation: fade .2s ease-out; }
+  }
 </style>

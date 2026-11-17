@@ -1,0 +1,64 @@
+---
+/**
+ * Layout for the home page in the 2b "playful Mac" style (space-kit home-desktop).
+ * Shares tokens and fonts with the case pages (case.css). The home page draws its own menu bar.
+ */
+import '../styles/case.css';
+import { site } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = site.description } = Astro.props;
+const fullTitle = title ? `${title} · ${site.name}` : `${site.name} · Senior product designer`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f3f3f5" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>
+      // Entry mode per application link: ?mode=focus (poster only until the house is touched)
+      // or ?mode=play (land in the house). The hero loader reads html[data-mode].
+      (function () {
+        document.documentElement.classList.add('js');
+        try {
+          var m = new URLSearchParams(location.search).get('mode');
+          if (m === 'focus' || m === 'play') sessionStorage.setItem('mode', m);
+          document.documentElement.dataset.mode = m || sessionStorage.getItem('mode') || 'default';
+          if (m === 'play' && location.pathname === '/') location.replace('/house');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot name="header" />
+    <main id="main">
+      <slot />
+    </main>
+    <style is:global>
+      /* The 3D house UI (src/house/house.css) still reads these tokens from the first design. */
+      :root {
+        --red: #c8442b;
+        --cobalt: #2b4fa8;
+        --mustard: #e0a72e;
+        --tint: #ebe3d5;
+        --ink-soft: #3e3a33;
+      }
+      html.in-house { overflow: hidden; }
+      html.house-loading, html.house-loading a { cursor: progress; }
+    </style>
+  </body>
+</html>

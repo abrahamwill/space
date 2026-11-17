@@ -1,0 +1,152 @@
+---
+/**
+ * The one result modal behind every NusaFinance transaction, cycling through the states in the
+ * Figma file ("New Success & Confirmation Modals"). Copy is from the design, with typos fixed.
+ */
+import Icon from './Icons.astro';
+
+const states = [
+  { key: 'stake', title: 'Stake Success', sub: 'Successfully staked IDRX', row: 'Staked Amount', amt: '1,294', ok: true },
+  { key: 'unbond', title: 'Unbond Success', sub: 'Successfully unbonded IDRX', row: 'Unbonded Amount', amt: '1,294', ok: true },
+  { key: 'withdraw', title: 'Withdraw Success', sub: 'Successfully withdrew IDRX', row: 'Withdrawal Amount', amt: '1,100', ok: true },
+  { key: 'claim', title: 'Claim Success', sub: 'Successfully released IDRX to your wallet', row: 'Released Amount', amt: '1,294', ok: true },
+  { key: 'error', title: 'Uh-oh! Something Went Wrong.', sub: 'Please try again later or check your connection. If the issue persists, contact support.', row: '', amt: '', ok: false },
+];
+---
+<div class="rm" data-rm>
+  <div class="rm-modal nusa-ui" aria-live="polite">
+    <span class="rm-close" aria-hidden="true"><Icon name="x" size={18} /></span>
+    <span class="rm-mark m1" aria-hidden="true">1</span>
+    <svg class="rm-icon" data-icon viewBox="0 0 52 52" aria-hidden="true">
+      <circle cx="26" cy="26" r="24" />
+      <path class="ok" d="m15 27 7.5 7.5L37.5 19" />
+      <path class="no" d="M18 18l16 16M34 18 18 34" />
+    </svg>
+    <span class="rm-mark m2" aria-hidden="true">2</span>
+    <p class="rm-title" data-title>{states[0].title}</p>
+    <span class="rm-mark m3" aria-hidden="true">3</span>
+    <p class="rm-sub" data-sub>{states[0].sub}</p>
+    <div class="rm-row" data-row>
+      <span class="rm-mark m4" aria-hidden="true">4</span>
+      <span data-row-label>{states[0].row}</span>
+      <b><span class="rm-xi" aria-hidden="true">X</span><span data-amt>{states[0].amt}</span> IDRX</b>
+    </div>
+    <span class="rm-mark m5" aria-hidden="true">5</span>
+    <span class="n-btn rm-btn"><Icon name="link" size={15} />View Transaction Detail</span>
+    <span class="rm-support" data-support hidden><Icon name="discord" size={15} />Contact Support</span>
+  </div>
+
+  <div class="rm-side">
+    <div class="rm-picker" role="group" aria-label="Show a result state">
+      {states.map((s, i) => (
+        <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-i={i} data-title={s.title} data-sub={s.sub} data-row={s.row} data-amt={s.amt} data-ok={s.ok ? '1' : '0'} class:list={[{ err: !s.ok }]}>
+          {s.ok ? s.title.replace(' Success', '') : 'Error'}
+        </button>
+      ))}
+    </div>
+    <ol class="rm-anatomy">
+      <li><b>Icon.</b> Green check or red cross, the only big colour on the modal.</li>
+      <li><b>Title.</b> What happened, in two or three words.</li>
+      <li><b>One line.</b> The same fact in plain words, or what to try next.</li>
+      <li><b>Amount.</b> The number people check first, set apart in its own row.</li>
+      <li><b>Receipt.</b> A link to the on-chain record. Errors keep it, and add a way to reach support.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-rm]').forEach((root) => {
+    const btns = [...root.querySelectorAll<HTMLButtonElement>('.rm-picker button')];
+    const icon = root.querySelector<SVGElement>('[data-icon]')!;
+    const modal = root.querySelector<HTMLElement>('.rm-modal')!;
+    const title = root.querySelector<HTMLElement>('[data-title]')!;
+    const sub = root.querySelector<HTMLElement>('[data-sub]')!;
+    const row = root.querySelector<HTMLElement>('[data-row]')!;
+    const rowLabel = root.querySelector<HTMLElement>('[data-row-label]')!;
+    const amt = root.querySelector<HTMLElement>('[data-amt]')!;
+    const support = root.querySelector<HTMLElement>('[data-support]')!;
+    let cur = 0, auto = !reduce;
+
+    const show = (i: number) => {
+      cur = i;
+      const b = btns[i];
+      btns.forEach((x, j) => x.setAttribute('aria-pressed', String(j === i)));
+      const ok = b.dataset.ok === '1';
+      modal.classList.toggle('is-err', !ok);
+      title.textContent = b.dataset.title!;
+      sub.textContent = b.dataset.sub!;
+      row.hidden = !ok;
+      rowLabel.textContent = b.dataset.row!;
+      amt.textContent = b.dataset.amt!;
+      support.hidden = ok;
+      if (!reduce) { icon.classList.remove('draw'); void (icon as unknown as HTMLElement).getBoundingClientRect(); icon.classList.add('draw'); }
+    };
+    btns.forEach((b, i) => b.addEventListener('click', () => { auto = false; show(i); }));
+
+    if (!auto) return;
+    icon.classList.add('draw');
+    let visible = false, hover = false;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: .4 }).observe(root);
+    root.addEventListener('pointerenter', () => { hover = true; });
+    root.addEventListener('pointerleave', () => { hover = false; });
+    root.addEventListener('focusin', () => { hover = true; });
+    root.addEventListener('focusout', () => { hover = false; });
+    setInterval(() => { if (auto && visible && !hover && !document.hidden) show((cur + 1) % btns.length); }, 2800);
+  });
+</script>
+
+<style>
+  .rm { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+  .rm-modal { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 52px 24px 24px; border-radius: 14px; background: #181818; box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 30px 70px rgba(0, 0, 0, .25); }
+  .rm-modal::before { content: ''; position: absolute; inset: -40px; z-index: -1; border-radius: 40px; background: #0b0b0b; }
+  .rm-close { position: absolute; right: 18px; top: 18px; color: var(--n-t2); }
+  .rm-icon { width: 92px; height: 92px; margin-bottom: 10px; }
+  .rm-icon circle { fill: #31c48d; transform-origin: center; transition: fill .3s; }
+  .rm-icon path { fill: none; stroke: #fff; stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 0; }
+  .rm-icon .no { display: none; }
+  .is-err .rm-icon circle { fill: #f26b5b; }
+  .is-err .rm-icon .ok { display: none; }
+  .is-err .rm-icon .no { display: inline; }
+  .rm-icon.draw circle { animation: rm-pop .45s var(--ease) both; }
+  .rm-icon.draw path { stroke-dashoffset: 40; animation: rm-draw .45s .22s var(--ease) forwards; }
+  @keyframes rm-pop { from { transform: scale(.45); opacity: 0; } }
+  @keyframes rm-draw { to { stroke-dashoffset: 0; } }
+  .rm-title { margin: 0; font-size: 20px !important; font-weight: 500; color: var(--n-t1) !important; }
+  .rm-sub { margin: 0; max-width: 340px; font-size: 13.5px !important; line-height: 1.55 !important; color: var(--n-t2) !important; min-height: 1.55em; }
+  .rm-row { position: relative; align-self: stretch; display: flex; justify-content: space-between; align-items: center; margin: 12px 0 4px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--n-line-2); font-size: 12.5px; color: var(--n-t2); }
+  .rm-row[hidden] { display: none; }
+  .rm-row b { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--n-t1); }
+  .rm-xi { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #1a4bd6; color: #fff; font: 800 11px/1 Georgia, serif; }
+  .rm-btn { margin-top: 6px; font-size: 14px; pointer-events: none; }
+  .rm-support { align-self: stretch; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border-radius: 8px; border: 1px solid var(--n-t2); font-size: 14px; }
+  .rm-support[hidden] { display: none; }
+
+  .rm-mark { position: absolute; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #fff; color: #151517; font: 700 11px/1 var(--sans, system-ui); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+  .m1 { left: calc(50% - 76px); top: 58px; }
+  .m2 { left: -30px; top: 168px; }
+  .m3 { left: -30px; top: 202px; }
+  .m4 { left: -54px; top: 50%; transform: translateY(-50%); } /* inside the row, which is inset 24px */
+  .m5 { left: -30px; bottom: 35px; }
+  .is-err .m5 { bottom: 87px; }
+
+  .rm-side { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .rm-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+  .rm-picker button { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; box-shadow: var(--hair); color: var(--muted); font: 500 13px/1 var(--sans); cursor: pointer; transition: background .2s, color .2s; }
+  .rm-picker button:hover { color: var(--ink); }
+  .rm-picker button[aria-pressed='true'] { background: #151517; color: #fff; box-shadow: none; }
+  .rm-picker button.err[aria-pressed='true'] { background: #c2412f; }
+  .rm-anatomy { margin: 0; padding: 0; list-style: none; counter-reset: a; display: flex; flex-direction: column; gap: 14px; }
+  .rm-anatomy li { counter-increment: a; position: relative; padding-left: 34px; font-size: 16px; line-height: 1.55; color: var(--body); }
+  .rm-anatomy li::before { content: counter(a); position: absolute; left: 0; top: 1px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #151517; color: #fff; font: 700 11px/1 var(--sans); }
+  .rm-anatomy b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 820px) {
+    .rm { grid-template-columns: minmax(0, 1fr); }
+    .rm-modal { max-width: 440px; width: 100%; justify-self: center; }
+    .rm-modal::before { inset: -16px; border-radius: 26px; }
+    .m2, .m3, .m5 { left: -12px; }
+    .m4 { left: -36px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .rm-icon.draw circle, .rm-icon.draw path { animation: none; stroke-dashoffset: 0; } }
+</style>

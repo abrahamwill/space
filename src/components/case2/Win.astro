@@ -1,0 +1,26 @@
+---
+/**
+ * Mac window frame with traffic lights and a centred title.
+ * Pass `src` for an image (lazy, sized), or put any content in the slot (a coded demo, a video).
+ */
+interface Props {
+  title: string;
+  src?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  /** Dark body for product UI that sits on black. */
+  dark?: boolean;
+  eager?: boolean;
+  class?: string;
+}
+const { title, src, alt = '', width, height, dark = false, eager = false, class: className } = Astro.props;
+---
+<figure class:list={['win', 'media', { dark }, className]} style="margin:0">
+  <div class="bar"><span class="lights" aria-hidden="true"><span></span><span></span><span></span></span><span class="fname">{title}</span></div>
+  {src ? (
+    <img src={src} alt={alt} width={width} height={height} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  ) : (
+    <slot />
+  )}
+</figure>

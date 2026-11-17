@@ -1,0 +1,134 @@
+---
+/**
+ * Shell for the hand-built ("bespoke") case studies, in the 2b Mac case style from space-kit.
+ * Header (desktop menu bar / mobile breadcrumb), the page, then "next project" + say hi + footer.
+ * Each page brings its own sections and a page-scoped <style>.
+ */
+import '../styles/case.css';
+import { site } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Short name for the mobile breadcrumb, e.g. "NusaFinance". */
+  crumb: string;
+  next: { href: string; title: string; line: string };
+}
+const { title, description, crumb, next } = Astro.props;
+const fullTitle = `${title} · Abraham Williams`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f3f3f5" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="topbar">
+      <nav class="tb-nav" aria-label="Main">
+        <a class="tb-name" href="/">Abraham</a>
+        <a href="/#studio" aria-current="page">Work</a>
+        <a href="/#lab">Lab</a>
+        <a href="/#about">About</a>
+      </nav>
+      <a class="tb-crumb" href="/#studio"><span aria-hidden="true">‹</span> Work <span class="tb-sep">/</span> <b>{crumb}</b></a>
+      <a class="tb-logo" href="/" aria-label="Home">
+        <svg width="30" height="26" viewBox="0 0 30 26" aria-hidden="true"><path d="M3 12 L15 2 L27 12 V24 H3 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"></path><rect x="10" y="13" width="3" height="5" rx="1.5" fill="currentColor"></rect><rect x="17" y="13" width="3" height="5" rx="1.5" fill="currentColor"></rect></svg>
+      </a>
+      <div class="tb-end">
+        <time class="tb-time" data-clock>--:--</time>
+        <a class="tb-hi" href="#say-hi">Say hi</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <section id="say-hi" class="sec closing">
+      <span class="dotfade"></span>
+      <div class="col z closing-row">
+        <div class="stack" style="gap:10px">
+          <span class="pillk">Next project</span>
+          <a class="next-title" href={next.href}>{next.title} <span aria-hidden="true">→</span></a>
+          <span class="next-line">{next.line}</span>
+        </div>
+        <a class="btn1" href={site.emailHref}>Say hi</a>
+      </div>
+      <div class="col z foot">
+        <span>© 2026 Abraham Williams</span>
+        <span>{site.email}</span>
+      </div>
+    </section>
+
+    <script>
+      // Jakarta clock in the menu bar.
+      const clock = document.querySelector<HTMLElement>('[data-clock]');
+      const tick = () => {
+        if (!clock) return;
+        try {
+          clock.textContent = new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
+        } catch { clock.textContent = ''; }
+      };
+      tick();
+      setInterval(tick, 20000);
+
+      // Reveal-on-scroll for anything marked data-reveal.
+      const io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }),
+        { rootMargin: '0px 0px -10% 0px' },
+      );
+      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+    </script>
+
+    <style>
+      .topbar {
+        position: sticky; top: 0; z-index: 50;
+        display: flex; align-items: center; justify-content: space-between;
+        height: 40px; padding: 0 22px; font-size: 14px;
+        background: color-mix(in srgb, var(--page) 82%, transparent);
+        backdrop-filter: saturate(1.4) blur(14px);
+        -webkit-backdrop-filter: saturate(1.4) blur(14px);
+        box-shadow: 0 .5px 0 rgba(0, 0, 0, .08);
+      }
+      .tb-nav { display: flex; align-items: center; gap: 20px; }
+      .tb-nav a { color: var(--muted); text-decoration: none; }
+      .tb-nav a:hover, .tb-nav a[aria-current] { color: var(--ink); }
+      .tb-nav a[aria-current] { font-weight: 500; }
+      .tb-nav .tb-name { color: var(--ink); font-weight: 600; }
+      .tb-logo { position: absolute; left: 50%; top: 7px; transform: translateX(-50%); color: var(--ink); }
+      .tb-end { display: flex; align-items: center; gap: 14px; }
+      .tb-time { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+      .tb-hi { font-weight: 500; color: var(--blue); text-decoration: none; }
+      .tb-crumb { display: none; color: var(--muted); text-decoration: none; font-size: 15px; }
+      .tb-crumb b { color: var(--ink); font-weight: 600; }
+      .tb-sep { color: #b4b4ba; }
+      @media (max-width: 700px) {
+        .topbar { height: 48px; padding: 0 16px; }
+        .tb-nav, .tb-logo, .tb-time { display: none; }
+        .tb-crumb { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+        .tb-hi { min-height: 44px; display: inline-flex; align-items: center; }
+      }
+
+      .closing { padding: clamp(110px, 12vw, 140px) 0 clamp(60px, 8vw, 120px); }
+      .closing-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 32px 40px; }
+      .next-title { font-weight: 600; font-size: clamp(32px, 2vw + 20px, 44px); letter-spacing: -.035em; line-height: 1.05; color: var(--ink); text-decoration: none; }
+      .next-title span { display: inline-block; transition: transform .25s var(--ease); }
+      .next-title:hover span { transform: translateX(6px); }
+      .next-line { font-size: 15px; color: var(--muted); }
+      .foot { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; margin-top: clamp(56px, 7vw, 90px); font-size: 13px; color: var(--muted); }
+    </style>
+  </body>
+</html>

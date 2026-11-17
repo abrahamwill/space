@@ -1,13 +1,13 @@
 ---
 import { Picture } from 'astro:assets';
-import Base from '../layouts/Base.astro';
+import Space from '../layouts/Space.astro';
 import HouseApp from '../house/HouseApp';
 import { getHouseContent } from '../data/houseContent';
 import posterDim from '../assets/house/poster-dim.png';
 
 const content = await getHouseContent();
 ---
-<Base title="The house" description="Step inside: a studio full of work, a lab of side projects, and the room I live in." bare>
+<Space title="The house" description="Step inside: a studio full of work, a lab of side projects, and the room I live in.">
   <h1 class="sr-only">The house</h1>
   <!-- First paint: a still of the arrival state. The 3D house fades in over it. -->
   <div class="house-poster" aria-hidden="true">
@@ -17,21 +17,21 @@ const content = await getHouseContent();
   <noscript>
     <div class="house-noscript">
       <p>The house needs JavaScript. The short tour has everything:</p>
-      <p><a href="/#studio">The studio</a> · <a href="/#lab">The lab</a> · <a href="/#about">The main room</a></p>
+      <p><a href="/#work">The work</a> · <a href="/#lab">The lab</a> · <a href="/#about">About me</a></p>
     </div>
   </noscript>
-</Base>
+</Space>
 
 <style>
   .house-poster {
     position: fixed;
-    inset: 96px 32px 72px;
+    inset: 72px 32px 72px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .house-poster :global(img) { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
-  @media (max-width: 899px) { .house-poster { inset: 136px 32px 32px; } }
+  @media (max-width: 899px) { .house-poster { inset: 112px 16px 32px; } }
   .house-noscript {
     position: fixed; left: 0; right: 0; bottom: 0; padding: 24px 32px;
     background: var(--page); display: flex; flex-direction: column; gap: 8px;

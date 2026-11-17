@@ -1,0 +1,55 @@
+---
+/**
+ * The live little picture inside a home window: Prototype Hub (cursor reviewing a page),
+ * the pet game (slow pan, rising hearts) or voice AI (equaliser). Decorative.
+ */
+interface Props {
+  kind: 'proto' | 'pet' | 'voice';
+}
+const { kind } = Astro.props;
+const bars = [20, 34, 50, 28, 60, 44, 24, 54, 38, 18, 46, 30, 56, 26, 40, 22];
+---
+{kind === 'proto' && (
+  <span class="peek" aria-hidden="true">
+    <img src="/images/lab/prototype-hub-cover.webp" alt="" width="900" height="431" loading="lazy" decoding="async" style="object-position:top left" />
+    <span class="cur"><span class="ring"></span><svg width="14" height="18" viewBox="0 0 14 18"><path d="M1 1 L1 15 L5 11 L8 17 L10.5 16 L7.5 10 L13 10 Z" fill="#151517" stroke="#fff" stroke-width="1.2"></path></svg></span>
+  </span>
+)}
+{kind === 'pet' && (
+  <span class="peek" aria-hidden="true">
+    <img class="pan" src="/images/lab/pet-game-cover.webp" alt="" width="900" height="507" loading="lazy" decoding="async" />
+    {[['30%', '0s', '#ff4f8b'], ['55%', '.9s', '#ff5f57'], ['72%', '1.7s', '#ff4f8b']].map(([l, d, c]) => (
+      <svg class="heart" width="14" height="12" viewBox="0 0 14 12" style={`left:${l};animation-delay:${d}`}><path d="M7 11 L1.5 5.5 A3 3 0 0 1 7 2 A3 3 0 0 1 12.5 5.5 Z" fill={c}></path></svg>
+    ))}
+  </span>
+)}
+{kind === 'voice' && (
+  <span class="peek eq" aria-hidden="true">
+    {bars.map((h, i) => <span class="eqb" style={`height:${h}px;background:hsl(${200 + i * 9},90%,55%);animation-delay:${(i * 0.07).toFixed(2)}s`}></span>)}
+  </span>
+)}
+
+<style>
+  .peek { position: absolute; inset: 0; display: block; overflow: hidden; }
+  .peek img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pan { animation: pan 7s ease-in-out infinite; }
+  .heart { position: absolute; bottom: 8px; opacity: 0; animation: rise 2.6s ease-out infinite; }
+  .cur { position: absolute; left: 0; top: 0; animation: cur 4s ease-in-out infinite; }
+  .cur svg { position: relative; }
+  .ring { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--blue); opacity: 0; animation: ring 4s ease-out infinite; }
+  .eq { display: flex; align-items: center; justify-content: center; gap: 4px; background: #101014; }
+  .eqb { display: inline-block; width: 5px; border-radius: 2px; transform-origin: bottom; animation: eq .9s ease-in-out infinite; }
+
+  @keyframes pan { 0%, 100% { transform: scale(1.08) translate(0, 0); } 50% { transform: scale(1.2) translate(-6%, -4%); } }
+  @keyframes rise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(-70px) scale(1); opacity: 0; } }
+  @keyframes cur { 0% { transform: translate(30px, 90px); } 25% { transform: translate(150px, 40px); } 45% { transform: translate(150px, 40px); } 70% { transform: translate(70px, 110px); } 100% { transform: translate(30px, 90px); } }
+  @keyframes ring { 0%, 40% { opacity: 0; transform: scale(.2); } 45% { opacity: 1; transform: scale(.6); } 60% { opacity: 0; transform: scale(1.4); } 100% { opacity: 0; } }
+  @keyframes eq { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+  /* Paused unless its window is on screen (home script toggles .is-paused on the section). */
+  :global(.is-paused) .pan, :global(.is-paused) .heart, :global(.is-paused) .cur, :global(.is-paused) .ring, :global(.is-paused) .eqb { animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce) {
+    .pan, .cur, .ring, .eqb { animation: none; }
+    .heart { display: none; }
+    .eqb { transform: scaleY(.6); }
+  }
+</style>

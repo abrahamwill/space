@@ -1,0 +1,260 @@
+---
+/**
+ * Case study: NusaFinance (freelance). Hand-built in the 2b Mac case style.
+ * Screens come from the NUSA Handoff Figma file; the dark demos are coded recreations of it.
+ * [Brackets] in .tbc chips are facts only the owner can fill. Never replace them with guesses.
+ */
+import CaseShell from '../../layouts/CaseShell.astro';
+import Win from '../../components/case2/Win.astro';
+import '../../components/nusa/nusa-ui.css';
+import OnrampDemo from '../../components/nusa/OnrampDemo.astro';
+import ModuleExplorer from '../../components/nusa/ModuleExplorer.astro';
+import TokenBoard from '../../components/nusa/TokenBoard.astro';
+import StakePicker from '../../components/nusa/StakePicker.astro';
+import ResultModal from '../../components/nusa/ResultModal.astro';
+import KycStepper from '../../components/nusa/KycStepper.astro';
+
+const P = '/images/work/nusa/';
+const directions = [
+  {
+    key: 'A', name: 'Pay first', src: 'onramp-crop.webp',
+    what: 'Rupiah on top, IDRX below, and the rate on the seam between them.',
+    for: 'People who start from what leaves their bank account.',
+  },
+  {
+    key: 'B', name: 'One big number', src: 'onramp-b-crop.webp',
+    what: 'The rupiah amount, large and centred. IDRX sits underneath with a swap toggle, and the rate shows a 20-second quote timer.',
+    for: 'Confidence in a single number, and an honest view of how long the price holds.',
+  },
+  {
+    key: 'C', name: 'Buy first', src: 'onramp-c-crop.webp',
+    what: 'The IDRX you want comes first; the rupiah you pay is worked out below.',
+    for: 'People who need an exact amount of IDRX for something they do next.',
+  },
+];
+---
+<CaseShell
+  title="NusaFinance: a rupiah front door to DeFi"
+  description="Case study: designing NusaFinance's web app, from buying a rupiah stablecoin with rupiah to staking, lending, governance and cashing out."
+  crumb="NusaFinance"
+  next={{ href: '/work/gm-xyz', title: 'gm.xyz', line: 'Freelance · a link-in-bio for Web3 that takes tips in SOL or USDC.' }}
+>
+  <!-- ============ Hero ============ -->
+  <section class="sec hero">
+    <span class="dotfade"></span>
+    <div class="col z stack" style="gap:26px">
+      <a class="back" href="/#studio">← All work</a>
+      <span class="kick">Case study · Freelance · NusaFinance · <span class="tbc">[Year]</span></span>
+      <h1>A rupiah front door to DeFi</h1>
+      <p class="lede">NusaFinance lets people buy IDRX, a rupiah stablecoin, with rupiah, put it to work in staking, lending and liquidity pools, and cash out to a bank account or e-wallet. I designed the web app's interface and the system that holds it together.</p>
+      <dl class="meta">
+        <div><dt>Role</dt><dd>UI designer, freelance <span class="tbc">[scope: solo? with whom?]</span></dd></div>
+        <div><dt>Scope</dt><dd>191 desktop screens across 20 flows</dd></div>
+        <div><dt>Surfaces</dt><dd>On- and off-ramp, e-KYC, staking, lending, pools, governance</dd></div>
+        <div><dt>Status</dt><dd>Product live at <a href="https://app.nusa.io/" rel="noopener">app.nusa.io</a></dd></div>
+      </dl>
+    </div>
+
+    <div class="wide z hero-stage">
+      <Win title="app.nusa.io · On-ramp" dark>
+        <OnrampDemo />
+      </Win>
+    </div>
+    <p class="cap z"><b>The on-ramp, rebuilt in code from the Figma file.</b> It plays a purchase on its own; click the amount and type your own. The rate between the two cards does the maths.</p>
+    <ol class="notes col z" aria-label="Design notes on the on-ramp">
+      <li>The rate sits on the seam between the two amounts: the one place that explains both numbers at once.</li>
+      <li>Three ways to fill an address: your connected wallet, one you saved, or a QR code. Nobody should have to paste a 42-character string by hand.</li>
+      <li>One green gradient per screen, and only on the next step. Everything else stays grey, so the eye always knows where to go.</li>
+    </ol>
+  </section>
+
+  <!-- ============ 01 The product ============ -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The product</span><h2>A whole DeFi suite, for people who start with rupiah</h2></div>
+      <p>Most DeFi apps assume you already hold crypto. NusaFinance starts a step earlier, with the rupiah in your bank account. The on-ramp turns it into IDRX, and from there the money can go to work: staking, lending, liquidity pools and farms. Holders of the NUSA token lock it to vote on where the platform goes next. When you're done, the off-ramp sends rupiah back to a bank account or an e-wallet.</p>
+      <p>That's a lot of product behind one navigation bar. The file covers every module end to end, including the states people only meet when something goes wrong.</p>
+    </div>
+    <div class="wide" style="margin-top:56px" data-reveal>
+      <ModuleExplorer />
+    </div>
+  </section>
+
+  <!-- ============ 02 The system ============ -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The system</span><h2>Four greys, one green, and a lot of restraint</h2></div>
+      <p>The screens are dense: tables of APRs, balances to four decimals, wallet addresses. Colour had to stay out of the way of all that data. So the palette is a ramp of four near-blacks for depth, one spring green for anything live, and a single gradient that only ever means "this is your next step".</p>
+      <p>Every module also opens with the same header, so moving from lending to governance feels like turning a page, not switching apps.</p>
+    </div>
+    <div class="wide z" style="margin-top:56px" data-reveal>
+      <TokenBoard />
+    </div>
+    <p class="cap z"><b>The system, coded from the file's values.</b> Surfaces, accent, gradient, text and type are taken from the on-ramp frame; page headers are copied from each module.</p>
+  </section>
+
+  <!-- ============ 03 Directions ============ -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Directions</span><h2>Three ways to say how much</h2></div>
+      <p>The amount card answers two questions at once: how much rupiah leaves your bank, and how much IDRX lands in your wallet. Which one leads changes who the screen is for, so I designed it three ways.</p>
+    </div>
+    <div class="wide dirs" style="margin-top:48px">
+      {directions.map((d) => (
+        <article class="dir" data-reveal>
+          <div class="dir-shot"><img src={P + d.src} alt={`On-ramp direction ${d.key}: ${d.name}.`} width="620" height="860" loading="lazy" decoding="async" /></div>
+          <div class="dir-text">
+            <span class="tag">Direction {d.key}</span>
+            <h3>{d.name}</h3>
+            <p class="dir-what">{d.what}</p>
+            <p class="dir-for"><span>Optimises for</span>{d.for}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+    <p class="cap">All three are in the handoff file. <span class="tbc">[TO CONFIRM: which direction shipped, and why]</span></p>
+  </section>
+
+  <!-- ============ 04 Earn ============ -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Earn</span><h2>Show the lock-in before the click, not after</h2></div>
+      <p>Staking IDRX comes in two kinds of term. Flexible ones can be ended at any time. Locked ones pay more, up to 10% for a year, but the money stays put until the term ends. That trade-off is the whole decision, so it lives in the picker itself: every locked option carries a Locked chip, and the rule is spelled out right above the grid.</p>
+      <p>Leaving early has a cost too. The unbond dialog says so in plain words before you confirm.</p>
+    </div>
+    <div class="wide z earn" style="margin-top:56px">
+      <div class="earn-demo" data-reveal>
+        <StakePicker />
+        <p class="earn-try">Pick a term and change the amount.</p>
+      </div>
+      <figure class="earn-shot" data-reveal>
+        <Win title="Staking · Unbond" src={P + 'unbond.webp'} alt="Unbond Principle dialog: 1,294 IDRX available to unbond, a warning about early withdrawal, and Cancel or Proceed Unbond." width={1512} height={940} dark />
+        <figcaption class="earn-cap">“If you withdraw your principal before the maturity date, any claimed profit will be deducted.” The warning sits between the amount and the button.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ 05 Outcomes ============ -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Outcomes</span><h2>One modal for every ending</h2></div>
+      <p>Stake, unbond, withdraw, claim: each ends with a transaction, and each can succeed or fail. Instead of designing a dozen endings, I gave them one shape. People learn it once, then read every result at a glance.</p>
+    </div>
+    <div class="mid z" style="margin-top:64px" data-reveal>
+      <ResultModal />
+    </div>
+  </section>
+
+  <!-- ============ 06 Cashing out ============ -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Cashing out</span><h2>Back to rupiah, to a name you trust</h2></div>
+      <p>The off-ramp mirrors the on-ramp: sell IDRX or USDT on top, see the rupiah you'll receive below, with the same rate chip on the seam. The difference is where the money goes. You pick a saved recipient, or add one: a personal or business account, at a bank or an e-wallet like GoPay, saved for next time.</p>
+      <p>Unlimited purchases need a verified account. The e-KYC flow breaks that into three steps and shows where you are in it the whole way.</p>
+    </div>
+    <div class="wide z two cash" style="margin-top:56px">
+      <Win title="app.nusa.io · Off-ramp" src={P + 'offramp.webp'} alt="Off-ramp screen: sell 100,000 IDRX on Polygon, receive 101,000 IDR, choose a bank account or e-wallet, Connect Wallet button." width={1512} height={1170} dark />
+      <Win title="Off-ramp · Add recipient" src={P + 'add-recipient.webp'} alt="Add Recipient dialog: Personal or Business account, GoPay as receiver platform, e-wallet phone number, label, and Save to Recipient List." width={1512} height={1213} dark />
+    </div>
+    <div class="mid z kyc-row" style="margin-top:28px" data-reveal>
+      <KycStepper />
+      <p class="kyc-cap"><b>e-KYC, three steps.</b> The tracker stays on screen through the camera steps, with tips for a usable photo: good light, a plain background, a sharp image.</p>
+    </div>
+  </section>
+
+  <!-- ============ 07 Scale ============ -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">In numbers</span><h2>The size of the handoff</h2></div>
+    </div>
+    <div class="wide stats" style="margin-top:40px" data-reveal>
+      <div class="stat"><b data-count="191">191</b><span>desktop frames at 1512px, every state included</span></div>
+      <div class="stat"><b data-count="20">20</b><span>flows, from on-ramp to governance voting</span></div>
+      <div class="stat"><b data-count="3">3</b><span>directions for the on-ramp amount card</span></div>
+      <div class="stat"><b data-count="1">1</b><span>accent colour across all of it</span></div>
+    </div>
+    <p class="cap">Counted from the NUSA Handoff Figma file. <span class="tbc">[TO CONFIRM: any outcome numbers you can share, e.g. users or volume after launch]</span></p>
+  </section>
+
+  <!-- ============ 08 Reflection ============ -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Reflection</span><h2><span class="tbc">[What this project taught me about designing for money]</span></h2></div>
+      <p><span class="tbc">[Lesson 1: e.g. what designing for people new to crypto changed in your choices]</span></p>
+      <p><span class="tbc">[Lesson 2: e.g. what you'd do differently with the system or the handoff]</span></p>
+      <p class="fineprint">Screens are from the NUSA Handoff Figma file; names, balances and addresses in them are mock data. The dark demos on this page are recreations in code, not the production app.</p>
+    </div>
+  </section>
+</CaseShell>
+
+<script>
+  // Count the stats up once they scroll into view.
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduce) {
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      io.unobserve(e.target);
+      const el = e.target as HTMLElement;
+      const to = Number(el.dataset.count), t0 = performance.now(), dur = 900 + to * 2;
+      const step = (t: number) => {
+        const p = Math.min(1, (t - t0) / dur);
+        el.textContent = String(Math.round(to * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }), { threshold: .6 });
+    document.querySelectorAll('[data-count]').forEach((el) => io.observe(el));
+  }
+</script>
+
+<style>
+  /* case.css sets .tbc to nowrap, which pushes long placeholders past a phone screen. Let them wrap here. */
+  .tbc { display: inline; white-space: normal; padding: 1px 8px; line-height: 1.9; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+  /* Hero */
+  .hero .kick { display: block; line-height: 1.7; }
+  .hero-stage { margin-top: 64px; }
+  @media (max-width: 700px) { .hero-stage { margin-top: 40px; } }
+  .hero-stage :global(.win) { box-shadow: 0 0 0 .5px rgba(0, 0, 0, .4), 0 4px 10px rgba(0, 0, 0, .08), 0 40px 90px rgba(0, 0, 0, .22); }
+  .notes { margin-top: 20px; padding: 0; list-style: none; counter-reset: n; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .notes li { counter-increment: n; position: relative; padding-left: 32px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .notes li::before { content: counter(n); position: absolute; left: 0; top: 0; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50% 50% 50% 3px; background: var(--ink); color: #fff; font: 700 11px/1 var(--sans); }
+  @media (min-width: 1100px) { .notes { display: none; } }
+  @media (max-width: 760px) { .notes { grid-template-columns: minmax(0, 1fr); } }
+
+  /* Directions */
+  .dirs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .dir { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: var(--hair), 0 10px 30px rgba(0, 0, 0, .05); transition: transform .35s var(--ease), box-shadow .35s var(--ease); }
+  .dir:hover { transform: translateY(-4px); box-shadow: var(--hair), 0 22px 46px rgba(0, 0, 0, .1); }
+  .dir-shot { background: #101010; padding: 18px 18px 0; aspect-ratio: 620 / 700; overflow: hidden; }
+  .dir-shot img { width: 100%; height: auto; border-radius: 10px 10px 0 0; transition: transform 1.2s var(--ease); }
+  .dir:hover .dir-shot img { transform: translateY(-6%); }
+  .dir-text { display: flex; flex-direction: column; gap: 10px; padding: 20px 22px 24px; }
+  .dir-text h3 { font-size: 20px; }
+  .dir-what { font-size: 15px !important; line-height: 1.55 !important; }
+  .dir-for { display: flex; flex-direction: column; gap: 4px; margin-top: 4px !important; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 14px !important; line-height: 1.5 !important; color: var(--ink) !important; }
+  .dir-for span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  @media (max-width: 900px) { .dirs { grid-template-columns: minmax(0, 1fr); max-width: 440px; } .dir-shot { aspect-ratio: 620 / 560; } }
+  @media (prefers-reduced-motion: reduce) { .dir, .dir-shot img { transition: none; } .dir:hover, .dir:hover .dir-shot img { transform: none; } }
+
+  /* Earn */
+  .earn { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: center; }
+  .earn-demo { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: clamp(16px, 3vw, 36px); border-radius: 22px; background: #0b0b0b; }
+  .earn-try { font-size: 13px !important; color: #9ca3af !important; }
+  .earn-shot { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+  .earn-cap { font-size: 14px; line-height: 1.55; color: var(--muted); }
+  @media (max-width: 960px) { .earn { grid-template-columns: minmax(0, 1fr); } }
+
+  /* Cashing out */
+  .cash { align-items: start; }
+  .kyc-row { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 32px; align-items: center; }
+  .kyc-cap { font-size: 15px !important; line-height: 1.6 !important; color: var(--muted) !important; }
+  .kyc-cap b { color: var(--ink); }
+  @media (max-width: 860px) { .kyc-row { grid-template-columns: minmax(0, 1fr); } }
+
+  .fineprint { margin-top: 10px !important; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px !important; line-height: 1.5 !important; color: var(--muted) !important; }
+</style>

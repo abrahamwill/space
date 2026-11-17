@@ -5,33 +5,12 @@
 import { useState } from 'react';
 import type { HouseContent } from './content';
 
-function Cover({ variant, label }: { variant: 'sun' | 'moon' | 'mast'; label: string }) {
-  const bg = { sun: 'var(--mustard)', moon: 'var(--cobalt)', mast: 'var(--red)' }[variant];
+/** A small Mac window with the project's picture, or a soft tile when there isn't one yet. */
+function Thumb({ title, src, position }: { title: string; src?: string; position?: string }) {
   return (
-    <div className="hx-cover" style={{ background: bg }} aria-hidden="true">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-        {variant === 'sun' && (
-          <>
-            <circle cx="39" cy="39" r="29" fill="var(--red)" />
-            <rect x="0" y="77" width="100" height="9" fill="var(--ink)" />
-            <circle cx="77" cy="57" r="13" fill="var(--cobalt)" />
-          </>
-        )}
-        {variant === 'moon' && (
-          <>
-            <circle cx="50" cy="44" r="28" fill="var(--mustard)" />
-            <path d="M50 16 A28 28 0 0 1 50 72 Z" fill="var(--page)" />
-          </>
-        )}
-        {variant === 'mast' && (
-          <>
-            <circle cx="80" cy="20" r="40" fill="var(--page)" />
-            <rect x="10" y="0" width="9" height="100" fill="var(--ink)" />
-            <rect x="30" y="52" width="30" height="30" fill="var(--mustard)" />
-          </>
-        )}
-      </svg>
-      <span className="hx-cover-label" style={{ left: variant === 'mast' ? '24%' : '6%' }}>{label}</span>
+    <div className="hx-thumb" aria-hidden="true">
+      <div className="hx-thumb-bar"><span className="hx-lights"><i /><i /><i /></span><span>{title}</span></div>
+      {src ? <img src={src} alt="" style={{ objectPosition: position }} /> : <div className="hx-thumb-empty">Case study</div>}
     </div>
   );
 }
@@ -61,18 +40,17 @@ function Folders({ content }: { content: HouseContent }) {
   const [i, setI] = useState(0);
   const w = content.featured[i];
   if (!w) return null;
-  const n = String(i + 1).padStart(2, '0');
   return (
     <>
       <div className="hx-tabs" role="tablist" aria-label="Featured folders">
         {content.featured.map((f, k) => (
           <button key={f.slug} type="button" role="tab" aria-selected={k === i} onClick={() => setI(k)}>
-            {String(k + 1).padStart(2, '0')}
+            {f.short ?? f.company}
           </button>
         ))}
       </div>
       <div className="hx-folder" role="tabpanel">
-        <Cover variant={w.cover} label={`Studio ${n}`} />
+        <Thumb title={w.short ?? w.company} src={w.thumb} position={w.thumbPosition} />
         <span className="hx-muted hx-small">{w.company} · {w.role} · {w.year}</span>
         <h3 className="hx-h">{w.published ? w.title : w.summary}</h3>
         {w.published && <p>{w.tldr ?? w.summary}</p>}
@@ -85,7 +63,7 @@ function Folders({ content }: { content: HouseContent }) {
         )}
         <div className="hx-actions">
           {w.published ? (
-            <a className="btn" href={`/work/${w.slug}`}>Read the full case study</a>
+            <a className="hx-btn" href={`/work/${w.slug}`}>Read the full case study</a>
           ) : (
             <span className="hx-muted">[Case study in progress]</span>
           )}

@@ -1,0 +1,49 @@
+---
+/** Control Center music card: vinyl, track, progress, transport (visual only), optional playlist link. */
+import { records, site } from '../../data/site';
+
+interface Props {
+  heading?: boolean;
+  playlist?: boolean;
+  class?: string;
+}
+const { heading = false, playlist = false, class: className } = Astro.props;
+const r = records[0];
+---
+<div class:list={['cc', className]}>
+  {heading && <span class="cc-h">On the turntable</span>}
+  <span class="cc-row">
+    <span class="cc-sleeve"><span class="vinyl" style={`--label:${r.label}`}></span></span>
+    <span class="cc-txt"><span class="cc-track">{r.title}</span><span class="cc-artist">{r.artist}</span></span>
+  </span>
+  <span class="cc-time"><span>1:12</span><span class="cc-bar"><span></span></span><span>3:40</span></span>
+  <span class="cc-ctl">
+    <button type="button" class="cbtn" aria-label="Previous track"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 4 L7 8 L13 12 Z M7 4 L1 8 L7 12 Z" fill="#1d1d1f"></path></svg></button>
+    <button type="button" class="cbtn" aria-label="Pause" data-vinyl-toggle><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3 V13 M11 3 V13" stroke="#1d1d1f" stroke-width="2.4" stroke-linecap="round"></path></svg></button>
+    <button type="button" class="cbtn" aria-label="Next track"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4 L9 8 L3 12 Z M9 4 L15 8 L9 12 Z" fill="#1d1d1f"></path></svg></button>
+  </span>
+  {playlist && site.playlist && <a class="cc-link" href={site.playlist}>The full playlist →</a>}
+</div>
+
+<style>
+  .cc { width: 280px; max-width: 100%; display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: rgba(240, 240, 242, .82); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 14px 40px rgba(0, 0, 0, .18); color: #1d1d1f; text-align: left; }
+  .cc-h { font-size: 11px; font-weight: 600; color: #6e6e73; }
+  .cc-row { display: flex; align-items: center; gap: 10px; }
+  .cc-sleeve { position: relative; flex: none; width: 46px; height: 46px; border-radius: 8px; background: #2c2c2e; overflow: hidden; }
+  .vinyl { position: absolute; left: 5px; top: 5px; width: 36px; height: 36px; border-radius: 50%; background: repeating-radial-gradient(circle, #111 0 2px, #2b2b2e 2px 3px); animation: spin 2s linear infinite; }
+  .vinyl::after { content: ''; position: absolute; inset: 34%; border-radius: 50%; background: conic-gradient(var(--label, #ff5f57), #febc2e, #28c840, #0a6cff, #b45cff, var(--label, #ff5f57)); }
+  :global(.cc.is-stopped) .vinyl { animation-play-state: paused; }
+  .cc-txt { display: flex; flex-direction: column; min-width: 0; }
+  .cc-track { font-size: 13px; font-weight: 600; }
+  .cc-artist { font-size: 12px; color: #6e6e73; }
+  .cc-time { display: flex; align-items: center; gap: 8px; font-size: 10px; color: #6e6e73; font-variant-numeric: tabular-nums; }
+  .cc-bar { flex: 1; height: 4px; border-radius: 2px; background: rgba(0, 0, 0, .12); }
+  .cc-bar span { display: block; width: 38%; height: 100%; border-radius: 2px; background: rgba(0, 0, 0, .55); }
+  .cc-ctl { display: flex; justify-content: center; gap: 18px; }
+  .cbtn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; padding: 0; cursor: pointer; }
+  .cbtn:hover { background: rgba(0, 0, 0, .08); }
+  .cc-link { font-size: 13px; font-weight: 500; color: var(--blue); text-decoration: none; }
+  .cc-link:hover { text-decoration: underline; color: var(--blue-ink); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .vinyl { animation: none; } }
+</style>

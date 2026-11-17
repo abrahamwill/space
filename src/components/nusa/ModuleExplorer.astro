@@ -1,0 +1,132 @@
+---
+/**
+ * Tabbed tour of NusaFinance's modules: a dark tab bar over a Mac window of real Figma screens.
+ * Autoplays with a progress line under the active tab; hover, focus or a click hands over control.
+ * Tabs follow the ARIA tabs pattern (roving tabindex, arrow keys, Home/End).
+ */
+import Win from '../case2/Win.astro';
+
+const P = '/images/work/nusa/';
+// The on-ramp is left out on purpose: the coded hero above already shows it.
+const mods = [
+  { id: 'lending', label: 'Lending', src: 'lending.webp', w: 1512, h: 1097, alt: 'Lending Market: account summary with net APY, supply and borrow balances, and a borrow/supply market table.', note: 'Supply tokens to earn, or borrow against them, with your borrow limit always in view.' },
+  { id: 'pools', label: 'Pools', src: 'liquidity.webp', w: 1512, h: 1552, alt: 'Liquidity Pools: TVL and volume charts above a table of pools with chain, TVL, APR and Add/Remove actions.', note: 'Provide liquidity on several chains and earn from trading fees.' },
+  { id: 'staking', label: 'Staking', src: 'stake-modal.webp', w: 1512, h: 940, alt: 'Stake IDRX dialog: six durations with APRs, two of them locked, an amount field and a Stake button.', note: 'Stake IDRX for a flexible or a locked term. Locked terms pay more.' },
+  { id: 'gov', label: 'Governance', src: 'governance.webp', w: 1148, h: 1600, alt: 'Governance: lock NUSA for a chosen period to receive veNUSA, with balances and lock duration controls.', note: 'Lock NUSA to get veNUSA, the voting power behind every proposal.' },
+  { id: 'vote', label: 'Voting', src: 'voting.webp', w: 1022, h: 1568, alt: 'Proposal page: proposal text, a 68% agree / 32% disagree bar, Agree and Disagree options, and the voters list.', note: 'Read a proposal, see the split, and vote Agree or Disagree with your veNUSA.' },
+  { id: 'kyc', label: 'e-KYC', src: 'ekyc.webp', w: 1512, h: 1059, alt: 'e-KYC screen: a three-step tracker (Upload KTP, Face Comparison, Liveness Test) with the camera step active.', note: 'Verify your account in three steps: ID card, face comparison, liveness test.' },
+  { id: 'offramp', label: 'Off-ramp', src: 'offramp.webp', w: 1512, h: 1170, alt: 'Off-ramp screen: sell 100,000 IDRX on Polygon and receive 101,000 IDR to a bank account or e-wallet.', note: 'Sell IDRX or USDT and receive rupiah in a bank account or an e-wallet.' },
+];
+---
+<div class="mx" data-mx>
+  <div class="mx-tabs nusa-ui" role="tablist" aria-label="NusaFinance modules">
+    {mods.map((m, i) => (
+      <button type="button" role="tab" id={`mx-tab-${m.id}`} aria-controls={`mx-panel-${m.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-i={i} data-label={m.label} data-note={m.note}>
+        {m.label}<span class="mx-prog" aria-hidden="true"></span>
+      </button>
+    ))}
+  </div>
+  <Win title={`app.nusa.io · ${mods[0].label}`} dark>
+    <div class="mx-stage">
+      {mods.map((m, i) => (
+        <div class:list={['mx-panel', { on: i === 0 }]} role="tabpanel" id={`mx-panel-${m.id}`} aria-labelledby={`mx-tab-${m.id}`} aria-hidden={i === 0 ? undefined : 'true'} inert={i !== 0}>
+          <img src={P + m.src} alt={m.alt} width={m.w} height={m.h} loading={i === 0 ? 'lazy' : 'lazy'} decoding="async" />
+        </div>
+      ))}
+    </div>
+  </Win>
+  <p class="cap mx-note" aria-live="polite"><b data-mx-label>{mods[0].label}.</b> <span data-mx-note>{mods[0].note}</span></p>
+</div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll<HTMLElement>('[data-mx]').forEach((root) => {
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+    const fname = root.querySelector<HTMLElement>('.fname');
+    const label = root.querySelector<HTMLElement>('[data-mx-label]')!;
+    const note = root.querySelector<HTMLElement>('[data-mx-note]')!;
+    let cur = 0, auto = !reduce;
+
+    const select = (i: number, focus = false) => {
+      cur = (i + tabs.length) % tabs.length;
+      tabs.forEach((t, j) => {
+        const on = j === cur;
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        const prog = t.querySelector<HTMLElement>('.mx-prog');
+        if (prog) { prog.style.animation = 'none'; void prog.offsetWidth; prog.style.animation = ''; }
+      });
+      panels.forEach((p, j) => {
+        const on = j === cur;
+        p.classList.toggle('on', on);
+        if (on) { p.removeAttribute('aria-hidden'); p.inert = false; } else { p.setAttribute('aria-hidden', 'true'); p.inert = true; }
+      });
+      const t = tabs[cur];
+      if (fname) fname.textContent = `app.nusa.io · ${t.dataset.label}`;
+      label.textContent = `${t.dataset.label}.`;
+      note.textContent = t.dataset.note ?? '';
+      if (focus) t.focus();
+      // Keep the active tab in view inside the bar without ever scrolling the page.
+      const bar = t.parentElement!;
+      const left = t.offsetLeft - bar.clientWidth / 2 + t.offsetWidth / 2;
+      if (bar.scrollWidth > bar.clientWidth) bar.scrollTo({ left, behavior: reduce ? 'auto' : 'smooth' });
+    };
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => { stopAuto(); select(i); });
+      t.addEventListener('keydown', (e) => {
+        const map: Record<string, number> = { ArrowRight: cur + 1, ArrowLeft: cur - 1, Home: 0, End: tabs.length - 1 };
+        if (e.key in map) { e.preventDefault(); stopAuto(); select(map[e.key], true); }
+      });
+      t.querySelector('.mx-prog')?.addEventListener('animationend', () => { if (auto) select(cur + 1); });
+    });
+
+    const stopAuto = () => { auto = false; root.classList.remove('playing'); };
+    if (!auto) return;
+    root.classList.add('playing');
+    const setRun = (run: boolean) => root.classList.toggle('paused', !run);
+    let visible = false, hover = false;
+    const sync = () => setRun(visible && !hover && !document.hidden);
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }, { threshold: .35 }).observe(root);
+    root.addEventListener('pointerenter', () => { hover = true; sync(); });
+    root.addEventListener('pointerleave', () => { hover = false; sync(); });
+    root.addEventListener('focusin', () => { hover = true; sync(); });
+    root.addEventListener('focusout', () => { hover = false; sync(); });
+    document.addEventListener('visibilitychange', sync);
+    setRun(false);
+  });
+</script>
+
+<style>
+  .mx { display: flex; flex-direction: column; gap: 14px; }
+  .mx-tabs {
+    display: flex; gap: 4px; align-self: center; max-width: 100%;
+    padding: 5px; border-radius: 12px; background: #101010;
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .12);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .mx-tabs::-webkit-scrollbar { display: none; }
+  .mx-tabs [role='tab'] {
+    position: relative; overflow: hidden; flex: none;
+    min-height: 38px; padding: 0 14px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--n-t3); font: 500 13.5px/1 var(--n-font); cursor: pointer;
+    transition: color .2s, background .2s;
+  }
+  .mx-tabs [role='tab']:hover { color: var(--n-t1); }
+  .mx-tabs [role='tab'][aria-selected='true'] { background: #202020; color: var(--n-green); }
+  .mx-prog { position: absolute; left: 10px; right: 10px; bottom: 4px; height: 2px; border-radius: 2px; background: var(--n-green); transform: scaleX(0); transform-origin: left; opacity: 0; }
+  .playing [aria-selected='true'] .mx-prog { opacity: .9; animation: mx-prog 5.2s linear forwards; }
+  .playing.paused [aria-selected='true'] .mx-prog { animation-play-state: paused; }
+  @keyframes mx-prog { to { transform: scaleX(1); } }
+
+  .mx-stage { position: relative; aspect-ratio: 1512 / 1000; background: #101010; }
+  .mx-panel { position: absolute; inset: 0; opacity: 0; transform: scale(1.012); transition: opacity .55s var(--ease), transform .8s var(--ease); }
+  .mx-panel.on { opacity: 1; transform: none; }
+  /* Width-locked so every 1512px frame shows at the same scale; tall ones are cropped at the bottom. */
+  .mx-stage { overflow: hidden; }
+  .mx-panel img { width: 100%; height: auto; }
+  @media (prefers-reduced-motion: reduce) { .mx-panel { transform: none; transition: opacity .2s; } }
+  .mx-note { min-height: 3em; text-align: center; }
+  @media (max-width: 700px) { .mx-tabs { align-self: stretch; } .mx-note { text-align: left; } }
+</style>

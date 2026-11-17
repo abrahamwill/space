@@ -18,6 +18,13 @@ const work = defineCollection({
     year: z.string(),
     order: z.number(),
     published: z.boolean().default(true),
+    /** The page is hand-built in src/pages/work/<id>.astro, not rendered from this file. */
+    bespoke: z.boolean().default(false),
+    /** Short name for window titles on the home page, e.g. "NusaFinance". */
+    short: z.string().optional(),
+    /** Card picture on the home page (a path in /public). Without one, the card draws a coded mock. */
+    thumb: z.string().optional(),
+    thumbPosition: z.string().default('top center'),
     /** Record-sleeve artwork; each variant carries its own colours. */
     cover: z.enum(['sun', 'moon', 'mast']),
     meta: z

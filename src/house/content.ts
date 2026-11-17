@@ -12,6 +12,9 @@ export interface HouseContent {
     year: string;
     published: boolean;
     cover: 'sun' | 'moon' | 'mast';
+    short?: string;
+    thumb?: string;
+    thumbPosition?: string;
     tldr?: string;
     metrics: Array<{ value: string; label: string }>;
     prototypeUrl?: string;
