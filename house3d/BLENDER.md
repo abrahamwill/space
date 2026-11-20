@@ -71,3 +71,14 @@ blender -b house3d/house_P2.blend -P house3d/rig_character.py -- public/house3d/
 - The script checks the rigged "wave" against the house's `character_abraham` and stops if they differ by more than a couple of millimetres (the bevel is welded per piece, so it differs very slightly).
 - The site hides the house's static copy and shows the rigged one. The pet (`lab_pet_Pet`) is animated in code (`src/house3d/life.ts`): its body and eyes hop; the bed stays put.
 - After changing the character or its clips, re-run the script, then the hero still: `node scripts/render-house3d-poster.mjs`.
+
+## 9. Where he stands and walks
+- **His mark** is `PERSON_AT` in `source/hero3d.py` (P2: plan (5.6, 5.2), moved there 2026-11-21 at Abraham's request so the HeroCamera sees him whole). Changing it means rebuilding the chain: `export_glb.py`, then setup → lighting → finish (save `house_P2.blend`), `export_web.py`, `rig_character.py`, `walks.py`, and the hero still.
+- **Walks:** `walks.py` writes `public/house3d/walks.json`:
+
+```bash
+blender -b house3d/house_P2.blend -P house3d/walks.py -- public/house3d/walks.json
+```
+
+  Walls and doors come from the plan, furniture from the finished scene (rays from head height), so the paths go round whatever is there. The spots (records, turntable, sofa, pet, PC, books, garden tree) are listed at the top of the script, with what he does there. Add `--map out.png` for a picture of the walkable floor and the paths.
+- The site (`src/house3d/life.ts`) walks him out from his mark every so often, and he always comes back to it. With reduced motion he stays on his mark.

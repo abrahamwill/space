@@ -22,7 +22,6 @@ Writes the GLB (Draco) and house3d/character_abraham.blend next to this script.
 import math
 import os
 import sys
-import types
 
 import bmesh
 import bpy
@@ -36,53 +35,11 @@ HOUSE = 'P2'
 
 
 # ------------------------------------------------------------------ the source, inside Blender
-# source/engine.py needs scipy's ConvexHull and Pillow (for its own renderer, unused here). Blender's
-# Python ships numpy only, so stand in for both: the hull comes from Blender's convex hull operator.
-class ConvexHull:
-    def __init__(self, pts):
-        bm = bmesh.new()
-        vs = [bm.verts.new(tuple(p)) for p in np.asarray(pts, float)]
-        bm.verts.index_update()
-        bmesh.ops.convex_hull(bm, input=vs)
-        bmesh.ops.triangulate(bm, faces=bm.faces[:])
-        self.simplices = np.array([[v.index for v in f.verts] for f in bm.faces], int)
-        bm.free()
+sys.path.insert(0, HERE)
+import source_in_blender as S  # noqa: E402
+from source_in_blender import C, hero3d, M2U, U2M, to_blender  # noqa: E402,F401
 
-
-try:
-    import scipy.spatial  # noqa: F401
-except ImportError:
-    scipy = types.ModuleType('scipy')
-    scipy.spatial = types.ModuleType('scipy.spatial')
-    scipy.spatial.ConvexHull = ConvexHull
-    sys.modules['scipy'], sys.modules['scipy.spatial'] = scipy, scipy.spatial
-try:
-    import PIL  # noqa: F401
-except ImportError:
-    pil = types.ModuleType('PIL')
-    pil.Image, pil.ImageDraw = types.ModuleType('PIL.Image'), types.ModuleType('PIL.ImageDraw')
-    sys.modules.update({'PIL': pil, 'PIL.Image': pil.Image, 'PIL.ImageDraw': pil.ImageDraw})
-
-sys.path.insert(0, os.path.join(HERE, 'source'))
-import character as C  # noqa: E402
-import hero3d  # noqa: E402
-from plans import M2U  # noqa: E402
-
-U2M = 1 / M2U
-
-# Where the house puts him: hero3d.person() picks the spot; catch its call instead of copying it.
-_spot = {}
-_orig = hero3d.character
-hero3d.character = lambda pose, yaw, at: (_spot.update(pose=pose, yaw=yaw, at=at), _orig(pose, yaw, at))[1]
-hero3d.person(HOUSE)
-hero3d.character = _orig
-
-
-def to_blender(p):
-    """source units (x = his right, y = forward on the plan, z up) -> Blender metres.
-    Same as export_glb.py (glTF X = x, Y = z, Z = y) followed by Blender's glTF import (Y-up -> Z-up)."""
-    p = np.asarray(p, float) * U2M
-    return np.stack([p[..., 0], -p[..., 1], p[..., 2]], -1)
+_spot = S.spot(HOUSE)   # where the house puts him: hero3d.person()'s spot and yaw
 
 
 # That mapping mirrors y, so a source rotation about x or z turns the other way in Blender; about y it doesn't.
