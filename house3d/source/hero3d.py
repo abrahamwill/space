@@ -1154,7 +1154,17 @@ def out_old(out, rects, bank, stair, ytop, pathL, key):
     return out
 
 
+# Hand-placed spots (plan metres) that override the search below.
+# P2: Abraham asked (2026-11-21) to stand on the open living-room floor, screen-left of the old spot
+# (6.75, 4.75), which the glass partition and the pocket tree cropped. (5.6, 5.2) is the nearest spot
+# to his mark where the HeroCamera sees him whole, feet to hair, 0.42 m clear of the coffee table.
+PERSON_AT = {"P2": (5.6, 5.2)}
+
+
 def person(key):
+    if key in PERSON_AT:
+        px, py = PERSON_AT[key]
+        return character("wave", -45, (m(px), m(py), .04))
     plan = PLANS[key]
     r = next(rr for rr in plan["rooms"] if rr[0] == "living")
     x, y, w, d = max(r[3], key=lambda q: q[2] * q[3])

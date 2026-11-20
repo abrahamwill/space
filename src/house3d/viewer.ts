@@ -10,14 +10,14 @@
  * into what Blender renders: three.js intensity = Blender strength / π. LIGHT then fine-tunes.
  * Fabric bump, AO and EEVEE soft shadows don't travel in a GLB.
  *
- * Life (life.ts): the rigged character and the pet. They only move while the view is on screen, the
+ * Life (life.ts): the rigged character (walking routines from walks.json) and the pet. They only move while the view is on screen, the
  * tab is visible and reduced motion is off, at HERO_FPS; otherwise nothing renders after the first frame.
  * `still` (the poster render) poses them at rest and never moves them.
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { bringToLife, CHARACTER_URL, type Life } from './life';
+import { bringToLife, CHARACTER_URL, WALKS_URL, type Life, type Walks } from './life';
 
 const UNITS = 1 / (683 * Math.PI);
 
@@ -37,6 +37,8 @@ export interface HouseOptions {
   light?: typeof LIGHT;
   /** The rigged character's GLB, or false to keep the house's static copy. */
   character?: string | false;
+  /** Where he walks (house3d/walks.py), or false to keep him on his mark. */
+  walks?: string | false;
   /** Pose everything at rest and never animate (poster renders). */
   still?: boolean;
 }
@@ -56,7 +58,7 @@ export interface HouseView {
 }
 
 export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView {
-  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, still = false } = opts;
+  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, walks = WALKS_URL, still = false } = opts;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -132,7 +134,14 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
       })
     : Promise.resolve(null);
 
-  const ready = Promise.all([loader.loadAsync(url), charGltf]).then(([gltf, charG]) => {
+  const walkData: Promise<Walks | null> =
+    character && walks && !still
+      ? fetch(walks)
+          .then((r) => (r.ok ? (r.json() as Promise<Walks>) : null))
+          .catch(() => null)
+      : Promise.resolve(null);
+
+  const ready = Promise.all([loader.loadAsync(url), charGltf, walkData]).then(([gltf, charG, walkG]) => {
     const root = gltf.scene;
     const box = new THREE.Box3();
     root.traverse((o) => {
@@ -164,7 +173,7 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     });
     scene.add(root);
     root.updateMatrixWorld(true);
-    if (charG) life = bringToLife(root, charG);
+    if (charG) life = bringToLife(root, charG, walkG);
 
     // Sun shadow camera: cover the whole house, seen from the sun.
     const suns: THREE.DirectionalLight[] = [];

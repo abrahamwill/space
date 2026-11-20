@@ -50,7 +50,7 @@ Claude drives Blender headless with Python (`blender -b -P script.py`). Blender 
 1. Set up the Blender → GLB → site pipeline and agree the look on **one room** (lighting, baked shadows, a faceted tree). (1–2)
 2. Floor plan, walls, glass, gardens, stair, and the rim the house sinks into. (1–2)
 3. Furniture and props, matched to the render. (2)
-4. Character and pet, rigged and animated. (1–2) **Done for the hero (2026-11-21):** `house3d/rig_character.py` → `public/house3d/character.glb` (idle, wave, walk, sit); the hero waves and says hi on hover/focus, once on touch; the pet hops (`src/house3d/life.ts`). Walk and sit wait for step 5's waypoints.
+4. Character and pet, rigged and animated. (1–2) **Done for the hero (2026-11-21):** `house3d/rig_character.py` → `public/house3d/character.glb` (idle, wave, walk, sit); the hero waves and says hi on hover/focus, once on touch; the pet hops (`src/house3d/life.ts`). He walks routines too (`house3d/walks.py` → `public/house3d/walks.json`: records, turntable, sofa, pet, PC, books, garden tree) and stands on a new mark the camera sees whole. Hotspots and the 4-room switch are still step 5.
 5. Waypoints, hotspots, bedroom content, room switch for 4 rooms. (1)
 6. Hero placement (top 208, 860×454, new grid), posters, download size, phones, reduced motion. (1)
 
