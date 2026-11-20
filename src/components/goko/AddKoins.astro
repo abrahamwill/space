@@ -1,0 +1,221 @@
+---
+/**
+ * GokoMart Portal "Tambah GokoKoins", coded from the release frame, and playable.
+ * The clerk finds the farmer by phone, sees their active in-store missions and today's coin limit,
+ * picks the one mission they finished, and adds the coins. The two sticky notes are the design notes
+ * from the frame ("only one can be picked"; "picking another moves the selection").
+ * Autoplay runs the whole errand; any interaction hands it over. Names and numbers are mock data.
+ */
+import './goko-ui.css';
+
+const missions = [
+  { id: 'play', name: 'Main Games di GokoHub', coins: 100, icon: 'm-play' },
+  { id: 'win', name: 'Menang Games di GokoHub', coins: 500, icon: 'm-win' },
+  { id: 'share', name: 'Sebar Aktivitas di Sosial Media', coins: 150, icon: 'm-share' },
+];
+---
+<div class="gk ak" data-add-koins>
+  <div class="gk-url" aria-hidden="true"><svg width="10" height="12" viewBox="0 0 10 12"><rect x="1" y="5" width="8" height="6.5" rx="1.2" fill="currentColor"/><path d="M3 5V3.6a2 2 0 0 1 4 0V5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>sales-portal.gokomodo.com/gokokoins/add</div>
+  <div class="ak-body">
+    <p class="ak-h">Tambah GokoKoins</p>
+    <p class="ak-sub">Cari customer dan tambah GokoKoins dari misi yang selesai</p>
+
+    <div class="ak-row">
+      <label class="ak-lb" for="ak-tel">Cari Customer <span class="gk-req">Wajib</span></label>
+      <div class="ak-col">
+        <div class="ak-find">
+          <span class="gk-field" data-field><span class="pre">+62</span><input id="ak-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="Nomor handphone" data-tel /></span>
+          <button type="button" class="gk-link" data-find>Cari Customer</button>
+        </div>
+        <dl class="ak-card" data-card hidden>
+          <div><dt>Nomor Telepon</dt><dd data-phone>+6282111292827</dd></div>
+          <div><dt>Nama Lengkap</dt><dd>Ageng Kurniawan</dd></div>
+          <div><dt>Misi Offline Aktif</dt><dd><span data-active>3</span> Misi</dd></div>
+          <div><dt>Limit Harian GokoKoins</dt><dd><span data-used>0</span> dari 2500 Ditambahkan</dd></div>
+        </dl>
+        <p class="ak-miss" data-miss hidden>Nomor ini belum terdaftar. Coba 82111292827.</p>
+      </div>
+    </div>
+
+    <div class="ak-row" data-pick-row>
+      <span class="ak-lb">Pilih Misi Offline <span class="gk-req">Wajib</span><small>Pilih misi offline aktif yang akan diselesaikan</small></span>
+      <div class="ak-col ak-missions-wrap">
+        <ul class="ak-missions" data-missions role="list">
+          {missions.map((m) => (
+            <li class="ak-m" data-m={m.id} data-coins={m.coins}>
+              <img src={`/images/work/gokomart/${m.icon}.webp`} alt="" width="42" height="42" />
+              <span class="ak-m-t"><b>{m.name}</b><span><i class="gk-coin" aria-hidden="true"></i> +{m.coins}</span></span>
+              <button type="button" class="gk-btn ghost sm" data-pick aria-pressed="false" aria-label={`Pilih ${m.name}`}><span>Pilih</span></button>
+            </li>
+          ))}
+        </ul>
+        <p class="ak-empty" data-empty>Cari customer dulu untuk melihat misi offline aktif.</p>
+        <span class="gk-note ak-note n1" aria-hidden="true">Hanya bisa pilih salah 1.</span>
+        <span class="gk-note ak-note n2" aria-hidden="true">Jika sudah memilih dan user memilih misi lainnya, maka state dipilih akan berganti ke misi yang dipilih terakhir</span>
+      </div>
+    </div>
+  </div>
+  <div class="ak-foot">
+    <button type="button" class="gk-btn ghost" data-cancel>Batal</button>
+    <button type="button" class="gk-btn" data-submit disabled>Tambah GokoKoins</button>
+  </div>
+  <p class="gk-toast" data-toast role="status"><i aria-hidden="true">✓</i><span></span></p>
+  <span class="gk-tap" data-tap aria-hidden="true"></span>
+</div>
+
+<script>
+  import { autoplay, tapAt, typeSteps, reduceMotion, type Step } from './autoplay';
+  const PHONE = '82111292827';
+
+  document.querySelectorAll<HTMLElement>('[data-add-koins]').forEach((root) => {
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const tel = $<HTMLInputElement>('[data-tel]');
+    const field = $('[data-field]');
+    const card = $('[data-card]');
+    const miss = $('[data-miss]');
+    const empty = $('[data-empty]');
+    const list = $('[data-missions]');
+    const submit = $<HTMLButtonElement>('[data-submit]');
+    const toast = $('[data-toast]');
+    const tap = $('[data-tap]');
+    const used = $('[data-used]');
+    const active = $('[data-active]');
+    let picked: HTMLElement | null = null;
+    let usedN = 0, toastTimer = 0;
+
+    const items = () => [...root.querySelectorAll<HTMLElement>('[data-m]')];
+    const setPick = (li: HTMLElement | null) => {
+      picked = li;
+      items().forEach((m) => {
+        const on = m === li;
+        m.classList.toggle('on', on);
+        const b = m.querySelector<HTMLButtonElement>('[data-pick]')!;
+        b.setAttribute('aria-pressed', String(on));
+        b.querySelector('span')!.textContent = on ? 'Dipilih' : 'Pilih';
+      });
+      submit.disabled = !li;
+    };
+    const find = () => {
+      const ok = tel.value.replace(/\D/g, '') === PHONE;
+      card.hidden = !ok; miss.hidden = ok;
+      root.classList.toggle('found', ok);
+      empty.hidden = ok;
+      if (!ok) setPick(null);
+    };
+    const reset = () => {
+      tel.value = ''; card.hidden = true; miss.hidden = true; empty.hidden = false;
+      root.classList.remove('found'); setPick(null);
+      usedN = 0; used.textContent = '0'; active.textContent = '3';
+      items().forEach((m) => { m.hidden = false; });
+    };
+    const add = () => {
+      if (!picked) return;
+      const n = Number(picked.dataset.coins);
+      if (usedN + n > 2500) return;
+      usedN += n; used.textContent = String(usedN);
+      used.classList.remove('bump'); void used.offsetWidth; used.classList.add('bump');
+      // A finished in-store mission counts once a day, so it leaves the list.
+      picked.hidden = true;
+      active.textContent = String(items().filter((m) => !m.hidden).length);
+      toast.querySelector('span')!.textContent = `+${n} GokoKoins ditambahkan ke akun Ageng Kurniawan`;
+      toast.classList.add('is-on');
+      clearTimeout(toastTimer); toastTimer = window.setTimeout(() => toast.classList.remove('is-on'), 2600);
+      setPick(null);
+    };
+
+    root.querySelector('[data-find]')!.addEventListener('click', find);
+    tel.addEventListener('keydown', (e) => { if (e.key === 'Enter') find(); });
+    tel.addEventListener('input', () => { tel.value = tel.value.replace(/\D/g, '').slice(0, 13); });
+    root.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach((b) => b.addEventListener('click', () => {
+      const li = b.closest<HTMLElement>('[data-m]')!;
+      setPick(picked === li ? null : li);
+    }));
+    submit.addEventListener('click', add);
+    root.querySelector('[data-cancel]')!.addEventListener('click', reset);
+
+    if (reduceMotion()) {
+      tel.value = PHONE; find(); setPick(items()[0]);
+      return;
+    }
+    const press = (el: Element) => { tapAt(root, tap, el); el.classList.add('press'); window.setTimeout(() => el.classList.remove('press'), 160); };
+    const pickBtn = (id: string) => root.querySelector<HTMLButtonElement>(`[data-m="${id}"] [data-pick]`)!;
+    const steps: Step[] = [
+      [() => { reset(); field.classList.add('typing'); }, 500],
+      ...typeSteps(tel, PHONE, 85),
+      [() => field.classList.remove('typing'), 450],
+      [() => { press(root.querySelector('[data-find]')!); }, 260],
+      [() => find(), 1500],
+      [() => { const b = pickBtn('win'); press(b); setPick(b.closest('[data-m]')); }, 1500],
+      // Change of mind: the farmer played but didn't win. Picking another moves the selection.
+      [() => { const b = pickBtn('play'); press(b); setPick(b.closest('[data-m]')); }, 1300],
+      [() => { press(submit); }, 200],
+      [() => add(), 3400],
+    ];
+    autoplay(root, steps, { startDelay: 900 });
+  });
+</script>
+
+<style>
+  .ak { position: relative; background: #fff; }
+  .ak-body { padding: 24px 30px 18px; }
+  .ak-h { font-size: 21px; font-weight: 500; }
+  .ak-sub { margin-top: 6px !important; padding-bottom: 18px; border-bottom: 1px solid var(--line); font-size: 13px; color: #6b6b72; }
+  .ak-row { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; padding-top: 22px; }
+  .ak-lb { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; align-self: start; padding-top: 10px; font-size: 14.5px; }
+  .ak-lb small { flex-basis: 100%; font-size: 11.5px; color: #8a8a90; }
+  .ak-col { position: relative; max-width: 440px; }
+  .ak-find { display: flex; align-items: center; gap: 18px; }
+  .ak-find .gk-field { flex: 1; }
+  .ak-find .gk-link { position: absolute; left: calc(100% + 18px); }
+  .ak-card { display: grid; gap: 10px; margin: 8px 0 0; padding: 14px 16px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 4px 12px rgba(0, 0, 0, .05); font-size: 13px; animation: ak-in .35s var(--ease); }
+  .ak-card[hidden] { display: none; }
+  .ak-card div { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 10px; }
+  .ak-card dt { color: #8a8a90; }
+  .ak-card dd { margin: 0; }
+  .ak-card [data-used] { display: inline-block; }
+  .ak-card [data-used]:global(.bump) { animation: ak-bump .5s cubic-bezier(.2, .9, .3, 1.4); color: var(--g); font-weight: 600; }
+  @keyframes ak-bump { 40% { transform: scale(1.3); } }
+  @keyframes ak-in { from { opacity: 0; transform: translateY(-6px); } }
+  .ak-miss { margin-top: 8px !important; font-size: 12.5px; color: var(--red); }
+  .ak-miss[hidden] { display: none; }
+
+  .ak-missions { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .ak:not(.found) .ak-missions { display: none; }
+  .ak-empty { padding: 10px 0; font-size: 13px; color: #8a8a90; }
+  .ak-empty[hidden] { display: none; }
+  .ak-m { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 2px 6px rgba(0, 0, 0, .05); transition: background-color .25s, box-shadow .25s; animation: ak-in .35s var(--ease) backwards; }
+  .ak-m:nth-child(2) { animation-delay: .06s; }
+  .ak-m:nth-child(3) { animation-delay: .12s; }
+  .ak-m[hidden] { display: none; }
+  .ak-m img { width: 38px; height: 38px; flex: none; border-radius: 50%; }
+  .ak-m-t { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 13.5px; }
+  .ak-m-t b { font-weight: 400; }
+  .ak-m-t span { font-size: 11px; color: #e09a00; }
+  .ak-m:global(.on) { background: var(--g-tint); box-shadow: 0 0 0 1px var(--g-tint-2); }
+  .ak-m:global(.on) [data-pick] { background: transparent; box-shadow: none; color: var(--g); }
+  [data-pick] { min-width: 64px; }
+
+  .ak-note { top: 0; }
+  .ak-note.n1 { left: calc(100% + 24px); height: 150px; }
+  .ak-note.n2 { left: calc(100% + 204px); height: 150px; }
+  .ak:not(.found) .ak-note { opacity: 0; }
+  .ak-note { transition: opacity .4s; }
+
+  .ak-foot { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 30px; border-top: 1px solid var(--line); box-shadow: 0 -4px 10px rgba(0, 0, 0, .03); }
+
+  @media (max-width: 1180px) { .ak-note { display: none; } }
+  @media (max-width: 860px) {
+    .ak-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .ak-lb { padding-top: 0; }
+    .ak-col { max-width: none; }
+    .ak-find .gk-link { position: static; }
+  }
+  @media (max-width: 520px) {
+    .ak-body { padding: 18px 16px 14px; }
+    .ak-find { flex-direction: column; align-items: stretch; gap: 10px; }
+    .ak-find .gk-link { align-self: flex-start; min-height: 32px; }
+    .ak-card div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+    .ak-foot { padding: 12px 16px; }
+    .ak-foot .gk-btn { flex: 1; }
+  }
+</style>

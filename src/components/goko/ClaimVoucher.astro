@@ -1,0 +1,195 @@
+---
+/**
+ * GokoMart Portal "Klaim Voucher", coded from the release frames, and playable.
+ * Proof first: entering a code shows whose voucher it is, what it's for, when it expires and how much
+ * of today's shared quota is left, before anything is claimed. Then the edge case from the frame's note:
+ * another store claims the last voucher while this clerk is still checking, and the portal offers
+ * another voucher instead of failing. Autoplay runs a normal claim, then the race. Mock data.
+ */
+import './goko-ui.css';
+---
+<div class="gk cv" data-claim>
+  <div class="gk-url" aria-hidden="true"><svg width="10" height="12" viewBox="0 0 10 12"><rect x="1" y="5" width="8" height="6.5" rx="1.2" fill="currentColor"/><path d="M3 5V3.6a2 2 0 0 1 4 0V5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>sales-portal.gokomodo.com/voucher/claim</div>
+  <div class="cv-body">
+    <p class="cv-h">Klaim Voucher</p>
+    <p class="cv-sub">Masukkan kode voucher yang ingin dipakai</p>
+    <div class="cv-row">
+      <label class="cv-lb" for="cv-code">Kode Voucher <span class="gk-req">Wajib</span></label>
+      <div class="cv-col">
+        <div class="cv-find">
+          <span class="gk-field" data-field><input id="cv-code" type="text" autocomplete="off" spellcheck="false" placeholder="Contoh: KOPSJUL2827AK" data-code /></span>
+          <button type="button" class="gk-link" data-find>Cari Voucher</button>
+        </div>
+        <p class="cv-miss" data-miss hidden>Kode tidak ditemukan. Coba KOPSJUL2827AK.</p>
+        <div class="cv-card" data-card hidden>
+          <p class="cv-sec">Informasi Akun</p>
+          <dl>
+            <div><dt>Pemilik</dt><dd>Ageng Kurniawan</dd></div>
+            <div><dt>Nomor Telepon</dt><dd>+6282111292827</dd></div>
+          </dl>
+          <p class="cv-sec">Informasi Voucher</p>
+          <dl>
+            <div><dt>Kode Voucher</dt><dd>KOPSJUL2827AK</dd></div>
+            <div><dt>Nama Voucher</dt><dd>Diskon Produk Agri Senilai 50000</dd></div>
+            <div><dt>Kadaluwarsa</dt><dd>30 Juli 2023, 23:59 WITA</dd></div>
+            <div><dt>Sisa Kuota Harian</dt><dd class="cv-q" data-quota>18</dd></div>
+          </dl>
+          <p class="cv-tnc">Tukarkan 50.000 GokoKoin untuk mendapatkan Diskon Produk Agri Senilai Rp50.000 di GokoHub terdekat. Persediaan terbatas, voucher berlaku untuk 10 orang pertama yang datang ke GokoHub setiap bulannya.</p>
+          <p class="cv-race" data-race aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cv-foot">
+    <button type="button" class="gk-btn ghost" data-cancel>Batal</button>
+    <button type="button" class="gk-btn" data-submit disabled>Klaim Voucher</button>
+  </div>
+
+  <div class="cv-dlg-wrap" data-dlg hidden>
+    <div class="cv-dlg" role="alertdialog" aria-labelledby="cv-dlg-t" aria-describedby="cv-dlg-d">
+      <img src="/images/work/gokomart/quota-art.webp" alt="" width="98" height="98" />
+      <p class="cv-dlg-t" id="cv-dlg-t">Kuota Voucher Telah Habis</p>
+      <p class="cv-dlg-d" id="cv-dlg-d">Silakan pilih voucher lain untuk diklaim</p>
+      <button type="button" class="gk-btn" data-other>Pilih Voucher Lainnya</button>
+    </div>
+  </div>
+  <p class="gk-toast" data-toast role="status"><i aria-hidden="true">✓</i><span></span></p>
+  <span class="gk-tap" data-tap aria-hidden="true"></span>
+</div>
+
+<script>
+  import { autoplay, tapAt, typeSteps, reduceMotion, type Step } from './autoplay';
+  const CODE = 'KOPSJUL2827AK';
+
+  document.querySelectorAll<HTMLElement>('[data-claim]').forEach((root) => {
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+    const code = $<HTMLInputElement>('[data-code]');
+    const field = $('[data-field]');
+    const card = $('[data-card]');
+    const miss = $('[data-miss]');
+    const quota = $('[data-quota]');
+    const race = $('[data-race]');
+    const submit = $<HTMLButtonElement>('[data-submit]');
+    const dlg = $('[data-dlg]');
+    const toast = $('[data-toast]');
+    const tap = $('[data-tap]');
+    const findBtn = $('[data-find]');
+    const other = $<HTMLButtonElement>('[data-other]');
+    let q = 18, toastTimer = 0;
+
+    const setQ = (n: number) => {
+      q = n; quota.textContent = String(n);
+      quota.classList.toggle('low', n <= 1);
+      quota.classList.remove('bump'); void quota.offsetWidth; quota.classList.add('bump');
+    };
+    const find = () => {
+      const ok = code.value.trim().toUpperCase() === CODE;
+      card.hidden = !ok; miss.hidden = ok; submit.disabled = !ok;
+    };
+    const reset = (quotaLeft = 18) => {
+      code.value = ''; card.hidden = true; miss.hidden = true; submit.disabled = true;
+      dlg.hidden = true; race.textContent = ''; race.classList.remove('is-on');
+      q = quotaLeft; quota.textContent = String(q); quota.classList.toggle('low', q <= 1);
+    };
+    const claim = () => {
+      if (card.hidden) return;
+      if (q <= 0) { dlg.hidden = false; return; }
+      setQ(q - 1);
+      toast.querySelector('span')!.textContent = 'Voucher berhasil diklaim untuk Ageng Kurniawan';
+      toast.classList.add('is-on');
+      clearTimeout(toastTimer); toastTimer = window.setTimeout(() => toast.classList.remove('is-on'), 2600);
+      submit.disabled = true;
+    };
+    const otherStore = () => {
+      race.textContent = 'GokoHub Sintang baru saja mengklaim voucher yang sama';
+      race.classList.add('is-on');
+      setQ(Math.max(0, q - 1));
+    };
+
+    findBtn.addEventListener('click', find);
+    code.addEventListener('keydown', (e) => { if (e.key === 'Enter') find(); });
+    submit.addEventListener('click', () => { claim(); if (!dlg.hidden) other.focus({ preventScroll: true }); });
+    $('[data-cancel]').addEventListener('click', () => reset(q));
+    other.addEventListener('click', () => reset(18));
+
+    if (reduceMotion()) { code.value = CODE; find(); return; }
+    const press = (el: Element) => { tapAt(root, tap, el); el.classList.add('press'); window.setTimeout(() => el.classList.remove('press'), 160); };
+    const steps: Step[] = [
+      // A normal claim: proof first, then claim.
+      [() => { reset(18); field.classList.add('typing'); }, 500],
+      ...typeSteps(code, CODE, 75),
+      [() => field.classList.remove('typing'), 350],
+      [() => press(findBtn), 220],
+      [() => find(), 2600],
+      [() => press(submit), 220],
+      [() => claim(), 3000],
+      // The race for the last voucher.
+      [() => { reset(1); field.classList.add('typing'); }, 500],
+      ...typeSteps(code, CODE, 60),
+      [() => field.classList.remove('typing'), 300],
+      [() => press(findBtn), 220],
+      [() => find(), 1900],
+      [() => otherStore(), 2000],
+      [() => press(submit), 220],
+      [() => claim(), 2800],
+      [() => press(other), 220],
+      [() => reset(18), 900],
+    ];
+    autoplay(root, steps, { startDelay: 900 });
+  });
+</script>
+
+<style>
+  .cv { position: relative; background: #fff; }
+  .cv-body { padding: 24px 30px 18px; min-height: 480px; }
+  .cv-h { font-size: 21px; font-weight: 500; }
+  .cv-sub { margin-top: 6px !important; padding-bottom: 18px; border-bottom: 1px solid var(--line); font-size: 13px; color: #6b6b72; }
+  .cv-row { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 20px; padding-top: 22px; }
+  .cv-lb { display: flex; align-items: center; gap: 8px; align-self: start; padding-top: 10px; font-size: 14.5px; white-space: nowrap; }
+  .cv-col { max-width: 460px; }
+  .cv-find { display: flex; align-items: center; gap: 18px; }
+  .cv-find .gk-field { flex: 1; }
+  .cv-find input { text-transform: uppercase; letter-spacing: .03em; }
+  .cv-find input::placeholder { text-transform: none; letter-spacing: 0; color: #b0b0b5; }
+  .cv-miss { margin-top: 8px !important; font-size: 12.5px; color: var(--red); }
+  .cv-miss[hidden] { display: none; }
+  .cv-card { margin-top: 8px; padding: 16px 18px; border-radius: 6px; box-shadow: 0 0 0 1px var(--line), 0 4px 12px rgba(0, 0, 0, .05); font-size: 13px; animation: cv-in .4s var(--ease); }
+  .cv-card[hidden] { display: none; }
+  @keyframes cv-in { from { opacity: 0; transform: translateY(-6px); } }
+  .cv-sec { font-size: 15px; font-weight: 500; margin: 0 0 10px !important; }
+  .cv-card dl { display: grid; gap: 9px; margin: 0 0 16px; }
+  .cv-card dl div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; }
+  .cv-card dt { color: #8a8a90; }
+  .cv-card dd { margin: 0; }
+  .cv-q { color: var(--g); font-weight: 600; font-variant-numeric: tabular-nums; transition: color .3s; }
+  .cv-q:global(.low) { color: #c05600; }
+  .cv-q:global(.bump) { animation: cv-bump .5s cubic-bezier(.2, .9, .3, 1.4); display: inline-block; }
+  @keyframes cv-bump { 40% { transform: scale(1.35); } }
+  .cv-tnc { padding-top: 12px; border-top: 1px solid var(--line); font-size: 11px; line-height: 1.55; color: #6b6b72; }
+  .cv-race { margin-top: 10px !important; padding: 0 10px; border-radius: 6px; background: #fff3e6; color: #8a4200; font-size: 12px; line-height: 1.4; max-height: 0; overflow: hidden; opacity: 0; transition: max-height .35s var(--ease), opacity .3s, padding .3s; }
+  .cv-race:global(.is-on) { max-height: 60px; opacity: 1; padding: 8px 10px; }
+  .cv-foot { display: flex; justify-content: flex-end; gap: 12px; padding: 14px 30px; border-top: 1px solid var(--line); }
+
+  .cv-dlg-wrap { position: absolute; inset: 0; z-index: 7; display: grid; place-items: center; padding: 16px; background: rgba(40, 40, 44, .45); animation: cv-fade .2s ease-out; }
+  .cv-dlg-wrap[hidden] { display: none; }
+  @keyframes cv-fade { from { opacity: 0; } }
+  .cv-dlg { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(560px, 100%); padding: 30px 24px 32px; border-radius: 8px; background: #fff; text-align: center; box-shadow: 0 20px 50px rgba(0, 0, 0, .25); animation: cv-pop .35s cubic-bezier(.2, .9, .3, 1.2); }
+  @keyframes cv-pop { from { opacity: 0; transform: scale(.94); } }
+  .cv-dlg img { width: 90px; height: 90px; border-radius: 50%; }
+  .cv-dlg-t { margin-top: 6px !important; font-size: 18px; font-weight: 500; }
+  .cv-dlg-d { font-size: 14px; color: var(--ink-2); margin-bottom: 6px !important; }
+
+  @media (max-width: 760px) {
+    .cv-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .cv-lb { padding-top: 0; }
+    .cv-col { max-width: none; }
+  }
+  @media (max-width: 520px) {
+    .cv-body { padding: 18px 16px 14px; }
+    .cv-find { flex-direction: column; align-items: stretch; gap: 10px; }
+    .cv-find .gk-link { align-self: flex-start; min-height: 32px; }
+    .cv-card dl div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+    .cv-foot { padding: 12px 16px; }
+    .cv-foot .gk-btn { flex: 1; }
+  }
+</style>

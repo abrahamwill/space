@@ -15,10 +15,10 @@ import GmViewers from '../../components/gm/GmViewers.astro';
 
 const img = (f: string) => `/images/work/gm-xyz/${f}`;
 const onboarding = [
-  { src: 'connect-wallet.webp', w: 546, h: 1568, alt: 'A profile dimmed behind a sheet asking to connect a Phantom wallet to start creating a gm link.', cap: 'Connect a Phantom wallet' },
-  { src: 'claim.webp', w: 724, h: 1568, alt: 'Start by creating your personal link: a gm.xyz/ field with a mint check and a Create my Link button.', cap: 'Claim gm.xyz/yourname' },
-  { src: 'add-links.webp', w: 506, h: 1568, alt: 'Great! Time to add links and media into your page: empty slots for social media and media, with an Add menu.', cap: 'Add links and media' },
-  { src: 'edit-profile.webp', w: 446, h: 1568, alt: 'The owner view of a profile with drag handles on the links and delete, edit and done buttons.', cap: 'Arrange your own page' },
+  { src: 'connect-wallet.webp', w: 786, h: 2258, top: 106, bottom: 900, alt: 'A profile dimmed behind a sheet asking to connect a Phantom wallet to start creating a gm link.', cap: 'Connect a Phantom wallet' },
+  { src: 'claim.webp', w: 786, h: 1704, top: 108, bottom: 0, alt: 'Start by creating your personal link: a gm.xyz/ field with a mint check and a Create my Link button.', cap: 'Claim gm.xyz/yourname' },
+  { src: 'add-links.webp', w: 786, h: 2440, top: 120, bottom: 300, alt: 'Great! Time to add links and media into your page: empty slots for social media and media, with an Add menu.', cap: 'Add links and media' },
+  { src: 'edit-profile.webp', w: 786, h: 2768, top: 84, bottom: 200, alt: 'The owner view of a profile with drag handles on the links and delete, edit and done buttons.', cap: 'Arrange your own page' },
 ];
 ---
 <CaseShell
@@ -104,7 +104,7 @@ const onboarding = [
     <div class="wide phones" data-reveal>
       {onboarding.map((p) => (
         <figure class="ph">
-          <Phone src={img(p.src)} alt={p.alt} width={p.w} height={p.h} screen={560} />
+          <Phone src={img(p.src)} alt={p.alt} width={p.w} height={p.h} top={p.top} bottom={p.bottom} screen={560} />
           <figcaption>{p.cap}</figcaption>
         </figure>
       ))}
@@ -125,7 +125,7 @@ const onboarding = [
     <div class="mid z tipjar" data-reveal>
       <div class="tip-col"><GmTip /></div>
       <figure class="ph lb">
-        <Phone src={img('leaderboard.webp')} alt="Top Tippers for Luke Moradavis: a podium for the top three tippers by wallet address and a ranked list below." width={575} height={1568} screen={560} />
+        <Phone src={img('leaderboard.webp')} alt="Top Tippers for Luke Moradavis: a podium for the top three tippers by wallet address and a ranked list below." width={786} height={2144} top={108} screen={560} />
         <figcaption>Every tip lands on the creator's leaderboard: a podium for the top three, the full list, and a History tab.</figcaption>
       </figure>
     </div>
