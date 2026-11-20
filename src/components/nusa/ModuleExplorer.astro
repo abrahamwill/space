@@ -9,13 +9,13 @@ import Win from '../case2/Win.astro';
 const P = '/images/work/nusa/';
 // The on-ramp is left out on purpose: the coded hero above already shows it.
 const mods = [
-  { id: 'lending', label: 'Lending', src: 'lending.webp', w: 1512, h: 1097, alt: 'Lending Market: account summary with net APY, supply and borrow balances, and a borrow/supply market table.', note: 'Supply tokens to earn, or borrow against them, with your borrow limit always in view.' },
-  { id: 'pools', label: 'Pools', src: 'liquidity.webp', w: 1512, h: 1552, alt: 'Liquidity Pools: TVL and volume charts above a table of pools with chain, TVL, APR and Add/Remove actions.', note: 'Provide liquidity on several chains and earn from trading fees.' },
+  { id: 'lending', label: 'Lending', src: 'lending.webp', w: 2420, h: 1568, alt: 'Lending Market: account summary with net APY, supply and borrow balances, and a borrow/supply market table.', note: 'Supply tokens to earn, or borrow against them, with your borrow limit always in view.' },
+  { id: 'pools', label: 'Pools', src: 'liquidity.webp', w: 2420, h: 1568, alt: 'Liquidity Pools: TVL and volume charts above a table of pools with chain, TVL, APR and Add/Remove actions.', note: 'Provide liquidity on several chains and earn from trading fees.' },
   { id: 'staking', label: 'Staking', src: 'stake-modal.webp', w: 1512, h: 940, alt: 'Stake IDRX dialog: six durations with APRs, two of them locked, an amount field and a Stake button.', note: 'Stake IDRX for a flexible or a locked term. Locked terms pay more.' },
-  { id: 'gov', label: 'Governance', src: 'governance.webp', w: 1148, h: 1600, alt: 'Governance: lock NUSA for a chosen period to receive veNUSA, with balances and lock duration controls.', note: 'Lock NUSA to get veNUSA, the voting power behind every proposal.' },
-  { id: 'vote', label: 'Voting', src: 'voting.webp', w: 1022, h: 1568, alt: 'Proposal page: proposal text, a 68% agree / 32% disagree bar, Agree and Disagree options, and the voters list.', note: 'Read a proposal, see the split, and vote Agree or Disagree with your veNUSA.' },
-  { id: 'kyc', label: 'e-KYC', src: 'ekyc.webp', w: 1512, h: 1059, alt: 'e-KYC screen: a three-step tracker (Upload KTP, Face Comparison, Liveness Test) with the camera step active.', note: 'Verify your account in three steps: ID card, face comparison, liveness test.' },
-  { id: 'offramp', label: 'Off-ramp', src: 'offramp.webp', w: 1512, h: 1170, alt: 'Off-ramp screen: sell 100,000 IDRX on Polygon and receive 101,000 IDR to a bank account or e-wallet.', note: 'Sell IDRX or USDT and receive rupiah in a bank account or an e-wallet.' },
+  { id: 'gov', label: 'Governance', src: 'governance.webp', w: 2420, h: 1568, alt: 'Governance: lock NUSA for a chosen period to receive veNUSA, with balances and lock duration controls.', note: 'Lock NUSA to get veNUSA, the voting power behind every proposal.' },
+  { id: 'vote', label: 'Voting', src: 'voting.webp', w: 2420, h: 1568, alt: 'Proposal page: proposal text, a 68% agree / 32% disagree bar, Agree and Disagree options, and the voters list.', note: 'Read a proposal, see the split, and vote Agree or Disagree with your veNUSA.' },
+  { id: 'kyc', label: 'e-KYC', src: 'ekyc.webp', w: 2420, h: 1568, alt: 'e-KYC screen: a three-step tracker (Upload KTP, Face Comparison, Liveness Test) with the camera step active.', note: 'Verify your account in three steps: ID card, face comparison, liveness test.' },
+  { id: 'offramp', label: 'Off-ramp', src: 'offramp-mx.webp', w: 2420, h: 1568, alt: 'Off-ramp screen: sell 100,000 IDRX on Polygon and receive 101,000 IDR to a bank account or e-wallet.', note: 'Sell IDRX or USDT and receive rupiah in a bank account or an e-wallet.' },
 ];
 ---
 <div class="mx" data-mx>
@@ -125,7 +125,8 @@ const mods = [
   .mx-panel.on { opacity: 1; transform: none; }
   /* Width-locked so every 1512px frame shows at the same scale; tall ones are cropped at the bottom. */
   .mx-stage { overflow: hidden; }
-  .mx-panel img { width: 100%; height: auto; }
+  /* Fill the stage: short frames used to leave a band at the bottom. */
+  .mx-panel img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
   @media (prefers-reduced-motion: reduce) { .mx-panel { transform: none; transition: opacity .2s; } }
   .mx-note { min-height: 3em; text-align: center; }
   @media (max-width: 700px) { .mx-tabs { align-self: stretch; } .mx-note { text-align: left; } }
