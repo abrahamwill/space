@@ -1,0 +1,387 @@
+---
+/**
+ * Case study: GokoMart, 0 to 1 (Gokomodo). From the canvas boards Case-GokoMart-Mac and -Mobile.
+ * Coded, animated screens live in src/components/goko/ (portal home, RMS customers, add GokoKoins,
+ * claim voucher); the app screens and the 2023 sign-up forms are stills from Gokomodo's Figma release
+ * files. All names, phone numbers and amounts in the screens are design mock data.
+ * [Bracketed] gold chips are for the owner to confirm before publishing.
+ */
+import CaseShell from '../../layouts/CaseShell.astro';
+import Win from '../../components/case2/Win.astro';
+import Phone from '../../components/case2/Phone.astro';
+import PortalHome from '../../components/goko/PortalHome.astro';
+import RmsCustomers from '../../components/goko/RmsCustomers.astro';
+import AddKoins from '../../components/goko/AddKoins.astro';
+import ClaimVoucher from '../../components/goko/ClaimVoucher.astro';
+
+const img = (f: string) => `/images/work/gokomart/${f}`;
+const before = ['Nama lengkap', 'Alamat lengkap', 'Provinsi', 'Kabupaten/Kota', 'Kecamatan', 'Kelurahan/Desa'];
+---
+<CaseShell
+  title="GokoMart, 0 to 1"
+  description="Case study: GokoMart at Gokomodo. The brief asked for a farmer app and a backoffice; field research found farmers the app couldn't reach, so we added a portal for the store crew. Today most members come in through the counter."
+  crumb="GokoMart"
+  next={{ href: '/work/prototype-hub', title: 'Prototype Hub', line: 'Lab · one place where my product team finds, tours and discusses every AI-built prototype.' }}
+>
+  <!-- Hero -->
+  <section class="sec hero">
+    <span class="dotfade"></span>
+    <div class="col z stack" style="gap:26px">
+      <a class="back" href="/#work">← All work</a>
+      <span class="kick">Case study · GokoMart, 0 to 1 · Gokomodo</span>
+      <h1>Two doors to one farm store</h1>
+      <p class="lede">At Gokomodo, the brief for GokoMart asked for a farmer app and a dashboard to run it. Our field research found two kinds of farmers, and only one of them would use the app on their own. So we designed a third product, for the store crew, to serve the other.</p>
+      <dl class="meta">
+        <div><dt>Role</dt><dd>Design lead: research, planning and review for a team of 4 designers</dd></div>
+        <div><dt>Time</dt><dd>2023–2025; 3 months from request to MVP</dd></div>
+        <div><dt>Surfaces</dt><dd>Farmer app and HQ backoffice, plus a store-crew portal</dd></div>
+        <div><dt>Scale</dt><dd>55+ stores today, up from 23+ at the end of 2025</dd></div>
+      </dl>
+    </div>
+    <div class="wide z doors" data-reveal>
+      <div class="door">
+        <span class="dlabel"><i>1</i>The app</span>
+        <Phone src={img('app-home.webp')} alt="Gokomodo App home for a member: a GokoKoins balance of 5,100, mission cards, vouchers to exchange coins for, and how-it-works cards" width={364} height={1269} screen={600} auto />
+      </div>
+      <div class="door">
+        <span class="dlabel blue"><i>2</i>The store counter</span>
+        <Win title="GokoMart Portal · Home"><PortalHome /></Win>
+      </div>
+    </div>
+    <p class="cap z"><b>Two ways into one service.</b> Farmers who are at home on their phones use the app. Farmers who aren't go through the store crew, who use this portal at the counter. Both from the first release, July 2023. Press a job on the portal to log it.</p>
+  </section>
+
+  <!-- The field -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The field</span><h2>One farmer shopped on Shopee. Another only had a phone for calls.</h2></div>
+      <p>Gokomodo wanted to bring fair prices and reliable stock to smallholder farmers in rural Kalimantan and Sumatra. The brief from stakeholders was two products: a farmer app, and RMS, a backoffice where head office manages the app's content.</p>
+      <p>As design lead, I prepared and led our field research, and we went back several times to farm-supply stores and the farmers who buy there. Two farmers summed up what we found. A younger farmer already bought things on e-commerce apps like Shopee. An older farmer still used a basic phone, for calls and SMS only. <span class="tbc">how many trips, how many people?</span></p>
+      <p>An app would reach the first farmer easily. It couldn't reach the second at all. Across our visits, the farmers we met split into those two groups.</p>
+    </div>
+    <div class="col personas" data-reveal>
+      <div class="persona ring">
+        <span class="tag tag-blue">Door 2 · the counter</span>
+        <h3>The older farmer</h3>
+        <ul><li>Lower digital literacy; many still use a basic phone, for calls and SMS only</li><li>Trusts buying in person, at a store and from people they know</li><li>Slow to move online; needs a person to get started</li></ul>
+        <p class="ans"><span>Will they use the app alone?</span>Rarely. They need a person.</p>
+      </div>
+      <div class="persona">
+        <span class="tag">Door 1 · the app</span>
+        <h3>The younger farmer</h3>
+        <ul><li>Higher digital literacy</li><li>Already shops on e-commerce apps like Shopee</li><li>Comfortable checking prices and ordering online</li></ul>
+        <p class="ans"><span>Will they use the app alone?</span>Yes, if it's worth opening.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- The reframe -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The reframe</span><h2>Serve everyone now, and move them to the app over time</h2></div>
+      <p>The app was still the right future. It reaches farmers no store can, works wherever there's signal, and lets the service grow without building more stores. But the brief would have served only the younger farmers, and quietly left out the older ones. <span class="tbc">which group bought more?</span></p>
+      <p>Our goal was a service for every farmer. I brought the field findings together with what we heard from stakeholders, and our team gave the store crew a way to serve older farmers at the counter, doing the digital part with them.</p>
+      <p>Our first idea was to give the crew accounts in RMS. After discussing it, we split the platform instead: RMS for head office, and a separate portal for store crew. Keeping the crew out of head office's tool was safer and made access control simple. It also gave them a tool built around their three jobs at the counter: sign a farmer up, add coins, claim a voucher.</p>
+    </div>
+    <ol class="wide z surfaces" role="list" data-reveal>
+      <li class="surface" style="--i:0">
+        <div class="nm"><span class="tag">In the brief · younger farmers</span><b>Gokomodo App</b></div>
+        <div class="flow"><span>Sign up</span><i aria-hidden="true">→</i><span>Daily missions</span><i aria-hidden="true">→</i><span class="c">GokoKoins</span><i aria-hidden="true">→</i><span class="k">Voucher</span></div>
+        <p class="who"><span>Their own phone</span>Does it all themselves.</p>
+      </li>
+      <li class="surface ring" style="--i:1">
+        <div class="nm"><span class="tag tag-blue">Added · older farmers</span><b>GokoMart Portal</b></div>
+        <div class="flow"><span>Clerk signs them up</span><i aria-hidden="true">→</i><span class="c">Clerk adds coins</span><i aria-hidden="true">→</i><span class="k">Clerk claims the voucher</span></div>
+        <p class="who"><span>Counter laptop</span>The clerk does the digital part with them.</p>
+      </li>
+      <li class="surface" style="--i:2">
+        <div class="nm"><span class="tag">In the brief · head office</span><b>RMS backoffice</b></div>
+        <div class="flow"><span>Set missions and vouchers</span><i aria-hidden="true">→</i><span>Run promos</span><i aria-hidden="true">→</i><span class="k">See every member, from both doors</span></div>
+        <p class="who"><span>Office web app</span>Runs one programme for both groups.</p>
+      </li>
+    </ol>
+    <p class="cap z"><b>Two products asked for, one added.</b> Both doors write to the same account, coins and vouchers.</p>
+    <div class="col z stack" style="margin-top:56px">
+      <p>I led design across all three products with a team of four designers: mostly planning the work and reviewing it, with hands-on design here and there. Before launch, three decisions made the two doors work as one service.</p>
+    </div>
+  </section>
+
+  <!-- Decision 1 -->
+  <section class="sec">
+    <div class="col stack dec">
+      <span class="dnum" aria-hidden="true">1</span>
+      <div class="stack" style="gap:16px"><span class="pillk">Decision 1 of 3</span><h2>A farmer who never opens the app is still a full member</h2></div>
+      <p>The portal isn't a lesser version of the app. A clerk can sign a farmer up, add the coins they earned and claim their vouchers, so an older farmer gets the whole programme without touching a phone.</p>
+      <p>Every sign-up lands in the same customer list at head office, marked with the door it came through and the clerk who did it. An account made at the counter is already real: it holds the farmer's coins and vouchers. It shows as "not yet activated" until the farmer signs in to the app for the first time with the same phone number, and everything is already there. That's the path from door 2 to door 1.</p>
+    </div>
+    <div class="mid" style="margin-top:48px" data-reveal>
+      <Win title="RMS · Customers"><RmsCustomers /></Win>
+    </div>
+    <p class="cap"><b>Both doors, one list.</b> Head office sees which members joined in the app and which joined at the counter, and through which clerk. Counter sign-ups stay "Belum aktivasi" (not yet activated) until the farmer first signs in to the app, with their coins already there.</p>
+  </section>
+
+  <!-- Decision 2 -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack dec">
+      <span class="dnum" aria-hidden="true">2</span>
+      <div class="stack" style="gap:16px"><span class="pillk">Decision 2 of 3</span><h2>Missions bring both farmers back to the store</h2></div>
+      <p>Most daily missions can only be finished in person: visit the nearest store for 1,000 GokoKoins, play a game in its entertainment area for 100, win one for 500. A younger farmer sees the mission in the app. An older farmer just turns up, and the clerk records it in the portal.</p>
+      <p>Either way, the coins land on the same account, and every loop ends with a visit to the store, where both groups can be served.</p>
+    </div>
+    <div class="wide z" style="margin-top:48px" data-reveal>
+      <span class="dlabel blue"><i>P</i>The counter</span>
+      <Win title="GokoMart Portal · Add GokoKoins"><AddKoins /></Win>
+    </div>
+    <p class="cap z"><b>Try it.</b> Find the farmer by phone (82111292827), pick the mission they finished and add the coins. Only one mission can be picked; picking another moves the selection, as the sticky notes on the release frame say.</p>
+    <div class="wide z trio2" data-reveal>
+      <div>
+        <span class="dlabel"><i>A</i>The app</span>
+        <Phone src={img('app-missions.webp')} alt="App missions page: 3 of 4 daily missions available, with check-in, visit GokoHub, play games and win games cards" width={360} height={1162} screen={560} auto />
+      </div>
+      <div>
+        <span class="dlabel"><i>R</i>Head office</span>
+        <Win title="RMS · Mission detail" src={img('rms-mission.webp')} alt="Backoffice mission detail for Play games at GokoHub: 100 GokoKoins, completed through the store portal, repeats daily, once per day, within a 30-metre radius" width={1360} height={1412} />
+      </div>
+    </div>
+    <p class="cap z"><b>One mission, three views.</b> The younger farmer sees "+100 for playing at GokoHub". For the older farmer, the clerk picks that mission after the game. Head office sets it to once a day, within 30 metres of the store.</p>
+  </section>
+
+  <!-- Decision 3 -->
+  <section class="sec">
+    <div class="col stack dec">
+      <span class="dnum" aria-hidden="true">3</span>
+      <div class="stack" style="gap:16px"><span class="pillk">Decision 3 of 3</span><h2>The clerk sees the proof before anything is claimed</h2></div>
+      <p>Farmers worried that the store wouldn't recognise a voucher from the app. For an older farmer already unsure about anything digital, one failed voucher at the register could end their trust in the whole programme.</p>
+      <p>So the portal's voucher claim shows the clerk, and the farmer across the counter, whose voucher it is, what it's for, when it expires and how much of today's quota is left, before anything is claimed. When something goes wrong, it says so in plain words. Stores share a voucher's daily quota, so another store can claim the last one while this clerk is still checking it. The portal catches that and offers another voucher instead of failing.</p>
+    </div>
+    <div class="mid" style="margin-top:48px" data-reveal>
+      <Win title="GokoMart Portal · Claim voucher"><ClaimVoucher /></Win>
+    </div>
+    <p class="cap"><b>Proof first, then the race for the last voucher.</b> The first claim shows the owner, the voucher, its expiry and today's quota before anything happens. The second shows the edge case from the frame's note: another store claims the last one first, and the portal says "Kuota Voucher Telah Habis" (quota has run out) and offers another voucher. Try code KOPSJUL2827AK.</p>
+    <div class="col" style="margin-top:40px" data-reveal>
+      <div class="callout"><b data-count-to="8.7" data-suffix="×">8.7×</b><span>Vouchers redeemed at the counter grew from 2,879 in 2024 to 24,982 in 2025.</span></div>
+    </div>
+  </section>
+
+  <!-- Launch day -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Launch day</span><h2>Then launch day broke our sign-up form</h2></div>
+      <p>The first release still asked too much at both doors: the full address, down to the village, in the app and in the portal. GokoMart opened with a launch event, and around 100 farmers signed up on the spot, some by themselves and some with a clerk's help. That's where the long form broke. Older farmers didn't want to wait while a clerk typed their address, and the queue backed up behind them.</p>
+      <p>So we cut sign-up at both doors to a phone number and an OTP, and collected the rest on later visits.</p>
+    </div>
+    <div class="wide z ph-slot" style="margin-top:48px">
+      <span class="tbc">add launch-day photo</span>
+      <span>A photo from the GokoMart launch event: farmers queuing to sign up, or a clerk helping one at the counter laptop.</span>
+    </div>
+    <div class="wide z before" data-reveal>
+      <div>
+        <span class="dlabel"><i>A</i>Before · app, July 2023</span>
+        <Phone src={img('app-signup-2023.webp')} alt="July 2023 app sign-up step: full name, street address, province, regency, district and village dropdowns, and an optional referral code" width={360} height={1070} screen={560} auto />
+      </div>
+      <div>
+        <span class="dlabel blue"><i>P</i>Before · portal, July 2023</span>
+        <Win title="GokoMart Portal · Add customer" src={img('portal-add-customer-2023.webp')} alt="July 2023 portal Add customer form with seven required fields: name, phone, address and four region dropdowns" width={900} height={628} />
+      </div>
+      <div>
+        <span class="dlabel blue"><i>✓</i>After · both doors</span>
+        <div class="cut" data-cut>
+          <p class="cut-h">Sign-up fields</p>
+          <ul class="cut-list" role="list">
+            {before.map((f, i) => <li class="cut-f gone" style={`--i:${i}`}><span>{f}</span></li>)}
+            <li class="cut-f keep"><span>Nomor handphone</span></li>
+            <li class="cut-f keep otp"><span>Kode OTP</span></li>
+          </ul>
+          <p class="cut-n"><b data-cut-n>8</b> fields <span data-cut-to>→ 2</span></p>
+          <p class="cut-note"><b>Phone number + OTP.</b> The rest on later visits.</p>
+          <span class="tbc">add the short sign-up screen</span>
+        </div>
+      </div>
+    </div>
+    <p class="cap z"><b>The launch-day forms.</b> The full address at both doors, later cut to a phone number and an OTP.</p>
+  </section>
+
+  <!-- Result -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Result</span><h2>The door that wasn't in the brief brought in most members</h2></div>
+      <p>Today, about 60% of members came in through the store counter and 40% through the app. The farmers the original brief would have left out became the larger group. Meanwhile the app's share keeps growing: a year after launch, it was about 10%.</p>
+    </div>
+    <div class="col" style="margin-top:40px">
+      <div class="bars" role="img" aria-label="Share of members by sign-up door. A year after launch: about 90% counter, 10% app. Today: about 60% counter, 40% app." data-reveal>
+        <div class="brow"><span class="lb"><b>A year after launch</b>Members by door</span><div class="bar2"><span class="ctr" style="--w:90%">Counter ~90%</span><span class="app" style="--w:10%">~10%</span></div></div>
+        <div class="brow"><span class="lb"><b>Today</b>Members by door</span><div class="bar2"><span class="ctr" style="--w:60%">Counter ~60%</span><span class="app" style="--w:40%">App ~40%</span></div></div>
+        <div class="bkey" aria-hidden="true"><span><i class="k-ctr"></i>Signed up at the store counter</span><span><i class="k-app"></i>Signed up in the app</span></div>
+      </div>
+    </div>
+    <div class="col stats stats3" style="margin-top:20px" data-reveal>
+      <div class="stat"><b>60%</b><span>of members came in through the store counter</span></div>
+      <div class="stat"><b>4×</b><span>growth in the app's share of members since the first year</span></div>
+      <div class="stat"><b>86%</b><span>of transaction value in 2025 came from registered members</span></div>
+    </div>
+    <div class="col stack" style="margin-top:28px">
+      <p class="small">These numbers belong to the whole GokoMart network, not to any single screen. <span class="tbc">exact split and date</span> <span class="tbc">source to confirm</span></p>
+    </div>
+  </section>
+
+  <!-- What I learned -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">What I learned</span><h2>Inclusive first, digital over time</h2></div>
+      <p>The brief described the service we wanted to end up with. The field showed who would be left out on the way there. Designing for the farmers who weren't ready for the app, instead of waiting for them to catch up, is what let the app-first future start on day one.</p>
+      <p class="quote">For the older farmers, the clerk is the interface.</p>
+      <p>It also changed who I count as a user. The store crew became users with their own flows, errors and edge cases.</p>
+      <h3 style="margin-top:18px">What I'd do differently</h3>
+      <p>I'd move closer to the farmers. The stores are in Kalimantan, I was in Jakarta, and our research came in trips. If I could change one thing, I'd spend the last one to three months before launch near the stores, testing every step with farmers and hearing their feedback day by day. That's how we would have caught the long sign-up form before launch day, not during it.</p>
+      <p>There was no budget for that then. Next time, I'd make that case early, with this launch day as the reason. <span class="tbc">keep this line?</span></p>
+      <p class="fine">RMS is Gokomodo's Retail Management System. GokoMart stores were called GokoHub in the 2023 designs, so some screens use that name. Screens are coded from, or taken from, Gokomodo's Figma release files, 2023; names, phone numbers and amounts in them are design mock data.</p>
+    </div>
+  </section>
+</CaseShell>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // The 8.7× callout counts up once it's in view.
+  document.querySelectorAll<HTMLElement>('[data-count-to]').forEach((b) => {
+    if (reduce) return;
+    const to = Number(b.dataset.countTo), suf = b.dataset.suffix ?? '';
+    b.textContent = `0${suf}`;
+    new IntersectionObserver(([e], io) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const t0 = performance.now();
+      const tick = (t: number) => {
+        const k = Math.min(1, (t - t0) / 1100), ease = 1 - Math.pow(1 - k, 3);
+        b.textContent = `${(to * ease).toFixed(1)}${suf}`;
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: .6 }).observe(b);
+  });
+</script>
+
+<style>
+  .hero { padding-top: clamp(48px, 6vw, 70px); }
+  .small { font-size: 15px; color: var(--muted); }
+  .fine { margin-top: 12px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .tag-blue { background: var(--blue); color: #fff; }
+
+  .dlabel { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 12px; padding: 4px 10px 4px 8px; border-radius: 999px; background: #fff; box-shadow: var(--hair); font-size: 13px; font-weight: 500; color: var(--ink); }
+  .dlabel i { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); color: #fff; font: 600 10px var(--mono); font-style: normal; }
+  .dlabel.blue i { background: var(--blue); }
+
+  /* Hero: the app and the counter */
+  .doors { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 40px; align-items: start; margin-top: 64px; }
+  .door { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .door :global(.win) { width: 100%; }
+
+  /* Personas */
+  .personas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 44px; }
+  .persona { display: flex; flex-direction: column; gap: 14px; padding: 24px; border-radius: 14px; background: #fff; box-shadow: var(--hair); }
+  .persona.ring { box-shadow: 0 0 0 2px var(--blue); }
+  .persona ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; line-height: 1.5; color: var(--body); }
+  .persona .ans { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 15px; line-height: 1.45; }
+  .persona .ans span { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+
+  /* Surfaces */
+  .surfaces { display: flex; flex-direction: column; gap: 12px; margin-top: 48px; padding: 0; list-style: none; }
+  .surface { display: grid; grid-template-columns: 230px minmax(0, 1fr) 250px; gap: 24px; align-items: center; padding: 18px 22px; border-radius: 12px; background: #fff; box-shadow: var(--hair); }
+  .surface.ring { box-shadow: 0 0 0 2px var(--blue); }
+  .surface .nm { display: flex; flex-direction: column; gap: 4px; }
+  .surface .nm b { font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+  .surface .who { font-size: 14px; line-height: 1.45; color: var(--body); }
+  .surface .who span { display: block; font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .flow span.k { background: #e6f0ff; color: var(--blue-ink); font-weight: 500; }
+  .flow span.c { background: #fff4d6; color: #8a5a00; font-weight: 500; }
+  :global(.js) .surfaces[data-reveal] > li { opacity: 0; transform: translateX(-14px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: calc(var(--i) * 140ms); }
+  :global(.js) .surfaces[data-reveal].is-in > li { opacity: 1; transform: none; }
+  /* The added door draws attention once the three are in */
+  :global(.js) .surfaces[data-reveal].is-in > li.ring { animation: ring-pulse 1.6s var(--ease) .7s 1; }
+  @keyframes ring-pulse { 0%, 100% { box-shadow: 0 0 0 2px var(--blue); } 40% { box-shadow: 0 0 0 2px var(--blue), 0 0 0 8px rgba(10, 108, 255, .14); } }
+
+  /* Decision numbers hang in the margin */
+  .dec { position: relative; }
+  .dnum { position: absolute; left: -118px; top: -14px; font-weight: 600; font-size: 96px; line-height: 1; letter-spacing: -.05em; color: var(--blue); }
+
+  .trio2 { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 44px; }
+  .trio2 > div { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .trio2 :global(.win) { width: 100%; }
+
+  .callout { display: flex; align-items: center; gap: 26px; padding: 24px 28px; border-radius: 14px; background: #fff; box-shadow: var(--hair); }
+  .callout b { font-weight: 600; font-size: 64px; line-height: 1; letter-spacing: -.045em; font-variant-numeric: tabular-nums; min-width: 3.1ch; }
+  .callout span { font-size: 16px; line-height: 1.5; color: var(--body); }
+
+  /* Launch day */
+  .ph-slot { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 420px; padding: 28px; border-radius: 14px; border: 1.5px dashed #b9b9c0; background: rgba(255, 255, 255, .55); color: var(--muted); font-size: 15px; line-height: 1.5; text-align: center; }
+  .ph-slot span:last-child { max-width: 440px; }
+  .before { display: grid; grid-template-columns: 260px minmax(0, 1fr) 280px; gap: 28px; align-items: start; margin-top: 56px; }
+  .before > div { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+  .before :global(.win) { width: 100%; }
+  .before :global(.phone) { width: 260px; }
+
+  .cut { width: 100%; display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 14px; background: #fff; box-shadow: var(--hair); }
+  .cut-h { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .cut-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .cut-f { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .45s var(--ease), opacity .35s, margin .45s; }
+  .cut-f span { overflow: hidden; min-height: 0; display: block; padding: 0 12px; border-radius: 6px; line-height: 34px; font-size: 13.5px; background: var(--page); color: var(--body); position: relative; }
+  .cut-f.keep span { background: #e7f6ef; color: #0f6e4c; font-weight: 500; }
+  .cut-f.gone span::after { content: ''; position: absolute; left: 12px; right: 12px; top: 50%; height: 1.5px; background: #c62828; transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+  .cut-n { font-size: 14px; color: var(--muted); }
+  .cut-n b { font-size: 22px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cut-n span { opacity: 0; transition: opacity .4s; }
+  .cut-note { font-size: 15px; line-height: 1.45; color: var(--body); }
+  .cut-note b { color: var(--ink); }
+  .cut .tbc { align-self: flex-start; }
+  /* On reveal: strike each address field, then fold it away, leaving phone + OTP */
+  :global(.js) [data-reveal].is-in .cut-f.gone span::after { transform: scaleX(1); transition-delay: calc(400ms + var(--i) * 260ms); }
+  :global(.js) [data-reveal].is-in .cut-f.gone { grid-template-rows: 0fr; opacity: 0; margin-top: -6px; transition-delay: calc(2200ms + var(--i) * 90ms); }
+  :global(.js) [data-reveal].is-in .cut-n span { opacity: 1; transition-delay: 2.6s; }
+  :global(html:not(.js)) .cut-f.gone, .no-anim .cut-f.gone { display: none; }
+
+  /* Result bars grow in */
+  .bars { display: flex; flex-direction: column; gap: 18px; padding: 26px 28px; border-radius: 14px; background: #fff; box-shadow: var(--hair); }
+  .brow { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; align-items: center; }
+  .brow .lb { font-size: 14px; line-height: 1.35; }
+  .brow .lb b { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--muted); }
+  .bar2 { display: flex; height: 34px; border-radius: 8px; overflow: hidden; font-size: 13px; font-weight: 600; background: var(--page); }
+  .bar2 span { display: flex; align-items: center; padding: 0 12px; white-space: nowrap; overflow: hidden; width: var(--w); transition: width 1s var(--ease); }
+  .bar2 .ctr { background: var(--blue); color: #fff; }
+  .bar2 .app { background: #cfe1ff; color: #0a3d8f; }
+  :global(.js) .bars[data-reveal]:not(.is-in) .bar2 span { width: 0; padding: 0; }
+  :global(.js) .bars[data-reveal] .brow:nth-child(2) .bar2 span { transition-delay: .35s; }
+  .bkey { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--muted); }
+  .bkey span { display: inline-flex; align-items: center; gap: 8px; }
+  .bkey i { width: 12px; height: 12px; border-radius: 3px; }
+  .k-ctr { background: var(--blue); }
+  .k-app { background: #cfe1ff; }
+  .stats3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cut-f.gone { display: none; }
+    .cut-n span { opacity: 1; }
+  }
+  @media (max-width: 1180px) {
+    .dnum { position: static; display: block; font-size: 64px; margin-bottom: -6px; }
+    .before { grid-template-columns: 260px minmax(0, 1fr); }
+    .before > div:last-child { grid-column: 1 / -1; }
+    .cut { max-width: 520px; }
+  }
+  @media (max-width: 960px) {
+    .doors, .trio2 { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+    .door:first-child, .trio2 > div:first-child { align-items: center; }
+    .surface { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  }
+  @media (max-width: 760px) {
+    .personas { grid-template-columns: minmax(0, 1fr); }
+    .before { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+    .before > div:first-child { align-items: center; }
+    .ph-slot { min-height: 260px; }
+    .brow { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .stats3 { grid-template-columns: minmax(0, 1fr); }
+    .callout { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>

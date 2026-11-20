@@ -1,0 +1,168 @@
+---
+/**
+ * GokoMart Portal home (store crew), coded from the July 2023 release frame.
+ * The clerk's three jobs as big buttons, and this week's activity log at the hub.
+ * Autoplay: a job button is pressed and its entry lands at the top of the log, the way the counter
+ * fills it through the day. Clicking a job adds an entry too. Names and numbers are design mock data.
+ */
+import './goko-ui.css';
+
+const jobs = [
+  { id: 'customer', label: 'Tambah Customer', icon: 'ic-customer', act: 'Penambahan Customer' },
+  { id: 'voucher', label: 'Klaim Voucher', icon: 'ic-voucher', act: 'Klaim Voucher' },
+  { id: 'koins', label: 'Tambah GokoKoins', icon: 'ic-koins', act: 'Penambahan GokoKoins' },
+];
+const rows = [
+  ['11 Jul 2023, 14:30', 'Penambahan Customer', 'Sri Hartanto', '+6282111922273', 'Alexandra'],
+  ['11 Jul 2023, 12:53', 'Penambahan Customer', 'Alhanif Fairuszabadi', '+6288822182999', 'Alexandra'],
+  ['11 Jul 2023, 09:44', 'Penambahan Customer', 'Bambang Pamungkas', '+6289688272199', 'Alexandra'],
+  ['10 Jul 2023, 10:30', 'Klaim Voucher', 'Arianto Raharjo', '+6289681772100', 'Alexandra'],
+  ['10 Jul 2023, 10:10', 'Klaim Voucher', 'Ananta Rispo', '+6281221881822', 'Beni Sulaiman'],
+  ['10 Jul 2023, 09:34', 'Penambahan Customer', 'Dwi Putra Perkasa', '+6289766658890', 'Beni Sulaiman'],
+];
+---
+<div class="gk ptl" data-portal-home>
+  <div class="gk-url" aria-hidden="true"><svg width="10" height="12" viewBox="0 0 10 12"><rect x="1" y="5" width="8" height="6.5" rx="1.2" fill="currentColor"/><path d="M3 5V3.6a2 2 0 0 1 4 0V5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>sales-portal.gokomodo.com</div>
+  <div class="ptl-body">
+    <div class="ptl-head">
+      <div>
+        <p class="ptl-hi">Hi, Alexandra</p>
+        <p class="ptl-hub">GokoHub Kab. Kapuas Hulu III - Kalimantan Barat</p>
+      </div>
+      <span class="ptl-out" aria-hidden="true">Keluar <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2.5H3.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1H6M10.5 11l3-3-3-3M13.5 8H6"/></svg></span>
+    </div>
+
+    <div class="ptl-jobs">
+      {jobs.map((j) => (
+        <button type="button" class="ptl-job" data-job={j.id} data-act={j.act}>
+          <img src={`/images/work/gokomart/${j.icon}.webp`} alt="" width="90" height="90" />
+          <span>{j.label}</span>
+        </button>
+      ))}
+    </div>
+
+    <div class="ptl-log">
+      <p class="ptl-log-h">Aktivitas Hub Minggu Ini</p>
+      <p class="ptl-log-d">9 Juli - 15 Juli 2023</p>
+      <div class="ptl-table" role="table" aria-label="Hub activity this week">
+        <div class="ptl-tr th" role="row">
+          <span role="columnheader">Waktu Aktivitas</span><span role="columnheader">Nama Aktivitas</span><span role="columnheader">Nama Customer</span><span role="columnheader" class="c-tel">Nomor Telepon</span><span role="columnheader" class="c-by">Dikerjakan Oleh</span>
+        </div>
+        <div class="ptl-rows" data-rows>
+          {rows.map((r) => (
+            <div class="ptl-tr" role="row">
+              <span role="cell">{r[0]} <i>UTC+8</i></span><span role="cell">{r[1]}</span><span role="cell">{r[2]}</span><span role="cell" class="c-tel">{r[3]}</span><span role="cell" class="c-by">{r[4]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="gk-tap" data-tap aria-hidden="true"></span>
+</div>
+
+<script>
+  import { autoplay, tapAt, reduceMotion, type Step } from './autoplay';
+
+  // Who walks up to the counter next (design mock data, same style as the frame's).
+  const QUEUE = [
+    { act: 'Penambahan GokoKoins', name: 'Robert Manurung', tel: '+6285712224977', job: 'koins' },
+    { act: 'Penambahan Customer', name: 'Siti Rahmawati', tel: '+6281345567210', job: 'customer' },
+    { act: 'Klaim Voucher', name: 'Ageng Kurniawan', tel: '+6282111292827', job: 'voucher' },
+    { act: 'Penambahan GokoKoins', name: 'Yohanes Situmorang', tel: '+6281277340912', job: 'koins' },
+    { act: 'Penambahan Customer', name: 'Wahyu Hidayat', tel: '+6285254471180', job: 'customer' },
+    { act: 'Klaim Voucher', name: 'Marlina Siregar', tel: '+6281390125566', job: 'voucher' },
+  ];
+
+  document.querySelectorAll<HTMLElement>('[data-portal-home]').forEach((root) => {
+    const list = root.querySelector<HTMLElement>('[data-rows]')!;
+    const tap = root.querySelector<HTMLElement>('[data-tap]')!;
+    const btn = (id: string) => root.querySelector<HTMLButtonElement>(`[data-job="${id}"]`)!;
+    let clock = 15 * 60 + 5; // 15:05 on 11 Jul, after the newest row in the frame
+    let q = 0;
+
+    const addRow = (act: string, name: string, tel: string) => {
+      clock += 7 + Math.round(Math.random() * 18);
+      const hh = String(Math.floor(clock / 60) % 24).padStart(2, '0'), mm = String(clock % 60).padStart(2, '0');
+      const row = document.createElement('div');
+      row.className = 'ptl-tr is-new';
+      row.setAttribute('role', 'row');
+      const cells = [`11 Jul 2023, ${hh}:${mm} <i>UTC+8</i>`, act, name, tel, 'Alexandra'];
+      row.innerHTML = cells.map((c, i) => `<span role="cell"${i === 3 ? ' class="c-tel"' : i === 4 ? ' class="c-by"' : ''}></span>`).join('');
+      const spans = row.querySelectorAll('span');
+      spans[0].innerHTML = cells[0];
+      for (let i = 1; i < 5; i++) spans[i].textContent = cells[i];
+      list.prepend(row);
+      requestAnimationFrame(() => row.classList.add('in'));
+      // Keep the log the same length: the oldest row drops off the bottom.
+      while (list.children.length > 6) list.lastElementChild!.remove();
+      window.setTimeout(() => row.classList.remove('is-new'), 1800);
+    };
+    const next = () => { const e = QUEUE[q % QUEUE.length]; q++; return e; };
+
+    root.querySelectorAll<HTMLButtonElement>('[data-job]').forEach((b) => b.addEventListener('click', () => {
+      const e = QUEUE.find((x) => x.job === b.dataset.job)!;
+      addRow(b.dataset.act!, e.name, e.tel);
+    }));
+
+    if (reduceMotion()) return;
+    const steps: Step[] = [];
+    for (let i = 0; i < QUEUE.length; i++) {
+      let e = QUEUE[0];
+      steps.push([() => { e = next(); const b = btn(e.job); tapAt(root, tap, b); b.classList.add('press'); }, 220]);
+      steps.push([() => { btn(e.job).classList.remove('press'); }, 700]);
+      steps.push([() => addRow(e.act, e.name, e.tel), 2400]);
+    }
+    autoplay(root, steps, { startDelay: 1200 });
+  });
+</script>
+
+<style>
+  .ptl { position: relative; background: #fff; }
+  .ptl-body { padding: 26px 30px 30px; }
+  .ptl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .ptl-hi { font-size: 26px; font-weight: 600; letter-spacing: -.02em; }
+  .ptl-hub { margin-top: 6px !important; font-size: 14.5px; color: #6b6b72; }
+  .ptl-out { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 6px; box-shadow: inset 0 0 0 1px #d8343a; color: #d8343a; font-size: 13px; white-space: nowrap; }
+
+  .ptl-jobs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 26px; }
+  .ptl-job { display: flex; align-items: center; gap: 14px; min-height: 92px; padding: 10px 14px; border: 0; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 4px 14px rgba(0, 0, 0, .08); font: 500 17px var(--sans); color: var(--ink); text-align: left; cursor: pointer; transition: transform .15s var(--ease), box-shadow .2s; }
+  .ptl-job img { width: 62px; height: 62px; flex: none; border-radius: 50%; }
+  .ptl-job:hover { box-shadow: 0 0 0 1.5px var(--g), 0 6px 18px rgba(0, 0, 0, .08); }
+  .ptl-job:global(.press) { transform: scale(.97); box-shadow: 0 0 0 2px var(--g), 0 2px 8px rgba(0, 0, 0, .08); }
+
+  .ptl-log { margin-top: 28px; }
+  .ptl-log-h { font-size: 18px; font-weight: 500; }
+  .ptl-log-d { margin-top: 8px !important; font-size: 14px; color: #6b6b72; }
+  .ptl-table { margin-top: 12px; font-size: 12.5px; }
+  .ptl-tr { display: grid; grid-template-columns: 1.15fr 1.1fr 1.1fr 1fr .9fr; gap: 12px; align-items: center; min-height: 42px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+  .ptl-tr span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ptl-tr i { font-style: normal; }
+  .ptl-tr.th { min-height: 40px; background: #fafafa; font-weight: 500; }
+  .ptl-rows { position: relative; }
+  .ptl-rows :global(.ptl-tr) { display: grid; grid-template-columns: 1.15fr 1.1fr 1.1fr 1fr .9fr; gap: 12px; align-items: center; min-height: 42px; padding: 0 12px; border-bottom: 1px solid var(--line); transition: background-color 1.4s ease; }
+  .ptl-rows :global(.ptl-tr span) { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ptl-rows :global(.ptl-tr i) { font-style: normal; }
+  .ptl-rows :global(.ptl-tr.is-new) { background: var(--g-tint); }
+  .ptl-rows :global(.ptl-tr.is-new:not(.in)) { opacity: 0; transform: translateY(-10px); }
+  .ptl-rows :global(.ptl-tr.in) { opacity: 1; transform: none; transition: opacity .35s, transform .4s var(--ease), background-color 1.4s ease; }
+
+  @media (max-width: 1000px) {
+    .ptl-body { padding: 20px; }
+    .ptl-job { font-size: 15px; min-height: 76px; gap: 10px; }
+    .ptl-job img { width: 50px; height: 50px; }
+    .ptl-tr.th, .ptl-rows :global(.ptl-tr) { grid-template-columns: 1.2fr 1.2fr 1.1fr; }
+    .c-tel, .c-by, .ptl-rows :global(.c-tel), .ptl-rows :global(.c-by) { display: none; }
+  }
+  @media (max-width: 560px) {
+    .ptl-hi { font-size: 21px; }
+    .ptl-hub { font-size: 13px; }
+    .ptl-out { display: none; }
+    .ptl-jobs { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 18px; }
+    .ptl-job { min-height: 64px; }
+    .ptl-job img { width: 44px; height: 44px; }
+    .ptl-table { font-size: 11.5px; }
+    .ptl-tr.th, .ptl-rows :global(.ptl-tr) { grid-template-columns: 1fr 1fr; padding: 0 8px; }
+    .ptl-tr.th span:nth-child(1), .ptl-rows :global(.ptl-tr span:nth-child(1)) { display: none; }
+  }
+</style>

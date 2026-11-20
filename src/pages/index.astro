@@ -19,7 +19,7 @@ const houseContent = inlineJson(await getHouseContent());
 const metaLine = (w: (typeof work)[number]) => [w.data.company, w.data.year, w.data.role].join(' · ');
 
 const wins: Record<'proto' | 'pet' | 'voice', WinData> = {
-  proto: { kind: 'proto', file: 'Prototype Hub', title: 'Prototype Hub', desc: lab[0].body },
+  proto: { kind: 'proto', file: 'Prototype Hub', title: 'Prototype Hub', desc: lab[0].body, href: '/work/prototype-hub', cta: 'Read the case study' },
   pet: { kind: 'pet', file: 'Pet game', title: 'A cozy pet game', desc: lab[1].body },
   voice: { kind: 'voice', file: 'Voice AI', title: 'Learning voice AI', desc: lab[2].body },
 };

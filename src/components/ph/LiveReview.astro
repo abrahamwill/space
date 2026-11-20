@@ -1,0 +1,467 @@
+---
+/**
+ * Coded recreation of a Prototype Hub live review (the viewer around GokoMart Daily Checklist),
+ * used as the /work/prototype-hub hero. Built from the Hub's own tokens (Desk direction) and the
+ * 5 Nov 2026 still. Teammates' cursors glide in and pin comments to elements; pins are anchored to
+ * the element they sit on (like the real Hub), so they ride along when the page scrolls.
+ * Any click on the page hands control to the visitor: it drops your own pin there, and the page scrolls.
+ * Names, comments and store data are the case study's scripted teammates and mock data.
+ */
+import './ph-ui.css';
+
+const people = {
+  nadia: { name: 'Nadia', ini: 'NA', color: '#5FB3E4' },
+  raka: { name: 'Raka', ini: 'RA', color: '#9B4D96' },
+  tari: { name: 'Tari', ini: 'TA', color: '#D9485F' },
+};
+const avatars = [people.tari, people.raka, people.nadia];
+const cards = [
+  { t: 'Opening', s: 'Diisi sebelum 08:00', badges: [['TERKIRIM', 'ok'], ['TELAT', 'warn'], ['BELUM DIREVIEW', 'mute']], foot: '08:12 WIB · Rina · ', alert: '2 kendala' },
+  { t: 'Stock Opname', s: 'Diisi setelah 17:00', badges: [['BELUM DIISI', 'mute']], foot: 'Belum dikirim' },
+  { t: 'Closing', s: 'Diisi setelah 17.00 atau tutup toko', badges: [['BELUM WAKTUNYA', 'mute']], foot: 'Dibuka pukul 17:00' },
+  { t: 'Daily', s: 'Diisi setelah tutup toko', badges: [['BELUM DIISI', 'mute']], foot: 'Belum dikirim' },
+];
+const nav = [
+  { h: 'Opening', n: 2, items: ['Jam operasional', 'Persiapan toko', 'Kebersihan & kerapihan', 'Sarana & prasarana', 'Seragam & display'], dot: 3 },
+  { h: 'Stock Opname', items: ['Stok fisik'], off: true },
+  { h: 'Closing', items: ['Pengunjung & member', 'Program & promosi'], off: true },
+];
+---
+<div class="ph-ui lr" data-live-review>
+  <div class="lr-top">
+    <span class="lr-back" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 5 8l5 5"/></svg></span>
+    <span class="lr-title">GokoMart Daily Checklist</span>
+    <span class="lr-live"><i></i>Live</span>
+    <span class="lr-chip lr-hide-s">GokoMart Portal</span>
+    <span class="lr-ver lr-hide-s">v0.10 <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 3.8 5 6.3l2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+    <span class="lr-gap"></span>
+    <span class="lr-avs" role="img" aria-label="Also here: Tari, Raka, Nadia">
+      {avatars.map((p) => <span class="lr-av" style={`--c:${p.color}`}>{p.ini}</span>)}
+    </span>
+    <span class="lr-pill lr-hide-m"><svg width="13" height="13" viewBox="0 0 38 57" aria-hidden="true"><path fill="#1abcfe" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"/><path fill="#0acf83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/><path fill="#ff7262" d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z"/><path fill="#f24e1e" d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/><path fill="#a259ff" d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/></svg>Figma</span>
+    <span class="lr-pill lr-hide-m">PRD</span>
+    <span class="lr-present"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5"/><path d="M6 14.5h4M8 11.5v3"/></svg>Present</span>
+  </div>
+
+  <div class="lr-body">
+    <div class="lr-canvas">
+      <div class="lr-page" data-page tabindex="0" role="region" aria-label="GokoMart Daily Checklist, admin store detail. Click anywhere to pin a comment; scroll to see pins follow their rows.">
+        <div class="lr-inner">
+          <span class="lr-btn lr-kembali"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3m4-4L3 8l4 4"/></svg>Kembali</span>
+          <div class="lr-head">
+            <div>
+              <p class="lr-h1">GokoMart Bodok</p>
+              <p class="lr-sub">HUB 1 · Kalimantan Barat · Senin, 5 Oktober 2026 · waktu toko WIB</p>
+            </div>
+            <span class="lr-date lr-hide-s">Senin, 5 Okt 2026 <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5h6L5 7z" fill="currentColor"/></svg></span>
+          </div>
+
+          <div class="lr-cards">
+            {cards.map((c) => (
+              <div class="lr-card">
+                <div class="lr-card-top"><b>{c.t}</b><span>{c.s}</span></div>
+                <div class="lr-card-bot">
+                  <span class="lr-badges">{c.badges.map(([b, k]) => <span class={`lr-badge ${k}`}>{b}</span>)}</span>
+                  <span class="lr-foot">{c.foot}{c.alert && <em>{c.alert}</em>}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div class="lr-cols">
+            <nav class="lr-nav" aria-hidden="true">
+              <span class="lr-toggle">Hanya tampilkan kendala <i></i></span>
+              <span class="lr-nav-on">Perlu dicek <em>2 kendala</em></span>
+              {nav.map((g) => (
+                <div class:list={['lr-nav-g', { off: g.off }]}>
+                  <span class="lr-nav-h">{g.h}{g.n && <b>{g.n}</b>}</span>
+                  {g.items.map((it, i) => <span class="lr-nav-i">{it}{g.dot === i && <i></i>}</span>)}
+                </div>
+              ))}
+            </nav>
+
+            <div class="lr-main">
+              <section class="lr-box">
+                <div class="lr-box-h"><b>Perlu dicek</b><span>2 kendala dari 1 checklist</span></div>
+                <div class="lr-rows">
+                  <div class="lr-issue" data-t="printer"><span class="lr-tag">Opening</span><b>Sarana &amp; prasarana › Printer</b><span class="lr-why">Printer tidak menyala walau kabel daya sudah diganti.</span><a>Lihat</a></div>
+                  <div class="lr-issue" data-t="plafon"><span class="lr-tag">Opening</span><b>Sarana &amp; prasarana › Sarana Lain</b><span class="lr-why">Plafon dekat gudang bocor.</span><a>Lihat</a></div>
+                </div>
+              </section>
+
+              <div class="lr-sec-h">
+                <b>Opening</b>
+                <span class="lr-badge ok">TERKIRIM</span><span class="lr-badge warn">TELAT</span><span class="lr-badge mute lr-hide-s">BELUM DIREVIEW</span>
+                <span class="lr-meta lr-hide-m">Dikirim 08:12 WIB oleh Rina · 21 baris</span>
+                <span class="lr-review" data-t="review">Review Opening</span>
+              </div>
+
+              <section class="lr-box">
+                <div class="lr-box-h"><b>Jam operasional</b><span>3 jawaban</span></div>
+                <div class="lr-rows">
+                  <div class="lr-kv"><span>Absensi</span><b>06:28</b></div>
+                  <div class="lr-kv"><span>Jam Buka POS</span><b>06:45</b><span class="lr-odoo" data-t="odoo">Odoo POS · <b>06:52</b> <em>Selisih 7 mnt</em></span></div>
+                  <div class="lr-kv"><span>Jam Buka Toko</span><b>08:20</b><span class="lr-late">di luar jam biasa (06:30–08:00)</span></div>
+                </div>
+              </section>
+
+              <section class="lr-box">
+                <div class="lr-box-h" data-t="persiapan"><b>Persiapan toko</b><span>5 jawaban</span></div>
+                <div class="lr-rows">
+                  <div class="lr-kv tall"><span>Kesiapan material display untuk program, event dan promo</span><b>Ada</b><span class="lr-note">Banner promo Oktober di pintu masuk dan wobbler di rak endcap.</span></div>
+                  <div class="lr-kv"><span>Foto display</span><b>3 foto</b></div>
+                  <div class="lr-kv"><span>Stok promo di rak</span><b>Lengkap</b></div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lr-tools" aria-hidden="true">
+        <span class="lr-tool on"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 13.5 3.6 10A5.5 5.5 0 1 1 6 12.4z"/></svg>Comment <kbd>C</kbd></span>
+        <span class="lr-tool lr-hide-s"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 14.5v-12M3.5 3h8l-1.5 3 1.5 3h-8"/></svg>Tour</span>
+        <span class="lr-tool lr-hide-m"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 8V3.5a1.25 1.25 0 0 1 2.5 0V8m0-1.5a1.25 1.25 0 0 1 2.5 0V8m0-.8a1.2 1.2 0 0 1 2.4 0v2.6A4.7 4.7 0 0 1 8.7 14.5H8a4.5 4.5 0 0 1-3.6-1.8L2.6 10.3a1.2 1.2 0 0 1 1.9-1.5L6 10"/></svg>Tap hints</span>
+        <span class="lr-sep lr-hide-m"></span>
+        <span class="lr-tool lr-hide-m mono">1300 px</span>
+        <span class="lr-tool lr-hide-m mono">Fit · 100%</span>
+      </div>
+
+      <p class="lr-toast" data-toast aria-hidden="true"></p>
+    </div>
+
+    <aside class="lr-panel" aria-label="Comments">
+      <div class="lr-panel-h"><b>Comments <span data-count>0</span></b><span class="lr-seg"><span class="on">Open</span><span>Resolved</span></span></div>
+      <ol class="lr-comments" data-comments aria-live="polite"></ol>
+      <p class="lr-empty" data-empty>No comments yet. Pins show up here as people post them.</p>
+    </aside>
+  </div>
+
+  <div class="lr-layer" data-layer aria-hidden="true">
+    {Object.entries(people).map(([id, p]) => (
+      <span class="lr-cur" data-cur={id} style={`--c:${p.color}`}>
+        <svg width="16" height="20" viewBox="0 0 14 18"><path d="M1 1v14l4-4 3 6 2.5-1-3-6H13z" fill="var(--c)" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <span class="lr-cur-name">{p.name}</span>
+        <span class="lr-ring"></span>
+      </span>
+    ))}
+  </div>
+</div>
+
+<script>
+  type Who = 'nadia' | 'raka' | 'tari' | 'you';
+  const PEOPLE: Record<Who, { name: string; ini: string; color: string }> = {
+    nadia: { name: 'Nadia', ini: 'NA', color: '#5FB3E4' },
+    raka: { name: 'Raka', ini: 'RA', color: '#9B4D96' },
+    tari: { name: 'Tari', ini: 'TA', color: '#D9485F' },
+    you: { name: 'You', ini: 'YOU', color: '#17171B' },
+  };
+  // The four comments from the 5 Nov review, in the order they were posted.
+  const SCRIPT: Array<{ who: Who; t: string; fx: number; fy: number; text: string; scroll?: number }> = [
+    { who: 'nadia', t: 'odoo', fx: .78, fy: .1, text: 'Can we flag anything over 5 minutes in red? Ops only cares about late openings.' },
+    { who: 'raka', t: 'review', fx: .5, fy: .05, text: 'Does Review Opening lock the checklist for the store crew, or can they still edit?' },
+    { who: 'tari', t: 'printer', fx: .7, fy: .18, text: 'QA: what happens if the store sends a new photo after this kendala is marked handled?' },
+    { who: 'tari', t: 'persiapan', fx: .42, fy: .2, text: 'Edge case: what does this section show when the crew attached no photos?', scroll: 1 },
+  ];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('[data-live-review]').forEach((root) => {
+    const page = root.querySelector<HTMLElement>('[data-page]')!;
+    const layer = root.querySelector<HTMLElement>('[data-layer]')!;
+    const list = root.querySelector<HTMLOListElement>('[data-comments]')!;
+    const empty = root.querySelector<HTMLElement>('[data-empty]')!;
+    const count = root.querySelector<HTMLElement>('[data-count]')!;
+    const toast = root.querySelector<HTMLElement>('[data-toast]')!;
+    const panel = root.querySelector<HTMLElement>('.lr-panel')!;
+    const cursors = Object.fromEntries([...root.querySelectorAll<HTMLElement>('[data-cur]')].map((c) => [c.dataset.cur, c])) as Record<string, HTMLElement>;
+
+    // ---------- Pins: anchored to an element plus a spot inside it (fx, fy), never to the frame ----------
+    type Pin = { el: HTMLElement; target: HTMLElement; fx: number; fy: number };
+    let pins: Pin[] = [];
+    const place = () => {
+      const r0 = root.getBoundingClientRect();
+      const pr = page.getBoundingClientRect();
+      for (const p of pins) {
+        const r = p.target.getBoundingClientRect();
+        const x = r.left + r.width * p.fx, y = r.top + r.height * p.fy;
+        const inside = y > pr.top + 6 && y < pr.bottom - 6 && x > pr.left && x < pr.right;
+        p.el.style.transform = `translate(${x - r0.left}px, ${y - r0.top}px)`;
+        p.el.classList.toggle('is-hidden', !inside);
+      }
+    };
+    const addPin = (who: Who, target: HTMLElement, fx: number, fy: number) => {
+      const P = PEOPLE[who];
+      const el = document.createElement('span');
+      el.className = 'lr-pin' + (who === 'you' ? ' you' : '');
+      el.style.setProperty('--c', who === 'you' ? '#17171B' : '#FF8A3D');
+      el.innerHTML = `<span><i>${who === 'you' ? '+' : P.ini}</i></span>`;
+      layer.appendChild(el);
+      pins.push({ el, target, fx, fy });
+      place();
+      requestAnimationFrame(() => el.classList.add('is-on'));
+    };
+
+    // ---------- Comments panel (or a toast when the panel is hidden on narrow screens) ----------
+    let n = 0, toastTimer = 0;
+    const addComment = (who: Who, text: string) => {
+      const P = PEOPLE[who];
+      const li = document.createElement('li');
+      li.className = 'lr-c';
+      li.innerHTML = `<span class="lr-c-top"><span class="lr-av sm" style="--c:${P.color}">${who === 'you' ? 'Y' : P.ini}</span><b></b><span>just now</span></span><span class="lr-c-where">Admin · Detail toko</span><span class="lr-c-text"></span>`;
+      li.querySelector('b')!.textContent = P.name;
+      li.querySelector('.lr-c-text')!.textContent = text;
+      list.prepend(li);
+      n++; count.textContent = String(n); empty.hidden = true;
+      requestAnimationFrame(() => li.classList.add('is-on'));
+      if (getComputedStyle(panel).display === 'none') {
+        toast.innerHTML = `<b></b> <span></span>`;
+        toast.querySelector('b')!.textContent = P.name;
+        toast.querySelector('span')!.textContent = text;
+        toast.style.setProperty('--c', P.color);
+        toast.classList.add('is-on');
+        clearTimeout(toastTimer); toastTimer = window.setTimeout(() => toast.classList.remove('is-on'), 3200);
+      }
+    };
+    const clearAll = () => {
+      pins.forEach((p) => p.el.remove()); pins = [];
+      list.replaceChildren(); n = 0; count.textContent = '0'; empty.hidden = false;
+      toast.classList.remove('is-on');
+    };
+
+    // ---------- Cursors ----------
+    const at = (id: string) => {
+      const r0 = root.getBoundingClientRect();
+      return (x: number, y: number) => { cursors[id].style.transform = `translate(${x - r0.left}px, ${y - r0.top}px)`; };
+    };
+    const moveTo = (id: string, el: HTMLElement, fx: number, fy: number) => {
+      const r = el.getBoundingClientRect();
+      at(id)(r.left + r.width * fx, r.top + r.height * fy);
+    };
+    const rest = () => {
+      // Parked spots: off to the sides of the page, like teammates reading.
+      const pr = page.getBoundingClientRect();
+      at('nadia')(pr.left + pr.width * .62, pr.top + pr.height * .55);
+      at('raka')(pr.left + pr.width * .88, pr.top + pr.height * .3);
+      at('tari')(pr.left + pr.width * .35, pr.top + pr.height * .78);
+    };
+    const click = (id: string) => {
+      const c = cursors[id];
+      c.classList.remove('click'); void c.offsetWidth; c.classList.add('click');
+    };
+
+    page.addEventListener('scroll', place, { passive: true });
+    new ResizeObserver(() => { place(); if (!stopped) rest(); }).observe(root);
+
+    // ---------- Visitor takes over: click to pin, scroll freely ----------
+    let stopped = false, timer = 0;
+    const stop = () => {
+      if (stopped) return;
+      stopped = true; clearTimeout(timer);
+      root.classList.add('is-yours');
+    };
+    page.addEventListener('click', (e) => {
+      stop();
+      const target = (e.target as HTMLElement).closest<HTMLElement>('.lr-issue, .lr-kv, .lr-box-h, .lr-sec-h, .lr-card, .lr-head, .lr-nav') ?? page;
+      const r = target.getBoundingClientRect();
+      addPin('you', target, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+      addComment('you', 'Your pin. Scroll the page: it stays on this element.');
+    });
+    page.addEventListener('wheel', stop, { passive: true });
+    page.addEventListener('touchstart', stop, { passive: true });
+    page.addEventListener('keydown', (e) => { if (e.isTrusted) stop(); });
+
+    // ---------- Still frame for reduced motion: all four pins and comments, cursors parked ----------
+    if (reduce) {
+      rest();
+      SCRIPT.filter((s) => !s.scroll).forEach((s) => { const t = page.querySelector<HTMLElement>(`[data-t="${s.t}"]`)!; addPin(s.who, t, s.fx, s.fy); addComment(s.who, s.text); });
+      root.classList.add('is-still');
+      return;
+    }
+
+    // ---------- Autoplay ----------
+    let visible = false;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: .3 }).observe(root);
+    const steps: Array<[() => void, number]> = [];
+    steps.push([() => { clearAll(); page.scrollTo({ top: 0 }); rest(); }, 1400]);
+    for (const s of SCRIPT) {
+      const target = () => page.querySelector<HTMLElement>(`[data-t="${s.t}"]`)!;
+      if (s.scroll) {
+        steps.push([() => { const t = target(); page.scrollTo({ top: t.offsetTop - 70, behavior: 'smooth' }); }, 1300]);
+      }
+      steps.push([() => moveTo(s.who, target(), s.fx, s.fy), 1000]);
+      steps.push([() => click(s.who), 260]);
+      steps.push([() => { addPin(s.who, target(), s.fx, s.fy); }, 700]);
+      steps.push([() => addComment(s.who, s.text), 1500]);
+      steps.push([() => { const pr = page.getBoundingClientRect(); at(s.who)(pr.left + pr.width * (.3 + Math.random() * .5), pr.top + pr.height * (.4 + Math.random() * .4)); }, 900]);
+    }
+    // Scroll back up: the first three pins come back with their rows.
+    steps.push([() => page.scrollTo({ top: 0, behavior: 'smooth' }), 3600]);
+    steps.push([() => root.classList.add('is-fading'), 700]);
+    steps.push([() => root.classList.remove('is-fading'), 10]);
+
+    let k = 0;
+    const run = () => {
+      if (stopped) return;
+      if (!visible || document.hidden) { timer = window.setTimeout(run, 400); return; }
+      const [fn, delay] = steps[k];
+      fn();
+      k = (k + 1) % steps.length;
+      timer = window.setTimeout(run, delay);
+    };
+    rest();
+    timer = window.setTimeout(run, 600);
+  });
+</script>
+
+<style>
+  .lr { position: relative; display: flex; flex-direction: column; height: clamp(520px, 52vw, 640px); background: var(--p-desk); color: var(--p-ink); overflow: hidden; }
+
+  /* Top bar */
+  .lr-top { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px 0 10px; border-bottom: 1px solid var(--p-hair); background: var(--p-desk); flex: none; white-space: nowrap; }
+  .lr-back { display: grid; place-items: center; width: 28px; height: 28px; color: var(--p-ink-2); }
+  .lr-title { font-size: 16px; font-weight: 600; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; }
+  .lr-live { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 500; color: var(--p-live-ink); }
+  .lr-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--p-live); }
+  .lr-chip { padding: 3px 8px; border-radius: 6px; background: var(--p-desk-2); font-size: 12px; color: var(--p-ink-2); }
+  .lr-ver { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: var(--p-surface); box-shadow: inset 0 0 0 1px var(--p-hair); font: 500 12px var(--p-mono); }
+  .lr-gap { flex: 1; }
+  .lr-avs { display: flex; }
+  .lr-av { display: grid; place-items: center; width: 26px; height: 26px; margin-left: -6px; border-radius: 50%; background: var(--c); color: #fff; font-size: 9.5px; font-weight: 600; box-shadow: 0 0 0 2px var(--p-desk); }
+  .lr-av.sm { width: 22px; height: 22px; margin: 0; font-size: 8.5px; box-shadow: none; }
+  .lr-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: var(--p-surface); box-shadow: inset 0 0 0 1px var(--p-hair); font-size: 12.5px; font-weight: 500; }
+  .lr-present { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--p-ink); color: #fff; font-size: 12.5px; font-weight: 500; }
+
+  /* Body: canvas + comments */
+  .lr-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: minmax(0, 1fr); }
+  .lr-canvas { position: relative; min-width: 0; min-height: 0; overflow: hidden; padding: 16px 16px 0; background-color: var(--p-desk); background-image: radial-gradient(var(--p-dot) 1px, transparent 1.2px); background-size: 16px 16px; }
+  .lr-page { height: calc(100% - 64px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; border-radius: 10px; background: var(--p-surface); box-shadow: 0 0 0 1px rgba(23, 23, 27, .06), 0 6px 18px rgba(23, 23, 27, .07); cursor: crosshair; }
+  .lr-page:focus-visible { outline: 2px solid var(--p-violet); outline-offset: 2px; }
+  .lr-inner { padding: 18px 26px 30px; font-size: 12.5px; }
+
+  .lr-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--p-hair); font-size: 12px; }
+  .lr-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 16px 0 14px; }
+  .lr-h1 { margin: 0; font-size: 21px; font-weight: 500; letter-spacing: -.02em; color: var(--p-ink); }
+  .lr-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--p-muted); line-height: 1.4; }
+  .lr-date { display: inline-flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; background: var(--p-raised); box-shadow: inset 0 0 0 1px var(--p-hair-soft); font-size: 12.5px; }
+
+  .lr-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--p-hair-soft); }
+  .lr-card { border-radius: 6px; box-shadow: inset 0 0 0 1px var(--p-hair-soft); overflow: hidden; }
+  .lr-card-top { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--p-raised); }
+  .lr-card-top b { font-weight: 500; font-size: 12px; }
+  .lr-card-top span { font-size: 11px; color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lr-card-bot { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 10px; }
+  .lr-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .lr-badge { padding: 2px 6px; border-radius: 999px; font-size: 9.5px; font-weight: 600; letter-spacing: .03em; background: var(--p-desk-2); color: var(--p-ink-2); white-space: nowrap; }
+  .lr-badge.ok { background: var(--p-live-tint); color: var(--p-live-ink); }
+  .lr-badge.warn { background: #fff4d6; color: #8a5a00; }
+  .lr-foot { font-size: 11px; color: var(--p-ink-2); }
+  .lr-foot em { font-style: normal; color: var(--p-error); }
+
+  .lr-cols { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; margin-top: 16px; }
+  .lr-nav { display: flex; flex-direction: column; gap: 2px; align-self: start; padding: 8px; border-radius: 8px; box-shadow: inset 0 0 0 1px var(--p-hair-soft); font-size: 12px; }
+  .lr-toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 8px; }
+  .lr-toggle i { width: 24px; height: 14px; border-radius: 999px; background: var(--p-desk-2); box-shadow: inset 0 0 0 1px var(--p-hair); position: relative; }
+  .lr-toggle i::after { content: ''; position: absolute; left: 2px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .2); }
+  .lr-nav-on { display: flex; justify-content: space-between; padding: 6px 8px; border-radius: 6px; background: var(--p-live-tint); color: var(--p-live-ink); }
+  .lr-nav-on em { font-style: normal; color: var(--p-error); font-size: 11px; }
+  .lr-nav-g { display: flex; flex-direction: column; padding: 6px 0; border-top: 1px solid var(--p-hair-soft); margin-top: 4px; }
+  .lr-nav-h { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; font-weight: 500; }
+  .lr-nav-h b { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--p-error); color: #fff; font-size: 9.5px; }
+  .lr-nav-i { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 4px 16px; color: var(--p-ink-2); }
+  .lr-nav-i i { width: 6px; height: 6px; border-radius: 50%; background: var(--p-error); }
+  .lr-nav-g.off .lr-nav-i { color: #aaa8a2; }
+
+  .lr-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .lr-box { border-radius: 8px; background: var(--p-raised); padding: 10px; }
+  .lr-box-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 2px 4px 9px; }
+  .lr-box-h b { font-weight: 500; font-size: 13.5px; }
+  .lr-box-h span { font-size: 11px; color: var(--p-muted); white-space: nowrap; }
+  .lr-rows { border-radius: 6px; background: var(--p-surface); box-shadow: inset 0 0 0 1px var(--p-hair-soft); }
+  .lr-rows > div + div { border-top: 1px solid var(--p-hair-soft); }
+  .lr-issue { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 12px; }
+  .lr-tag { padding: 2px 6px; border-radius: 4px; background: var(--p-desk-2); font-size: 10.5px; color: var(--p-ink-2); }
+  .lr-issue b { font-weight: 500; white-space: nowrap; }
+  .lr-why { color: var(--p-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lr-issue a { color: var(--p-live-ink); font-weight: 500; }
+  .lr-sec-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; }
+  .lr-sec-h > b { font-weight: 500; font-size: 17px; letter-spacing: -.02em; margin-right: 2px; }
+  .lr-meta { font-size: 11.5px; color: var(--p-muted); }
+  .lr-review { margin-left: auto; padding: 6px 11px; border-radius: 6px; background: var(--p-live); color: #fff; font-size: 12px; font-weight: 500; }
+  .lr-kv { display: grid; grid-template-columns: 34% auto minmax(0, 1fr); align-items: center; gap: 4px 12px; padding: 10px 14px; }
+  .lr-kv > span:first-child { color: var(--p-ink-2); }
+  .lr-kv > b { font-weight: 600; }
+  .lr-kv.tall { align-items: start; }
+  .lr-note { grid-column: 2 / -1; color: var(--p-ink-2); }
+  .lr-odoo { justify-self: start; display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border-radius: 5px; box-shadow: inset 0 0 0 1px var(--p-hair-soft); font-size: 11px; color: var(--p-ink-2); white-space: nowrap; }
+  .lr-odoo b { color: var(--p-ink); font-weight: 500; }
+  .lr-odoo em { font-style: normal; padding: 1px 5px; border-radius: 4px; background: #fff4d6; color: #8a5a00; font-size: 10px; }
+  .lr-late { color: #b25e00; }
+
+  /* Floating toolbar */
+  .lr-tools { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 5px; border-radius: 12px; background: var(--p-surface); box-shadow: 0 0 0 1px rgba(23, 23, 27, .08), 0 8px 24px rgba(23, 23, 27, .12); font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .lr-tool { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 8px; color: var(--p-ink-2); }
+  .lr-tool.on { background: var(--p-violet-tint); color: var(--p-violet-ink); }
+  .lr-tool kbd { font: 500 10px var(--p-mono); color: var(--p-muted); }
+  .lr-tool.mono { font: 500 11.5px var(--p-mono); }
+  .lr-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--p-hair); }
+
+  /* Comments panel */
+  .lr-panel { display: flex; flex-direction: column; min-height: 0; border-left: 1px solid var(--p-hair); background: var(--p-surface); }
+  .lr-panel-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--p-hair-soft); }
+  .lr-panel-h b { font-size: 14px; font-weight: 600; }
+  .lr-panel-h b span { color: var(--p-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .lr-seg { display: flex; padding: 2px; border-radius: 999px; background: var(--p-desk); font-size: 11.5px; }
+  .lr-seg span { padding: 3px 9px; border-radius: 999px; color: var(--p-muted); }
+  .lr-seg .on { background: var(--p-surface); color: var(--p-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .1); }
+  .lr-comments { flex: 1; margin: 0; padding: 0; list-style: none; overflow: hidden; }
+  .lr-empty { margin: 0; padding: 18px 16px; font-size: 12.5px; line-height: 1.5; color: var(--p-muted); }
+  .lr-empty[hidden] { display: none; }
+  :global(.lr-c) { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-bottom: 1px solid var(--p-hair-soft); opacity: 0; transform: translateY(-8px); transition: opacity .35s var(--ease), transform .45s var(--ease), background-color 1.6s ease; background: var(--p-violet-tint); }
+  :global(.lr-c.is-on) { opacity: 1; transform: none; background: var(--p-surface); }
+  :global(.lr-c-top) { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
+  :global(.lr-c-top b) { font-weight: 600; }
+  :global(.lr-c-top > span:last-child) { color: var(--p-muted); }
+  :global(.lr-c-where) { font: 400 10.5px var(--p-mono); color: var(--p-muted); }
+  :global(.lr-c-text) { font-size: 13px; line-height: 1.45; color: var(--p-ink); }
+
+  /* Overlay layer: cursors and pins */
+  .lr-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+  .lr-cur { position: absolute; left: 0; top: 0; transition: transform 1s cubic-bezier(.45, .05, .25, 1), opacity .4s; will-change: transform; }
+  .lr-cur svg { display: block; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .2)); }
+  .lr-cur-name { position: absolute; left: 12px; top: 16px; padding: 2px 7px; border-radius: 999px; background: var(--c); color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; box-shadow: 0 0 0 1.5px #fff; }
+  .lr-ring { position: absolute; left: -9px; top: -9px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--c); opacity: 0; }
+  .lr-cur:global(.click) .lr-ring { animation: lr-ring .5s ease-out; }
+  @keyframes lr-ring { from { opacity: 1; transform: scale(.3); } to { opacity: 0; transform: scale(1.4); } }
+  .lr.is-yours .lr-cur { opacity: .35; }
+
+  :global(.lr-pin) { position: absolute; left: 0; top: 0; width: 0; height: 0; transition: opacity .2s; }
+  :global(.lr-pin > span) { position: absolute; left: -14px; top: -34px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50% 50% 50% 4px; background: var(--c); box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(0, 0, 0, .22); color: #fff; font-size: 9.5px; font-weight: 700; line-height: 1; opacity: 0; transform: rotate(-45deg) scale(.2); transition: transform .45s cubic-bezier(.2, .9, .3, 1.4), opacity .2s; }
+  :global(.lr-pin > span > i) { font-style: normal; transform: rotate(45deg); }
+  :global(.lr-pin.is-on > span) { opacity: 1; transform: rotate(-45deg) scale(1); }
+  :global(.lr-pin.is-hidden) { opacity: 0; }
+  :global(.lr-pin.you > span) { font-size: 15px; font-weight: 600; }
+  .lr.is-fading :global(.lr-pin), .lr.is-fading :global(.lr-c) { opacity: 0; transition: opacity .6s; }
+
+  .lr-toast { position: absolute; left: 50%; bottom: 60px; z-index: 6; width: min(340px, calc(100% - 32px)); margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--p-surface); box-shadow: 0 0 0 1px rgba(23, 23, 27, .08), 0 10px 26px rgba(23, 23, 27, .16); font-size: 12.5px; line-height: 1.45; opacity: 0; transform: translate(-50%, 8px); transition: opacity .25s, transform .3s var(--ease); pointer-events: none; }
+  .lr-toast :global(b) { color: var(--c); }
+  .lr-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Narrower containers */
+  @media (max-width: 1100px) { .lr-body { grid-template-columns: minmax(0, 1fr) 250px; } .lr-hide-m { display: none; } .lr-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 860px) { .lr-panel { display: none; } .lr-body { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 640px) {
+    .lr { height: 560px; }
+    .lr-hide-s, .lr-nav { display: none; }
+    .lr-cols { grid-template-columns: minmax(0, 1fr); }
+    .lr-canvas { padding: 10px 10px 0; }
+    .lr-inner { padding: 14px 14px 24px; }
+    .lr-issue { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
+    .lr-issue .lr-tag { display: none; }
+    .lr-why { grid-column: 1 / 2; white-space: normal; }
+    .lr-issue a { grid-row: 1; grid-column: 2; }
+    .lr-kv { grid-template-columns: minmax(0, 1fr) auto; }
+    .lr-odoo, .lr-late, .lr-note { grid-column: 1 / -1; }
+    .lr-title { font-size: 14px; }
+    .lr-present { padding: 6px 9px; font-size: 0; gap: 0; }
+  }
+</style>
