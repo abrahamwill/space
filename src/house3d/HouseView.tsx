@@ -295,7 +295,7 @@ export default function HouseView({ content }: { content: HouseContent }) {
             stage={stage}
             anchor={h.id}
             className={`hx-hotspot${item === h.id ? ' is-open' : ''}`}
-            hidden={!ready || h.room !== here || !stage.wallShown(stage.walls.get(h.id), rot)}
+            hidden={!ready || (h.room !== here && !h.everywhere) || !stage.wallShown(stage.walls.get(h.id), rot)}
           >
             <button type="button" onClick={(e) => openHotspot(h.id, h.room, e.currentTarget)} aria-expanded={h.inline ? undefined : item === h.id}>
               <span className="hx-dot" aria-hidden="true" />

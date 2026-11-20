@@ -76,6 +76,8 @@ export interface Hotspot {
   anchor: Anchor;
   /** No window: does something in place (the pet). */
   inline?: boolean;
+  /** Shown in every room's view (he walks around the house), not only in `room`. */
+  everywhere?: boolean;
 }
 
 /**
@@ -84,7 +86,7 @@ export interface Hotspot {
  */
 export const HOTSPOTS: Hotspot[] = [
   // living room
-  { id: 'window', room: 'living', label: 'Me · about me', anchor: { me: true } },
+  { id: 'window', room: 'living', label: 'Me · about me', anchor: { me: true }, everywhere: true },
   { id: 'turntable', room: 'living', label: 'Turntable · next record', anchor: { object: 'living_console_Turntable' } },
   { id: 'photos', room: 'living', label: 'Record shelf · photos', anchor: { object: 'living_shelf_Records' } },
   { id: 'door', room: 'living', label: 'Front door · contact + CV', anchor: { point: [3, 1.2, 3.75] } },
