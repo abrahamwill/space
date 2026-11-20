@@ -1,6 +1,8 @@
 ---
 // Internal preview of the Pinwheel house GLB (House v2), framed like reference/hero_P2.png. Not linked anywhere.
 // Light can be tried from the URL: /house3d?sun=2.2&ambient=1.1&lamp=1
+// ?bare (the poster render, scripts/render-house3d-poster.mjs) or ?still: character and pet at rest, not moving.
+// ?wave: the character waves (window.__house.greet(true / false) toggles it).
 ---
 <!doctype html>
 <html lang="en">
@@ -27,9 +29,9 @@
         const v = parseFloat(q.get(k) ?? '');
         if (!Number.isNaN(v)) light[k] = v;
       }
-      const view = mountHouse(document.getElementById('house')!, undefined, light);
+      const view = mountHouse(document.getElementById('house')!, { light, still: q.has('bare') || q.has('still') });
       (window as any).__house = view;
-      view.ready.then(() => { (window as any).__houseReady = true; }, (e) => { console.error(e); (window as any).__houseError = String(e); });
+      view.ready.then(() => { if (q.has('wave')) view.greet(true); (window as any).__houseReady = true; }, (e) => { console.error(e); (window as any).__houseError = String(e); });
     </script>
   </body>
 </html>

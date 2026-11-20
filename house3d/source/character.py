@@ -109,11 +109,18 @@ def head(tilt=0.0, turn=0.0, smile=True):
     return h
 
 
-def character(pose="stand", yaw=0.0, at=(0, 0, 0)):
-    P = dict(stand=dict(hips=(0, 0, 0, 0), arms=((4, 6, 8), (4, 6, 8)), lean=0, tilt=0, turn=0),
+# The designed poses. house3d/rig_character.py turns these same angles into the rig's keyframes:
+# hips = (right hip, right knee, left hip, left knee), arms = (swing, abduction, elbow) per side
+# (right first), lean / tilt / turn in degrees, move in scene units.
+POSES = dict(stand=dict(hips=(0, 0, 0, 0), arms=((4, 6, 8), (4, 6, 8)), lean=0, tilt=0, turn=0),
              wave=dict(hips=(0, 0, 0, 0), arms=((-12, 150, 25), (6, 8, 10)), lean=0, tilt=-6, turn=0),
-             run=dict(hips=(32, -18, -30, -78), arms=((-38, 10, 95), (34, 10, 80)), lean=7, tilt=0, turn=0),
-             sit=dict(hips=(85, -85, 85, -85), arms=((40, 8, 45), (40, 8, 45)), lean=-4, tilt=0, turn=0))[pose]
+             run=dict(hips=(32, -18, -30, -78), arms=((-38, 10, 95), (34, 10, 80)), lean=7, tilt=0, turn=0, move=(0, 0, .05)),
+             sit=dict(hips=(85, -85, 85, -85), arms=((40, 8, 45), (40, 8, 45)), lean=-4, tilt=0, turn=0, move=(0, .25, -.42)))
+
+
+def character(pose="stand", yaw=0.0, at=(0, 0, 0)):
+    """pose: a name from POSES, or a dict of the same shape."""
+    P = pose if isinstance(pose, dict) else POSES[pose]
     hr, kr, hl, kl = P["hips"]
     legs = leg(1, hr, kr) + leg(-1, hl, kl)
     body = cbox(0, 0, 1.5, .47, .255, .14, .06, DENIM)
@@ -124,8 +131,6 @@ def character(pose="stand", yaw=0.0, at=(0, 0, 0)):
     body = body + head(P["tilt"], P["turn"])
     body = body.rot("x", P["lean"], (0, 0, 1.45))
     ch = legs + body
-    if pose == "run":
-        ch = ch.move(0, 0, .05)
-    if pose == "sit":
-        ch = ch.move(0, .25, -.42)
+    if P.get("move"):
+        ch = ch.move(*P["move"])
     return ch.rot("z", yaw).move(*at)

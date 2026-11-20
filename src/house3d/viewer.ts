@@ -9,10 +9,15 @@
  * The GLB stores lights in glTF units (lux / candela, = Blender watts × 683). UNITS turns them back
  * into what Blender renders: three.js intensity = Blender strength / π. LIGHT then fine-tunes.
  * Fabric bump, AO and EEVEE soft shadows don't travel in a GLB.
+ *
+ * Life (life.ts): the rigged character and the pet. They only move while the view is on screen, the
+ * tab is visible and reduced motion is off, at HERO_FPS; otherwise nothing renders after the first frame.
+ * `still` (the poster render) poses them at rest and never moves them.
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { bringToLife, CHARACTER_URL, type Life } from './life';
 
 const UNITS = 1 / (683 * Math.PI);
 
@@ -25,15 +30,33 @@ export const LIGHT = {
   lamp: 1,       // × the exported lamp lights (Blender 12 W)
 };
 
+export const HERO_FPS = 30;
+
+export interface HouseOptions {
+  url?: string;
+  light?: typeof LIGHT;
+  /** The rigged character's GLB, or false to keep the house's static copy. */
+  character?: string | false;
+  /** Pose everything at rest and never animate (poster renders). */
+  still?: boolean;
+}
+
 export interface HouseView {
   scene: THREE.Scene;
   renderer: THREE.WebGLRenderer;
   ready: Promise<void>;
   render(): void;
+  /** The character waves (and the pet hops) while on; with reduced motion he only changes pose. */
+  greet(on: boolean): void;
+  /** Where the speech bubble goes: px from the top-left of the mount element, or null before load. */
+  bubbleAnchor(): { x: number; y: number } | null;
+  /** Called after every rendered frame (e.g. to move the bubble). */
+  onFrame: (() => void) | null;
   dispose(): void;
 }
 
-export function mountHouse(el: HTMLElement, url = '/house3d/house_P2.glb', light = LIGHT): HouseView {
+export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView {
+  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, still = false } = opts;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -65,9 +88,51 @@ export function mountHouse(el: HTMLElement, url = '/house3d/house_P2.glb', light
     camera.updateProjectionMatrix();
   };
 
-  const render = () => { if (camera) renderer.render(scene, camera); };
+  let life: Life | null = null;
+  const view = { onFrame: null } as Pick<HouseView, 'onFrame'>;
+  const render = () => {
+    if (!camera) return;
+    renderer.render(scene, camera);
+    view.onFrame?.();
+  };
 
-  const ready = loader.loadAsync(url).then((gltf) => {
+  // ---- the loop: only while there is something to see move
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  let onScreen = false;
+  let raf = 0;
+  let last = 0;
+  const moving = () => !!life && !still && onScreen && !document.hidden && !reduced.matches;
+  const tick = (now: number) => {
+    raf = 0;
+    if (!moving()) return;
+    raf = requestAnimationFrame(tick);
+    const dt = (now - last) / 1000;
+    if (dt < 1 / HERO_FPS - 0.004) return;
+    last = now;
+    life!.update(Math.min(dt, 0.1));
+    render();
+  };
+  const wake = () => {
+    if (raf || !moving()) return;
+    last = performance.now();
+    raf = requestAnimationFrame(tick);
+  };
+  const io = new IntersectionObserver((entries) => {
+    onScreen = entries.some((e) => e.isIntersecting);
+    wake();
+  });
+  io.observe(el);
+  document.addEventListener('visibilitychange', wake);
+  reduced.addEventListener('change', wake);
+
+  const charGltf = character
+    ? loader.loadAsync(character).catch((e) => {
+        console.warn('house3d: character failed to load, keeping the static one', e);
+        return null;
+      })
+    : Promise.resolve(null);
+
+  const ready = Promise.all([loader.loadAsync(url), charGltf]).then(([gltf, charG]) => {
     const root = gltf.scene;
     const box = new THREE.Box3();
     root.traverse((o) => {
@@ -99,6 +164,7 @@ export function mountHouse(el: HTMLElement, url = '/house3d/house_P2.glb', light
     });
     scene.add(root);
     root.updateMatrixWorld(true);
+    if (charG) life = bringToLife(root, charG);
 
     // Sun shadow camera: cover the whole house, seen from the sun.
     const suns: THREE.DirectionalLight[] = [];
@@ -123,21 +189,39 @@ export function mountHouse(el: HTMLElement, url = '/house3d/house_P2.glb', light
     base = { x: cam.right, y: cam.top };
     fit();
     render();
+    wake();
   });
 
   const ro = new ResizeObserver(() => { fit(); render(); });
   ro.observe(el);
 
-  return {
+  const v = new THREE.Vector3();
+  return Object.assign(view, {
     scene,
     renderer,
     ready,
     render,
+    greet(on: boolean) {
+      if (!life || still) return;
+      const animate = !reduced.matches;
+      life.greet(on, animate);
+      if (animate) wake();
+      else render();
+    },
+    bubbleAnchor() {
+      if (!life || !camera) return null;
+      life.bubbleAt(v).project(camera);
+      return { x: (v.x * 0.5 + 0.5) * el.clientWidth, y: (-v.y * 0.5 + 0.5) * el.clientHeight };
+    },
     dispose() {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+      document.removeEventListener('visibilitychange', wake);
+      reduced.removeEventListener('change', wake);
       ro.disconnect();
       draco.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },
-  };
+  });
 }

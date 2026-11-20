@@ -112,7 +112,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
             formats={['avif', 'webp']}
             widths={[720, 1080, 1440, 1800, 2336]}
             sizes="(max-width: 900px) 120vw, 900px"
-            alt="My house, cut into the page: a living room in the middle with a sofa, a checkered rug and me waving, and around it a bedroom, a studio with a bookcase and a treadmill, a lab, and small gardens with trees"
+            alt="My house, cut into the page: a living room in the middle with a sofa, a checkered rug and me, and around it a bedroom, a studio with a bookcase and a treadmill, a lab, and small gardens with trees"
             loading="eager"
             fetchpriority="high"
             decoding="async"
@@ -306,6 +306,11 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
    *
    * "Step in" is a plain link to /house for now: the in-place zoom (house/enter.ts) drives the old
    * house engine, which the hero no longer runs.
+   *
+   * The house never moves; things happen inside it when someone looks (as the old src/house/hero.ts):
+   * on hover or keyboard focus the character waves and says hello in a bubble over his head, and the pet
+   * hops; they settle a moment after the pointer leaves. Touch screens (no hover) play it once, the first
+   * time the hero is properly in view. With reduced motion he changes pose without animating.
    */
   import type { HouseView } from '../house3d/viewer';
 
@@ -322,15 +327,82 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.documentElement.dataset.mode === 'focus';
 
+    // the talking box, pinned above the character's head
+    const bubble = document.createElement('div');
+    bubble.className = 'hero-bubble';
+    bubble.setAttribute('aria-hidden', 'true');
+    bubble.innerHTML = '<p>Hi! Come on in, I’ll show you around.</p>';
+
+    let looking = false;
+    let live: HouseView | null = null;
+    let byeTimer = 0;
+    const hello = () => {
+      if (!live) return;
+      clearTimeout(byeTimer);
+      live.greet(true);
+      bubble.classList.add('is-on');
+    };
+    const bye = () => {
+      clearTimeout(byeTimer);
+      byeTimer = window.setTimeout(() => {
+        live?.greet(false);
+        bubble.classList.remove('is-on');
+      }, 350);
+    };
+
     let view: Promise<HouseView> | null = null;
     const start = () =>
       (view ??= import('../house3d/viewer').then(({ mountHouse }) => {
         const v = mountHouse(host);
+        host.appendChild(bubble);
+        v.onFrame = () => {
+          const a = v.bubbleAnchor();
+          if (a) bubble.style.transform = `translate3d(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px, 0)`;
+        };
         return v.ready.then(() => {
           link.classList.add('is-live');
+          live = v;
+          v.render();
+          if (looking) hello();
+          else touchOnce();
           return v;
         });
       }));
+
+    const enter = () => {
+      looking = true;
+      hello();
+    };
+    const leave = () => {
+      looking = false;
+      bye();
+    };
+    link.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && enter());
+    link.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && leave());
+    link.addEventListener('focusin', enter);
+    link.addEventListener('focusout', leave);
+
+    // Touch screens can't hover: play it once, the first time the hero is properly in view and the
+    // live house is up (this never loads it by itself, so Save-Data and the like still hold it back).
+    let inView = false;
+    let played = false;
+    function touchOnce() {
+      if (played || !inView || !live) return;
+      played = true;
+      seen.disconnect();
+      setTimeout(() => {
+        hello();
+        byeTimer = window.setTimeout(() => !looking && bye(), 3600);
+      }, 500);
+    }
+    const seen = new IntersectionObserver(
+      (entries) => {
+        inView = entries.some((e) => e.isIntersecting);
+        touchOnce();
+      },
+      { threshold: 0.6 },
+    );
+    if (matchMedia('(hover: none)').matches) seen.observe(link);
 
     if (holdBack) {
       for (const ev of ['pointerenter', 'focusin', 'touchstart'] as const) link.addEventListener(ev, () => start(), { once: true, passive: true });
@@ -594,6 +666,10 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .house:global(.is-live) .house-live { opacity: 1; }
   .house:global(.is-live) :global(img) { opacity: 0; }
   .house:global(.has-pill), .house:global(.has-pill) * { cursor: none; }
+  .house :global(.hero-bubble) { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
+  .house :global(.hero-bubble p) { position: absolute; left: 0; bottom: 14px; transform: translate(-50%, 6px) scale(.92); transform-origin: 50% 100%; width: max-content; max-width: 220px; margin: 0; padding: 8px 12px; border-radius: 12px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 500; line-height: 1.35; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 8px 20px rgba(0, 0, 0, .12); opacity: 0; transition: opacity .2s ease, transform .25s cubic-bezier(.2, .7, .2, 1.3); }
+  .house :global(.hero-bubble p::after) { content: ''; position: absolute; left: 50%; bottom: -6px; width: 12px; height: 12px; background: #fff; transform: translateX(-50%) rotate(45deg); box-shadow: .5px .5px 0 rgba(0, 0, 0, .15); }
+  .house :global(.hero-bubble.is-on p) { opacity: 1; transform: translate(-50%, 0) scale(1); }
 
   .step-pill { position: fixed; left: 0; top: 0; z-index: 55; padding: 10px 16px; border-radius: 999px; background: rgba(255, 255, 255, .6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 6px 18px rgba(0, 0, 0, .18); font-weight: 600; font-size: 14px; color: var(--ink); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
   .step-pill:global(.is-on) { opacity: 1; }
