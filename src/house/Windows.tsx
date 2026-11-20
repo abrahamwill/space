@@ -212,6 +212,18 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
           </ul>
         </>
       );
+    // House v2 (Pinwheel): what these open is still an open question (design/house-v2-blender.md)
+    case 'pc':
+    case 'photowall':
+    case 'treadmill':
+    case 'medals':
+      return (
+        <>
+          <h3 className="hx-h">[Still to decide]</h3>
+          <p>[What opens here is an open question for Abraham.]</p>
+          <Ph>[Content]</Ph>
+        </>
+      );
     case 'photos':
       return (
         <>

@@ -304,8 +304,9 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
    * Never on Save-Data, slow connections, low-memory devices, reduced motion, or ?mode=focus;
    * there it waits for intent (hover/focus/touch).
    *
-   * "Step in" is a plain link to /house for now: the in-place zoom (house/enter.ts) drives the old
-   * house engine, which the hero no longer runs.
+   * "Step in" is a link to /house. Where the browser has cross-document view transitions, the house
+   * zooms from here into the /house poster (view-transition-name: house on both), and the live house
+   * fades in over that; elsewhere it's a plain page load.
    *
    * The house never moves; things happen inside it when someone looks (as the old src/house/hero.ts):
    * on hover or keyboard focus the character waves and says hello in a bubble over his head, and the pet
@@ -659,6 +660,12 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .stage { position: relative; aspect-ratio: 860 / 645; margin-right: -4%; }
   .grid { position: absolute; left: -22%; top: -12%; width: 144%; max-width: none; height: auto; z-index: 0; pointer-events: none; opacity: .9; -webkit-mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); }
   .house { position: absolute; left: -2%; right: -2%; top: 50%; transform: translateY(-50%); z-index: 2; display: block; }
+  /* "Step in": the house morphs into the /house poster (src/pages/house.astro) */
+  @media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+    .house { view-transition-name: house; }
+    :global(::view-transition-group(house)) { animation-duration: .55s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+  }
   .house :global(img) { display: block; width: 100%; height: auto; transition: opacity .6s ease; }
   /* The live canvas shows the whole HeroCamera frame; the poster is cropped to the house. This inset
      (printed by scripts/render-house3d-poster.mjs) makes the two line up. */

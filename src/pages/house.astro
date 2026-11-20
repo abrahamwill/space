@@ -1,19 +1,21 @@
 ---
 import { Picture } from 'astro:assets';
 import Space from '../layouts/Space.astro';
-import HouseApp from '../house/HouseApp';
+import HouseView from '../house3d/HouseView';
 import { getHouseContent } from '../data/houseContent';
-import posterDim from '../assets/house/poster-dim.png';
+// The Pinwheel house (House v2): the same still as the home hero (scripts/render-house3d-poster.mjs).
+import poster from '../assets/house/hero-p2.png';
 
 const content = await getHouseContent();
 ---
-<Space title="The house" description="Step inside: a studio full of work, a lab of side projects, and the room I live in.">
+<Space title="The house" description="Step inside: a living room, a bedroom, a studio full of work and a lab of side projects.">
   <h1 class="sr-only">The house</h1>
-  <!-- First paint: a still of the arrival state. The 3D house fades in over it. -->
+  <!-- First paint: a still of the house. The 3D house fades in over it, framed the same
+       (posterRect in src/house3d/stage.ts uses these insets; keep them in step with overviewInsets). -->
   <div class="house-poster" aria-hidden="true">
-    <Picture src={posterDim} formats={['avif', 'webp']} widths={[960, 1440, 2400]} sizes="100vw" alt="" loading="eager" fetchpriority="high" />
+    <Picture src={poster} formats={['avif', 'webp']} widths={[960, 1440, 2400, 3320]} sizes="100vw" alt="" loading="eager" fetchpriority="high" />
   </div>
-  <HouseApp client:only="react" content={content} />
+  <HouseView client:only="react" content={content} />
   <noscript>
     <div class="house-noscript">
       <p>The house needs JavaScript. The short tour has everything:</p>
@@ -25,13 +27,23 @@ const content = await getHouseContent();
 <style>
   .house-poster {
     position: fixed;
-    inset: 72px 32px 72px;
+    inset: 96px 32px 72px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: opacity 0.4s ease 0.5s;
+  }
+  /* From the home hero, the house zooms into this poster ("Step in", src/pages/index.astro). */
+  @media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+    .house-poster :global(img) { view-transition-name: house; }
+    :global(::view-transition-group(house)) { animation-duration: .55s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
   }
   .house-poster :global(img) { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
-  @media (max-width: 899px) { .house-poster { inset: 112px 16px 32px; } }
+  @media (max-width: 899px) { .house-poster { inset: 136px 16px 32px; } }
+  /* once the live house has faded in over it (and leaving shouldn't morph a hidden poster) */
+  :global(html:has(.hx2.is-ready)) .house-poster { opacity: 0; }
+  :global(html:has(.hx2.is-ready)) .house-poster :global(img) { view-transition-name: none; }
   .house-noscript {
     position: fixed; left: 0; right: 0; bottom: 0; padding: 24px 32px;
     background: var(--page); display: flex; flex-direction: column; gap: 8px;

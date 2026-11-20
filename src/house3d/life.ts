@@ -23,6 +23,8 @@ export interface Life {
   greet(on: boolean, animate: boolean): void;
   /** World point just above the character's head, for the speech bubble. */
   bubbleAt(out: THREE.Vector3): THREE.Vector3;
+  /** The pet hops a few times in a row (the "pet me" hotspot). */
+  excitePet(): void;
 }
 
 export function bringToLife(house: THREE.Object3D, char: GLTF): Life {
@@ -70,6 +72,9 @@ export function bringToLife(house: THREE.Object3D, char: GLTF): Life {
         to.reset().setEffectiveWeight(1).play();
         mixer.update(0);
       }
+    },
+    excitePet() {
+      pet?.excite();
     },
     bubbleAt(out) {
       head.getWorldPosition(out);

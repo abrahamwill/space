@@ -1,0 +1,12 @@
+/* /house on the Pinwheel house: on top of src/house/house.css. */
+
+/* The page shows through (the poster underneath fades out once the scene is up, see src/pages/house.astro). */
+.hx2.is-ready { background: none; }
+
+/* Four rooms in the switch: tighter on phones. */
+@media (max-width: 899px) {
+  .hx2 .hx-rooms button { padding: 0 12px; }
+}
+@media (max-width: 380px) {
+  .hx2 .hx-rooms button { padding: 0 9px; font-size: 13px; }
+}

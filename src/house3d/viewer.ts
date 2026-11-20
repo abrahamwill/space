@@ -39,6 +39,15 @@ export interface HouseOptions {
   character?: string | false;
   /** Pose everything at rest and never animate (poster renders). */
   still?: boolean;
+  /** Frames per second while something moves (default HERO_FPS). */
+  fps?: number;
+  /**
+   * The caller drives the camera (the full house view, src/house3d/HouseView.tsx). The frustum is then
+   * the canvas size in px, so camera.zoom is px per metre; position and zoom are the caller's.
+   */
+  control?: boolean;
+  /** Called after the canvas is resized (control mode), before the frame is drawn. */
+  onResize?: (w: number, h: number) => void;
 }
 
 export interface HouseView {
@@ -52,11 +61,25 @@ export interface HouseView {
   bubbleAnchor(): { x: number; y: number } | null;
   /** Called after every rendered frame (e.g. to move the bubble). */
   onFrame: (() => void) | null;
+  /** Called every animation tick with dt (s); return true while it still needs frames (e.g. a camera move). */
+  step: ((dt: number) => boolean) | null;
+  /** Start the loop if anything needs frames (call after changing what `step` animates). */
+  kick(): void;
+  /** The camera, once the house has loaded. */
+  camera(): THREE.OrthographicCamera | null;
+  /** The GLB HeroCamera's half-extents (m): the frame the hero poster is cut from. */
+  heroFrame(): { x: number; y: number };
+  /** The loaded house (gltf scene), once loaded. */
+  house(): THREE.Object3D | null;
+  /** The pet hops a few times (no-op with reduced motion or before load). */
+  excitePet(): void;
+  /** World point just above the character's head (null before load). */
+  headAt(out: THREE.Vector3): THREE.Vector3 | null;
   dispose(): void;
 }
 
 export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView {
-  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, still = false } = opts;
+  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, still = false, fps = HERO_FPS, control = false } = opts;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -80,6 +103,12 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
     if (!camera) return;
+    if (control) {
+      camera.left = -w / 2; camera.right = w / 2; camera.top = h / 2; camera.bottom = -h / 2;
+      opts.onResize?.(w, h);
+      camera.updateProjectionMatrix();
+      return;
+    }
     // Contain: keep the whole HeroCamera frame visible at any aspect.
     const a = w / h;
     let x = base.x, y = base.y;
@@ -89,7 +118,8 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
   };
 
   let life: Life | null = null;
-  const view = { onFrame: null } as Pick<HouseView, 'onFrame'>;
+  let houseRoot: THREE.Object3D | null = null;
+  const view = { onFrame: null, step: null } as Pick<HouseView, 'onFrame' | 'step'>;
   const render = () => {
     if (!camera) return;
     renderer.render(scene, camera);
@@ -101,15 +131,19 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
   let onScreen = false;
   let raf = 0;
   let last = 0;
-  const moving = () => !!life && !still && onScreen && !document.hidden && !reduced.matches;
+  let stepping = false; // `step` asked for more frames
+  const alive = () => !!life && !still && onScreen && !document.hidden && !reduced.matches;
+  const moving = () => alive() || (stepping && !!camera && !document.hidden);
   const tick = (now: number) => {
     raf = 0;
     if (!moving()) return;
     raf = requestAnimationFrame(tick);
     const dt = (now - last) / 1000;
-    if (dt < 1 / HERO_FPS - 0.004) return;
+    if (dt < 1 / fps - 0.004) return;
     last = now;
-    life!.update(Math.min(dt, 0.1));
+    const d = Math.min(dt, 0.1);
+    if (alive()) life!.update(d);
+    stepping = !!view.step?.(d);
     render();
   };
   const wake = () => {
@@ -163,6 +197,7 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
       }
     });
     scene.add(root);
+    houseRoot = root;
     root.updateMatrixWorld(true);
     if (charG) life = bringToLife(root, charG);
 
@@ -188,6 +223,7 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     camera = cam;
     base = { x: cam.right, y: cam.top };
     fit();
+    if (control) stepping = !!view.step?.(0);
     render();
     wake();
   });
@@ -212,6 +248,23 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
       if (!life || !camera) return null;
       life.bubbleAt(v).project(camera);
       return { x: (v.x * 0.5 + 0.5) * el.clientWidth, y: (-v.y * 0.5 + 0.5) * el.clientHeight };
+    },
+    kick() {
+      if (!camera) return;
+      stepping = true;
+      if (raf) return;
+      if (moving()) wake();
+    },
+    camera: () => camera,
+    heroFrame: () => base,
+    house: () => houseRoot,
+    excitePet() {
+      if (!life || still || reduced.matches) return;
+      life.excitePet();
+      wake();
+    },
+    headAt(out: THREE.Vector3) {
+      return life ? life.bubbleAt(out) : null;
     },
     dispose() {
       cancelAnimationFrame(raf);
