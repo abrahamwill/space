@@ -9,13 +9,12 @@ import Space from '../layouts/Space.astro';
 import PeekWin, { type WinData } from '../components/home/PeekWin.astro';
 import NowPlaying from '../components/home/NowPlaying.astro';
 import { site, lab, houseHref } from '../data/site';
-import { getHouseContent, inlineJson } from '../data/houseContent';
-// The hero rests in the arrival state (main room lit); the other rooms light up when someone looks.
-import houseDim from '../assets/house/poster-dim.png';
+// The Pinwheel house (House v2): a still of the live 3D (scripts/render-house3d-poster.mjs), so the
+// 3D that fades in over it lines up exactly.
+import housePoster from '../assets/house/hero-p2.png';
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order).slice(0, 3);
 const [lead, ...rest] = work;
-const houseContent = inlineJson(await getHouseContent());
 const metaLine = (w: (typeof work)[number]) => [w.data.company, w.data.year, w.data.role].join(' · ');
 
 const wins: Record<'proto' | 'pet' | 'voice', WinData> = {
@@ -55,7 +54,6 @@ const info = [
 const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
 ---
 <Space>
-  <script type="application/json" id="house-content" set:html={houseContent} />
 
   <!-- ============ Menu bar ============ -->
   <header slot="header" class="mb">
@@ -110,11 +108,11 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
         <img class="grid" src="/images/iso-grid.webp" alt="" width="2880" height="1720" decoding="async" />
         <a class="house fx" href={houseHref} aria-label="Step into my space">
           <Picture
-            src={houseDim}
+            src={housePoster}
             formats={['avif', 'webp']}
             widths={[720, 1080, 1440, 1800, 2336]}
             sizes="(max-width: 900px) 120vw, 900px"
-            alt="My house, cut into the page: the main room lit, with a turntable and a sofa; the studio behind it and the lab to the right still dark, with light spilling from their doorways"
+            alt="My house, cut into the page: a living room in the middle with a sofa, a checkered rug and me waving, and around it a bedroom, a studio with a bookcase and a treadmill, a lab, and small gardens with trees"
             loading="eager"
             fetchpriority="high"
             decoding="async"
@@ -300,15 +298,16 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
 
 <script>
   /**
-   * The live house in the hero, and stepping inside without a page load (unchanged from milestone 4,
-   * except the cursor, which is now the kit's glass "Step in →" pill).
+   * The live 3D house (House v2, src/house3d/viewer.ts) fades in over the poster.
    *
    * Auto-load only when it's cheap and wanted: after the page is idle AND the hero is on screen.
    * Never on Save-Data, slow connections, low-memory devices, reduced motion, or ?mode=focus;
    * there it waits for intent (hover/focus/touch).
+   *
+   * "Step in" is a plain link to /house for now: the in-place zoom (house/enter.ts) drives the old
+   * house engine, which the hero no longer runs.
    */
-  import type { HouseEngine } from '../house/engine';
-  import type { HouseContent } from '../house/content';
+  import type { HouseView } from '../house3d/viewer';
 
   const host = document.querySelector<HTMLElement>('[data-house-live]');
   const link = host?.closest<HTMLElement>('.house');
@@ -323,32 +322,15 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.documentElement.dataset.mode === 'focus';
 
-    let engine: Promise<HouseEngine> | null = null;
+    let view: Promise<HouseView> | null = null;
     const start = () =>
-      (engine ??= import('../house/hero').then(
-        ({ mountHero }) =>
-          new Promise<HouseEngine>((resolve) => {
-            const e = mountHero(host, () => {
-              link.classList.add('is-live');
-              resolve(e);
-            });
-          }),
-      ));
-    // Dev only: this page has no React island, so @astrojs/react never adds the React Refresh
-    // preamble, and importing enter.ts (React) throws "can't detect preamble". Install it first.
-    const preamble: Promise<unknown> = import.meta.env.DEV
-      ? import(/* @vite-ignore */ '/@react-refresh' as string).then(({ injectIntoGlobalHook }) => {
-          const w = window as unknown as Record<string, unknown>;
-          injectIntoGlobalHook(window);
-          w.$RefreshReg$ = () => {};
-          w.$RefreshSig$ = () => (type: unknown) => type;
-        })
-      : Promise.resolve();
-    const loadEnter = () => preamble.then(() => import('../house/enter'));
-    const warm = () => {
-      start();
-      loadEnter();
-    };
+      (view ??= import('../house3d/viewer').then(({ mountHouse }) => {
+        const v = mountHouse(host);
+        return v.ready.then(() => {
+          link.classList.add('is-live');
+          return v;
+        });
+      }));
 
     if (holdBack) {
       for (const ev of ['pointerenter', 'focusin', 'touchstart'] as const) link.addEventListener(ev, () => start(), { once: true, passive: true });
@@ -381,47 +363,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       });
       link.addEventListener('pointermove', move);
       link.addEventListener('pointerleave', () => pill.classList.remove('is-on'));
-      new MutationObserver(() => document.documentElement.classList.contains('in-house') && pill.classList.remove('is-on')).observe(
-        document.documentElement,
-        { attributes: true, attributeFilter: ['class'] },
-      );
     }
-
-    // ---- stepping inside ----
-    const webgl = (() => {
-      try {
-        const c = document.createElement('canvas');
-        return !!(c.getContext('webgl2') || c.getContext('webgl'));
-      } catch {
-        return false;
-      }
-    })();
-    const content = () => JSON.parse(document.getElementById('house-content')!.textContent!) as HouseContent;
-    const isHouseLink = (t: EventTarget | null) => (t as Element | null)?.closest?.('a[href="/house"]');
-
-    for (const ev of ['pointerover', 'focusin'] as const)
-      document.addEventListener(ev, (e) => isHouseLink(e.target) && webgl && warm(), { passive: true });
-
-    let busy = false;
-    const go = async (push: boolean) => {
-      if (busy) return;
-      busy = true;
-      document.documentElement.classList.add('house-loading');
-      try {
-        const [e, mod] = await Promise.all([start(), loadEnter()]);
-        mod.onHistory(() => go(false));
-        mod.enter(e, host, content(), push);
-      } finally {
-        busy = false;
-        document.documentElement.classList.remove('house-loading');
-      }
-    };
-    document.addEventListener('click', (e) => {
-      if (!webgl || !isHouseLink(e.target)) return;
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      e.preventDefault();
-      go(true);
-    });
   }
 </script>
 
@@ -646,18 +588,12 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .grid { position: absolute; left: -22%; top: -12%; width: 144%; max-width: none; height: auto; z-index: 0; pointer-events: none; opacity: .9; -webkit-mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); }
   .house { position: absolute; left: -2%; right: -2%; top: 50%; transform: translateY(-50%); z-index: 2; display: block; }
   .house :global(img) { display: block; width: 100%; height: auto; transition: opacity .6s ease; }
-  .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+  /* The live canvas shows the whole HeroCamera frame; the poster is cropped to the house. This inset
+     (printed by scripts/render-house3d-poster.mjs) makes the two line up. */
+  .house-live { position: absolute; inset: -25.098% -1.807% -22.142% -1.807%; opacity: 0; transition: opacity .6s ease; pointer-events: none; }
   .house:global(.is-live) .house-live { opacity: 1; }
   .house:global(.is-live) :global(img) { opacity: 0; }
-  .house:global(.is-handoff) :global(img) { opacity: 1; transition: none; }
-  .house:global(.is-away) :global(img) { opacity: 0; transition: none; }
   .house:global(.has-pill), .house:global(.has-pill) * { cursor: none; }
-
-  /* Character's talking box (hero.ts pins it above their head). */
-  .house :global(.hero-bubble) { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
-  .house :global(.hero-bubble p) { position: absolute; left: 0; bottom: 14px; transform: translate(-50%, 6px) scale(.92); transform-origin: 50% 100%; width: max-content; max-width: 220px; margin: 0; padding: 8px 12px; border-radius: 12px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 500; line-height: 1.35; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 8px 20px rgba(0, 0, 0, .12); opacity: 0; transition: opacity .2s ease, transform .25s cubic-bezier(.2, .7, .2, 1.3); }
-  .house :global(.hero-bubble p::after) { content: ''; position: absolute; left: 50%; bottom: -6px; width: 12px; height: 12px; background: #fff; transform: translateX(-50%) rotate(45deg); box-shadow: .5px .5px 0 rgba(0, 0, 0, .15); }
-  .house :global(.hero-bubble.is-on p) { opacity: 1; transform: translate(-50%, 0) scale(1); }
 
   .step-pill { position: fixed; left: 0; top: 0; z-index: 55; padding: 10px 16px; border-radius: 999px; background: rgba(255, 255, 255, .6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 6px 18px rgba(0, 0, 0, .18); font-weight: 600; font-size: 14px; color: var(--ink); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
   .step-pill:global(.is-on) { opacity: 1; }

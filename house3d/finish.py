@@ -5,6 +5,8 @@ back later; re-running the whole chain (setup -> lighting -> finish) rebuilds fr
 
   0. Cleanup   faces lying exactly on top of another are removed first (one copy kept; for a
                cream-under-glow pair the glow face is kept). Approved by Abraham 2026-11-20.
+     Winding   faces pointing inward are turned to face outward (same shape, same look; it matters
+               for shadows on the website). Approved by Abraham 2026-11-21.
   1. Bevel     0.7 cm, 2 segments, Harden Normals, only on edges sharper than 30°.
                Skips wall_art, page_surface, and any edge touching a screen / glow face.
   2. Lights    a small warm point light inside each lamp shade (warm glow_ islands), and a faint
@@ -91,6 +93,23 @@ def weld(ob):
             p.use_smooth = False
     bm.free()
     return ok
+
+
+def fix_winding(ob):
+    """Make every face's front side point outward (approved by Abraham 2026-11-21). Shape and colours
+    don't change; Blender and the site draw both sides anyway, but the site's shadows read the front."""
+    me = ob.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    before = [f.normal.copy() for f in bm.faces]
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    flipped = sum(1 for f, n in zip(bm.faces, before) if f.normal.dot(n) < 0)
+    if flipped:
+        bm.to_mesh(me)
+        for p in me.polygons:
+            p.use_smooth = False
+    bm.free()
+    return flipped
 
 
 def bevel(ob):
@@ -252,7 +271,7 @@ def shading():
 
 # ---------------------------------------------------------------- run
 
-edges, unwelded = 0, []
+edges, unwelded, turned = 0, [], 0
 for ob in sc.objects:
     if ob.type != 'MESH' or ob.name == 'page_surface' or any(m.type == 'BEVEL' for m in ob.modifiers):
         continue
@@ -262,6 +281,7 @@ for ob in sc.objects:
     if not weld(ob):
         unwelded.append(ob.name)  # overlapping faces: leave it exactly as imported
         continue
+    turned += fix_winding(ob)
     if ob.name not in BEVEL_SKIP:
         edges += bevel(ob)
 glow_materials()
@@ -269,4 +289,5 @@ lamps = add_lamps()
 fabrics = apply_fabrics()
 shading()
 print('FINISH_OK bevelled edges %d, lamp lights %d, fabric materials %s' % (edges, lamps, fabrics))
+print('FINISH_WINDING faces turned to face outward: %d' % turned)
 print('FINISH_SKIPPED (overlapping faces, not welded or bevelled):', unwelded)

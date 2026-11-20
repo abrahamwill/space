@@ -400,11 +400,12 @@ def gym3d(cx, cy, w, d, var):
     X, Y = cx - w / 2, cy - d / 2
     g = Part()
     if var == "pullup":        # freestanding pull-up station, bar running along y
+        top = H - .1           # stays below the wall tops, so nothing pokes out above the page
         for yy in (Y + .1, Y + d - .25):
-            g = g + box(X + w / 2 - .08, yy, 0, .16, .16, 5.6, "#2b2b2e") + box(X, yy - .05, 0, w, .26, .12, "#2b2b2e")
-        g = g + rod((X + w / 2, Y + .1, 5.45), (X + w / 2, Y + d - .1, 5.45), .07, "#9b9b96", 8)
+            g = g + box(X + w / 2 - .08, yy, 0, .16, .16, top, "#2b2b2e") + box(X, yy - .05, 0, w, .26, .12, "#2b2b2e")
+        g = g + rod((X + w / 2, Y + .1, top - .15), (X + w / 2, Y + d - .1, top - .15), .07, "#9b9b96", 8)
         for yy in (Y + .45, Y + d - .6):
-            g = g + box(X + w / 2 - .09, yy, 5.38, .18, .15, .15, "#c8442b")
+            g = g + box(X + w / 2 - .09, yy, top - .22, .18, .15, .15, "#c8442b")
     elif var == "mat":
         g = box(X, Y, 0, w, d, .05, "#6f8f6a", "#7fa07a") + box(X, Y, .05, w * .16, d, .12, "#6f8f6a", "#86a881")
     elif var == "parallettes":
@@ -776,10 +777,12 @@ def wspec(walls, axis, x, y, z, w, d, h, col, top=None, join=True):
     walls.append(dict(axis=axis, x0=x, x1=x + w, y0=y, y1=y + d, z0=z, z1=z + h, col=col, top=top or col, join=join))
 
 
-def join_walls(walls, eps=.03):
+def join_walls(walls, eps=.03, keep_lone=False):
     """Extend every wall end that stops against a perpendicular piece of the same material so the
     two meet in a clean corner (fills convex corners, closes L and T joints). Free ends are left alone,
-    so nothing pokes out past a corner."""
+    so nothing pokes out past a corner.
+    keep_lone: keep full-height walls that touch nothing. In a house sunk into the page (slot stair)
+    such a wall is a side of the cut, e.g. P2's workout-deck notch, and the page hides its ends."""
     out = []
     for p in walls:
         q = dict(p)
@@ -804,7 +807,7 @@ def join_walls(walls, eps=.03):
         return not (a["x0"] > b["x1"] + eps or b["x0"] > a["x1"] + eps or a["y0"] > b["y1"] + eps or b["y0"] > a["y1"] + eps)
     keep = []
     for q in out:
-        if q["z1"] >= H - eps and q["z0"] <= eps and q["join"] and not any(o is not q and o["z1"] >= H - eps and touches(q, o) for o in out):
+        if not keep_lone and q["z1"] >= H - eps and q["z0"] <= eps and q["join"] and not any(o is not q and o["z1"] >= H - eps and touches(q, o) for o in out):
             continue
         keep.append(q)
     g = Part()
@@ -961,7 +964,7 @@ def build_shell(key):
                 internal_specs(walls, ax, k, a, b, kind, gaps, P["wall"])
     if "stair" in plan:
         g2, extra = slot_entry(plan, walls)
-        return g + g2 + join_walls(walls), rects, [], ("slot", extra), None, None
+        return g + g2 + join_walls(walls, keep_lone=True), rects, [], ("slot", extra), None, None
     g = g + join_walls(walls)
     # bank: heightfield over the bank strips, rising from the house to the page
     sx = ent["x"]
