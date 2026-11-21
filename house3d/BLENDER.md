@@ -67,7 +67,8 @@ blender -b house3d/house_P2.blend -P house3d/rig_character.py -- public/house3d/
 ```
 
 - Same mesh, same spot, same colours: it is built by `source/character.py` and split into rigid pieces, one per bone (thighs, shins, spine, head, arms, forearms, root). Each joint sits on the pivot the source rotates that piece around.
-- The clips use the source's own pose angles (`character.POSES`): **idle** (stand, breathing, a glance aside), **wave**, **walk** (half-way to the designed run), **sit**.
+- The clips use the source's own pose angles (`character.POSES`): **idle** (stand, breathing, a glance aside), **wave**, **walk** (half-way to the designed run), **sit**, **run** (a 0.67 s running cycle in place around the designed run pose, for the treadmill: knee drive, heel up behind, elbows ~90° swinging against the legs; keys in `RUN_HALF`).
+- Walks: `house3d/walks.py` → `public/house3d/walks.json`, run in Blender (`blender -b house3d/house_P2.blend -P house3d/walks.py -- public/house3d/walks.json`). The treadmill spot (act `run`) has `belt` and `lift` (belt height); the deck is reached across its open edge from the garden (`OPEN_EDGES`). The hero leaves the treadmill out; only `/house` sends him there.
 - The script checks the rigged "wave" against the house's `character_abraham` and stops if they differ by more than a couple of millimetres (the bevel is welded per piece, so it differs very slightly).
 - The site hides the house's static copy and shows the rigged one. The pet (`lab_pet_Pet`) is animated in code (`src/house3d/life.ts`): its body and eyes hop; the bed stays put.
 - After changing the character or its clips, re-run the script, then the hero still: `node scripts/render-house3d-poster.mjs`.

@@ -210,7 +210,9 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     scene.add(root);
     houseRoot = root;
     root.updateMatrixWorld(true);
-    if (charG) life = bringToLife(root, charG, walkG);
+    // The treadmill run (act "run") is for the full house only; in the hero he keeps to the other spots.
+    const routes = walkG && !control ? { ...walkG, spots: walkG.spots.filter((sp) => sp.act !== 'run') } : walkG;
+    if (charG) life = bringToLife(root, charG, routes);
 
     // Sun shadow camera: cover the whole house, seen from the sun.
     const suns: THREE.DirectionalLight[] = [];
