@@ -6,10 +6,12 @@
  *   He starts on his mark (hero3d.person(), what the hero poster shows) in the designed standing pose.
  * - Routines, like the old house (src/house/life.ts): every so often he walks from his mark to a spot in
  *   public/house3d/walks.json (house3d/walks.py: paths round the furniture and through the doors), looks
- *   at the records, the turntable, the PC or the books, sits on the sofa, stands by the garden tree, or
- *   says hi to the pet, then walks back to his mark.
+ *   at the records, the turntable, the PC or the books, sits on the sofa, stands by the garden tree,
+ *   says hi to the pet, or goes for a run on the treadmill (steps up onto the belt, runs in place with the
+ *   "run" clip, turns round and steps off), then walks back to his mark.
  * - greet(true) stops whatever he is doing (getting up first if he sits): he turns to the camera and
- *   waves. greet(false) puts his arm down and he carries on: on with a walk, or back to his mark.
+ *   waves (on the treadmill he stops running and waves from the belt). greet(false) puts his arm down and he
+ *   carries on: on with a walk, or back to his mark (stepping off the treadmill first).
  * - Pet: lab_pet_Pet in the house GLB. Its body and eyes hop on the cushion now and then and breathe in
  *   between; it hops a few times in a row when he waves or comes to see it. The bed doesn't move.
  *
@@ -30,17 +32,22 @@ const SPEED = 0.7; // m/s walking
 const WALK_CLIP_SPEED = 0.83; // m/s the walk clip covers at timeScale 1 (two 0.42 m steps a second)
 const TURN = 5; // rad/s
 const SIT_TIME = 0.8; // s to sit down or get up
+const STEP_TIME = 1.1; // s to walk from behind the treadmill onto the middle of the belt (or back off)
+const STEP_UP = 0.4; // share of that walk spent stepping up onto the treadmill's deck
 
 type XY = [number, number];
 const TO_CAMERA: XY = [Math.SQRT1_2, Math.SQRT1_2]; // facing the HeroCamera (plan +x, +y)
 
 export interface Spot {
   name: string;
-  act: 'look' | 'sit' | 'pet';
+  act: 'look' | 'sit' | 'pet' | 'run';
   at: XY;
   face: XY;
   path: XY[];
   seat?: XY;
+  /** run spots: where he runs on the treadmill. */
+  belt?: XY;
+  /** sit: how far the designed sit pose moves up onto the seat; run: the belt's height. */
   lift?: number;
 }
 export interface Walks {
@@ -88,6 +95,8 @@ type State =
   | { k: 'turn'; spot: Spot | null; to: number }
   | { k: 'do'; spot: Spot; wait: number }
   | { k: 'sit'; spot: Spot; t: number; down: boolean; wait: number }
+  /** t: 0 behind the treadmill .. 1 on the belt. on -> run -> about (turn round) -> off. */
+  | { k: 'run'; spot: Spot; t: number; phase: 'on' | 'run' | 'about' | 'off'; wait: number }
   | { k: 'hi' };
 
 export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | null): Life {
@@ -113,7 +122,7 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
     if (!clip) throw new Error(`character.glb has no "${name}" clip`);
     return mixer.clipAction(clip);
   };
-  const clips = { idle: action('idle'), wave: action('wave'), walk: action('walk'), sit: action('sit') };
+  const clips = { idle: action('idle'), wave: action('wave'), walk: action('walk'), sit: action('sit'), run: action('run') };
   clips.walk.timeScale = SPEED / WALK_CLIP_SPEED;
   let clip = clips.idle;
   clip.play();
@@ -148,6 +157,12 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
     pos[0] = a[0] + (b[0] - a[0]) * k;
     pos[1] = a[1] + (b[1] - a[1]) * k;
     lift = (spot.lift ?? 0) * k;
+  };
+  const beltAt = (spot: Spot, t: number) => {
+    const a = spot.at, b = spot.belt ?? spot.at;
+    pos[0] = a[0] + (b[0] - a[0]) * t; // walking pace, no easing: the walk clip keeps going
+    pos[1] = a[1] + (b[1] - a[1]) * t;
+    lift = (spot.lift ?? 0) * ease(Math.min(1, t / STEP_UP));
   };
 
   // ---- the routine: home -> walk out -> turn -> look / sit / pet -> walk back -> turn -> home
@@ -193,6 +208,9 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
           else if (spot.act === 'sit') {
             state = { k: 'sit', spot, t: 0, down: true, wait: rand(6, 10) };
             play(clips.sit, SIT_TIME);
+          } else if (spot.act === 'run') {
+            state = { k: 'run', spot, t: 0, phase: 'on', wait: rand(12, 20) };
+            play(clips.walk, 0.25);
           } else {
             if (spot.act === 'pet') pet?.excite();
             state = { k: 'do', spot, wait: rand(3, 6) };
@@ -215,6 +233,31 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
           if (st.t <= 0) walkTo(st.spot, true);
         }
         seatAt(st.spot, st.t);
+        break;
+      }
+      case 'run': {
+        const st = state;
+        if (st.phase === 'on') {
+          st.t = Math.min(1, st.t + dt / STEP_TIME);
+          if (st.t >= 1) {
+            st.phase = 'run';
+            play(clips.run, 0.3);
+          }
+        } else if (st.phase === 'run') {
+          if ((st.wait -= dt) <= 0) {
+            st.phase = 'about';
+            play(clips.idle, 0.35);
+          }
+        } else if (st.phase === 'about') {
+          if (turnTo(heading([-st.spot.face[0], -st.spot.face[1]]), dt)) {
+            st.phase = 'off';
+            play(clips.walk, 0.25);
+          }
+        } else {
+          st.t = Math.max(0, st.t - dt / STEP_TIME);
+          if (st.t <= 0) walkTo(st.spot, true);
+        }
+        beltAt(st.spot, st.t);
         break;
       }
       case 'hi':
@@ -259,6 +302,10 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
         state = { k: 'home', wait: rand(4, 8) };
       } else if (was.k === 'walk') {
         walkTo(was.spot, was.back, was.s); // carry on where he was
+      } else if (was.k === 'run') {
+        // he waved from the treadmill: turn round and step off, then head home
+        state = { ...was, phase: was.t > 0 ? 'about' : 'off' };
+        play(clips.idle, 0.45);
       } else if (was.k === 'turn' && !was.spot) {
         play(clips.idle, 0.45);
         state = { k: 'turn', spot: null, to: heading(walks.mark.face) };

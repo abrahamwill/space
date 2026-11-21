@@ -35,12 +35,14 @@ CELL = 0.05          # m
 BODY = 0.25          # m: how close his centre comes to a wall or a piece of furniture
 DOOR_EDGE = 0.15     # m: how close his centre comes to a door post (he turns a shoulder through tight ones)
 HEAD = 1.65          # m: rays start here; anything lower than this is in his way
-WALKABLE = ('living', 'bedroom', 'studio', 'lab', 'garden')
+WALKABLE = ('living', 'bedroom', 'studio', 'lab', 'garden', 'deckS')
 SIT_DEPTH = 0.31     # m: underside of his thighs above the floor in the designed "sit" pose
 
 # name: where he stands (plan m), which way he faces (plan direction), what he does.
 # sit spots: `seat` is where his root goes, `seat_top` the cushion height (probed from the scene);
 # he walks to the stand point in front of it, turns his back to it and sits.
+# run spots: `belt` is where his root goes on the treadmill, `lift` the belt's height (probed); he walks to
+# the stand point behind it, faces the console, steps up onto the belt and runs in place.
 SPOTS = {
     'records':   dict(at=(3.55, 3.85), face=(0, -1), act='look', room='living'),
     'turntable': dict(at=(6.85, 3.85), face=(0, -1), act='look', room='living'),
@@ -51,6 +53,8 @@ SPOTS = {
     # the garden bench (5.5, 11.0) sits behind the page's front edge, where the camera hardly sees him,
     # so in the garden he stands by the tree instead
     'tree':      dict(at=(4.9, 9.8), face=(.97, -.24), act='look', room='garden'),
+    # the treadmill on the workout deck (x 1.05-2.9, y 8.6-9.4): console at the low-x end, belt x 1.95-2.7
+    'treadmill': dict(at=(3.2, 9.0), face=(-1, 0), act='run', belt=(2.35, 9.0), room='studio'),
 }
 NOT_IN_THE_WAY = ('house_shell', 'page_surface', 'wall_art', 'character_abraham', 'living_rug_check', 'bedroom_rug', 'studio_rug_blob')
 
@@ -85,7 +89,10 @@ for rects in rooms.values():
         m &= inside(rects, GX + ox, GY + oy)
     floor |= m
 room_of = lambda px, py: next((k for k, rects in rooms.items() if inside(rects, np.array(px), np.array(py))), None)
-for (dx, dy, axis, w) in plan['doors']:
+# Open edges he can walk across as well as the doors: the workout deck and the garden have no wall between
+# them (both open-air), and the living room's door onto the deck is blocked by the orange chair and the sofa.
+OPEN_EDGES = [(4.5, 9.3, 'y', 1.6)]     # same shape as a door: (x, y, axis of the wall, width)
+for (dx, dy, axis, w) in list(plan['doors']) + OPEN_EDGES:
     a = (dx - w / 2 + DOOR_EDGE, dx + w / 2 - DOOR_EDGE) if axis == 'x' else (dy - w / 2 + DOOR_EDGE, dy + w / 2 - DOOR_EDGE)
     if axis == 'x':
         sides = (room_of(dx, dy - .3), room_of(dx, dy + .3))
@@ -263,9 +270,13 @@ for name, s in SPOTS.items():
         spot['seat'] = list(s['seat'])
         spot['lift'] = round(top - SIT_DEPTH, 3)     # raise (or lower) the designed sit pose onto this seat
         spot['seat_top'] = round(top, 3)
+    if s['act'] == 'run':
+        spot['belt'] = list(s['belt'])
+        spot['lift'] = round(first_thing(*s['belt'], top=.9) or 0.0, 3)   # his feet on the belt
     out['spots'].append(spot)
     print('WALKS %-9s %-8s seen %.2f  path %.1f m, %d points%s' % (name, s['room'], spot['seen'], spot['length'], len(path),
-          ('  seat %.2f m, lift %+.2f m' % (spot['seat_top'], spot['lift'])) if 'seat' in spot else ''))
+          ('  seat %.2f m, lift %+.2f m' % (spot['seat_top'], spot['lift'])) if 'seat' in spot else
+          ('  belt lift %.2f m' % spot['lift']) if 'belt' in spot else ''))
 print('WALKS mark seen', out['mark']['seen'])
 if not failed:
     os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)
