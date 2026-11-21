@@ -22,6 +22,8 @@ export interface HouseContent {
   lab: ReadonlyArray<{ title: string; body: string; status: string; mark: string }>;
   about: { body: string; facts: ReadonlyArray<{ what: string; when: string }> };
   records: ReadonlyArray<{ title: string; artist: string; label: string; src?: string }>;
+  /** The running wall beside the treadmill (House v2). */
+  running: { intro: string; photos: ReadonlyArray<{ src?: string; caption: string }>; medals: ReadonlyArray<{ what: string; when: string }> };
 }
 
 export interface Hotspot {

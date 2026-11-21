@@ -1,6 +1,6 @@
 import { getCollection } from 'astro:content';
 import type { HouseContent } from '../house/content';
-import { site, lab, about, records } from './site';
+import { site, lab, about, records, running } from './site';
 
 /** What the house shows, built from the same sources as the fast view. */
 export async function getHouseContent(): Promise<HouseContent> {
@@ -26,6 +26,7 @@ export async function getHouseContent(): Promise<HouseContent> {
     lab,
     about,
     records,
+    running,
   };
 }
 

@@ -213,10 +213,23 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
         </>
       );
     // House v2 (Pinwheel): what these open is still an open question (design/house-v2-blender.md)
-    case 'pc':
+    case 'running':
+      return (
+        <>
+          <h3 className="hx-h">Miles on the wall</h3>
+          <p>{content.running.intro}</p>
+          <ul className="hx-instax" aria-label="Photos from my running">
+            {content.running.photos.map((ph, i) => (
+              <li key={i}>
+                {ph.src ? <img src={ph.src} alt={ph.caption} loading="lazy" /> : <span className="hx-instax-empty" aria-hidden="true" />}
+                <span>{ph.caption}</span>
+              </li>
+            ))}
+          </ul>
+          <Rows rows={content.running.medals} />
+        </>
+      );
     case 'photowall':
-    case 'treadmill':
-    case 'medals':
       return (
         <>
           <h3 className="hx-h">[Still to decide]</h3>

@@ -17,6 +17,7 @@
  */
 import * as THREE from 'three';
 import type { HouseView } from './viewer';
+import { RUNNING_WALL } from './props';
 import { ROOMS, HOTSPOTS, onFootprint, inRect, roomAt, type RoomId, type Anchor } from './rooms';
 
 export type Face = '-x' | '+x' | '-z' | '+z';
@@ -168,7 +169,7 @@ export class Stage {
       const room = g.kind === 'room' ? g.room : g.phoneRoom!;
       const R = ROOMS[room];
       const zoom = this.posterZoom(g.kind === 'room' ? g.overviewInsets(this.w, this.h) : ins) * (g.kind === 'room' ? R.zoom : 2);
-      const c = new THREE.Vector3(R.rect[0] + R.rect[2] / 2, 0.5, R.rect[1] + R.rect[3] / 2);
+      const c = R.focus ? new THREE.Vector3(...R.focus) : new THREE.Vector3(R.rect[0] + R.rect[2] / 2, 0.5, R.rect[1] + R.rect[3] / 2);
       const f = free(ins);
       return { target: this.place(c, f.x, f.y, zoom, az), zoom, az };
     }
@@ -294,6 +295,7 @@ export class Stage {
     };
     split('house_shell');
     split('wall_art');
+    split(RUNNING_WALL); // props.ts: hung on the deck's outer wall
 
     this.ready = true;
     this.onReady?.();
@@ -308,7 +310,7 @@ export class Stage {
       if (!o) return null;
       const b = new THREE.Box3().setFromObject(o);
       const c = b.getCenter(new THREE.Vector3());
-      return { at: new THREE.Vector3(c.x, b.max.y + 0.05 - (a.drop ?? 0), c.z) };
+      return { at: new THREE.Vector3(c.x, b.max.y + 0.05 - (a.drop ?? 0), c.z), face: a.wall };
     }
     // framed art inside a part of a room
     const art = house.getObjectByName('wall_art');

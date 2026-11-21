@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { bringToLife, CHARACTER_URL, WALKS_URL, type Life, type Walks } from './life';
+import { addProps } from './props';
 
 const UNITS = 1 / (683 * Math.PI);
 
@@ -205,6 +206,7 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
         (o as THREE.PointLight).intensity *= UNITS * light.lamp;
       }
     });
+    addProps(root); // pieces not in the GLB yet (props.ts)
     scene.add(root);
     houseRoot = root;
     root.updateMatrixWorld(true);

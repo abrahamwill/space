@@ -14,6 +14,7 @@
  *   - wall cut-aways are worked out from the plan's outline (see stage.ts).
  */
 import type { Face } from './stage';
+import { RUNNING_WALL } from './props';
 
 export type RoomId = 'living' | 'bedroom' | 'studio' | 'lab';
 export const ROOM_ORDER: RoomId[] = ['living', 'bedroom', 'studio', 'lab'];
@@ -30,12 +31,14 @@ export interface Room {
   rect: Rect;
   /** Zoom relative to the overview. */
   zoom: number;
+  /** Where the camera centres (x, y, z), if not the middle of `rect`. */
+  focus?: readonly [number, number, number];
 }
 
 export const ROOMS: Record<RoomId, Room> = {
   living: { label: 'Living room', short: 'Living', sub: 'about me →', rect: [3, 3, 5, 5], zoom: 2 },
   bedroom: { label: 'Bedroom', short: 'Bedroom', sub: 'off the clock →', rect: [1.5, 0, 4.5, 3], zoom: 2.2 },
-  studio: { label: 'Studio', short: 'Studio', sub: 'selected work →', rect: [0, 4.5, 3, 4], zoom: 2.2 },
+  studio: { label: 'Studio', short: 'Studio', sub: 'selected work →', rect: [0, 4.5, 3, 4], zoom: 2, focus: [1.3, 1.2, 7.3] }, // takes in the running wall on the deck
   lab: { label: 'Lab', short: 'Lab', sub: 'experiments →', rect: [8, 1.5, 3, 4.5], zoom: 2.2 },
 };
 
@@ -60,8 +63,8 @@ export function roomAt(x: number, z: number): RoomId | null {
 
 /** Where a hotspot hangs. */
 export type Anchor =
-  /** On top of a named object in the GLB. `drop` lowers the dot from the object's top (m). */
-  | { object: string; drop?: number }
+  /** On top of a named object in the GLB. `drop` lowers the dot from the object's top (m); `wall`: hung on that wall. */
+  | { object: string; drop?: number; wall?: Face }
   /** On the framed art (`wall_art`) inside this part of a room. */
   | { art: Rect }
   /** A point in the house (plan data), for parts the GLB doesn't name. */
@@ -90,14 +93,13 @@ export const HOTSPOTS: Hotspot[] = [
   { id: 'turntable', room: 'living', label: 'Turntable · next record', anchor: { object: 'living_console_Turntable' } },
   { id: 'photos', room: 'living', label: 'Record shelf · photos', anchor: { object: 'living_shelf_Records' } },
   { id: 'door', room: 'living', label: 'Front door · contact + CV', anchor: { point: [3, 1.2, 3.75] } },
-  // bedroom (what opens here is an open question, see design/house-v2-blender.md)
-  { id: 'pc', room: 'bedroom', label: 'Gaming PC', anchor: { object: 'bedroom_desk_Desk___PC' } },
+  // bedroom (the gaming PC opens nothing for now; the photo wall is still an open question)
   { id: 'photowall', room: 'bedroom', label: 'Photo wall', anchor: { art: [1.6, 0, 2.2, 0.6] } },
   // studio
   { id: 'folders', room: 'studio', label: '3 featured folders', anchor: { object: 'studio_desk_Desk', drop: 0.5 } },
   { id: 'archive', room: 'studio', label: 'Shelves · archive', anchor: { object: 'studio_shelf_Archive' } },
   { id: 'pinboard', room: 'studio', label: 'Pinboard · how I work', anchor: { art: [0, 4.5, 1, 4] } },
-  { id: 'treadmill', room: 'studio', label: 'Treadmill', anchor: { object: 'deckS_treadmill_Treadmill' } },
+  { id: 'running', room: 'studio', label: 'Medals · my running', anchor: { object: RUNNING_WALL, wall: '-x' } },
   // lab
   { id: 'prototypehub', room: 'lab', label: 'Workbench · Prototype Hub', anchor: { object: 'lab_desk_Bench' } },
   { id: 'arcade', room: 'lab', label: 'Arcade · pet game', anchor: { object: 'lab_arcade_Arcade' } },
@@ -114,12 +116,11 @@ export const WINDOW_TITLES: Record<string, string> = {
   turntable: 'Living room · turntable',
   photos: 'Living room · record shelf',
   door: 'Living room · front door',
-  pc: 'Bedroom · gaming PC',
   photowall: 'Bedroom · photo wall',
   folders: 'Studio · featured work',
   archive: 'Studio · archive',
   pinboard: 'Studio · how I work',
-  treadmill: 'Studio · treadmill',
+  running: 'Studio · running',
   prototypehub: 'Lab · workbench',
   arcade: 'Lab · arcade',
   voice: 'Lab · voice gadget',
