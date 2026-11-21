@@ -326,6 +326,9 @@ export default function HouseView({ content }: { content: HouseContent }) {
           </span>
         </div>
         <nav className="hx-rooms" aria-label="Rooms">
+          <button type="button" aria-current={view === 'overview' ? 'true' : undefined} onClick={() => go('overview')}>
+            House
+          </button>
           {ROOM_ORDER.map((r) => (
             <button key={r} type="button" aria-current={view === r ? 'true' : undefined} onClick={() => go(r, ROOM_DEFAULT[r])}>
               {ROOMS[r].short}

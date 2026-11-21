@@ -81,6 +81,93 @@ export interface HouseView {
   dispose(): void;
 }
 
+/** The house's outer walls (house_shell, #ece3d4 in house3d/source). */
+const CUT_WALL = 0xece3d4;
+/** Grid the page is rebuilt on (m). Every edge of the cut is on the plan's 0.5 m module. */
+const CELL = 0.25;
+
+/**
+ * The page the house is sunk into, rebuilt from the GLB's page_surface on a regular grid:
+ *   - mask: the holdout itself (depth only). The GLB's page has T-junctions (a corner sitting on another
+ *     triangle's edge), which leave hairline cracks you can see through once the house turns; a grid
+ *     shares every corner, so there are none.
+ *   - walls (cut_walls): all the way round the cut. The GLB only has walls on the edges the HeroCamera
+ *     sees (the back ones); the front ones hide under the page from there. Turned around (/house), they
+ *     are the far side, so without these you'd see out through the bottom of the cut. Each stands 1 cm
+ *     outside the cut (behind the house's own walls where they exist) and stops just under the page.
+ *     Off by default: stage.ts shows them when the house is turned, so the hero angle matches the poster.
+ */
+function sinkHouse(page: THREE.Mesh, floor: number): { mask: THREE.Mesh; walls: THREE.Mesh } {
+  const pos = page.geometry.getAttribute('position');
+  const index = page.geometry.index;
+  const tris = index ? index.count / 3 : pos.count / 3;
+  const P = (t: number, k: number) => new THREE.Vector3().fromBufferAttribute(pos, index ? index.getX(3 * t + k) : 3 * t + k).applyMatrix4(page.matrixWorld);
+  const bounds = new THREE.Box3();
+  const flat: number[][] = [];
+  for (let t = 0; t < tris; t++) {
+    const v = [P(t, 0), P(t, 1), P(t, 2)];
+    for (const p of v) bounds.expandByPoint(p);
+    flat.push(v.flatMap((p) => [p.x, p.z]));
+  }
+  const onPage = (x: number, z: number) =>
+    flat.some(([ax, az, bx, bz, cx, cz]) => {
+      const d1 = (x - bx) * (az - bz) - (ax - bx) * (z - bz);
+      const d2 = (x - cx) * (bz - cz) - (bx - cx) * (z - cz);
+      const d3 = (x - ax) * (cz - az) - (cx - ax) * (z - az);
+      return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+    });
+  const x0 = bounds.min.x, z0 = bounds.min.z, y = bounds.max.y;
+  const nx = Math.round((bounds.max.x - x0) / CELL), nz = Math.round((bounds.max.z - z0) / CELL);
+  const on: boolean[][] = [];
+  for (let i = 0; i < nx; i++) {
+    on.push([]);
+    for (let j = 0; j < nz; j++) on[i].push(onPage(x0 + (i + 0.5) * CELL, z0 + (j + 0.5) * CELL));
+  }
+  const at = (i: number, j: number) => i < 0 || j < 0 || i >= nx || j >= nz || on[i][j]; // outside = page
+
+  // the mask: a quad per page cell on shared grid corners
+  const verts: number[] = [], idx: number[] = [];
+  const vid = (i: number, j: number) => i * (nz + 1) + j;
+  for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) verts.push(x0 + i * CELL, y, z0 + j * CELL);
+  for (let i = 0; i < nx; i++)
+    for (let j = 0; j < nz; j++)
+      if (on[i][j]) idx.push(vid(i, j), vid(i, j + 1), vid(i + 1, j + 1), vid(i, j), vid(i + 1, j + 1), vid(i + 1, j));
+  const mg = new THREE.BufferGeometry();
+  mg.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  mg.setIndex(idx);
+  const mask = new THREE.Mesh(mg, page.material);
+  mask.name = 'page_surface_grid';
+  mask.renderOrder = -1;
+
+  // the walls: wherever a page cell meets an open one
+  const top = y - 0.004, out: number[] = [], nor: number[] = [];
+  const wall = (ax: number, az: number, bx: number, bz: number, n: [number, number]) => {
+    const ox = -n[0] * 0.01, oz = -n[1] * 0.01; // 1 cm back into the page
+    for (const [px, py, pz] of [[ax, floor, az], [bx, floor, bz], [bx, top, bz], [ax, floor, az], [bx, top, bz], [ax, top, az]]) {
+      out.push(px + ox, py, pz + oz);
+      nor.push(n[0], 0, n[1]); // facing into the cut
+    }
+  };
+  for (let i = 0; i < nx; i++)
+    for (let j = 0; j < nz; j++) {
+      if (!on[i][j]) continue;
+      const xa = x0 + i * CELL, xb = xa + CELL, za = z0 + j * CELL, zb = za + CELL;
+      if (!at(i - 1, j)) wall(xa, za, xa, zb, [-1, 0]);
+      if (!at(i + 1, j)) wall(xb, za, xb, zb, [1, 0]);
+      if (!at(i, j - 1)) wall(xa, za, xb, za, [0, -1]);
+      if (!at(i, j + 1)) wall(xa, zb, xb, zb, [0, 1]);
+    }
+  const wg = new THREE.BufferGeometry();
+  wg.setAttribute('position', new THREE.Float32BufferAttribute(out, 3));
+  wg.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  const walls = new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ color: CUT_WALL, roughness: 0.85, metalness: 0, side: THREE.DoubleSide }));
+  walls.name = 'cut_walls';
+  walls.visible = false;
+  walls.castShadow = true;
+  walls.receiveShadow = true;
+  return { mask, walls };
+}
+
 export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView {
   const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, walks = WALKS_URL, still = false, fps = HERO_FPS, control = false } = opts;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -179,10 +266,12 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
   const ready = Promise.all([loader.loadAsync(url), charGltf, walkData]).then(([gltf, charG, walkG]) => {
     const root = gltf.scene;
     const box = new THREE.Box3();
+    let page = null as THREE.Mesh | null;
     root.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) {
         const m = o as THREE.Mesh;
         if (m.name.startsWith('page_surface') || m.parent?.name === 'page_surface') {
+          page = m;
           // Like Blender's holdout: invisible, but hides what sits below page level. Lifted 5 mm so it
           // also covers the outer wall tops (1 mm above the page), as in reference/hero_P2.png;
           // otherwise they show as a cream border around the house.
@@ -210,6 +299,11 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     scene.add(root);
     houseRoot = root;
     root.updateMatrixWorld(true);
+    if (page) {
+      const { mask, walls } = sinkHouse(page, box.min.y);
+      page.visible = false; // the grid mask replaces it
+      root.add(mask, walls);
+    }
     if (charG) life = bringToLife(root, charG, walkG);
 
     // Sun shadow camera: cover the whole house, seen from the sun.

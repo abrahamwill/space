@@ -1,27 +1,25 @@
 /**
- * The camera and the cut-aways for the full house view (/house), on top of viewer.ts in control mode.
+ * The camera for the full house view (/house), on top of viewer.ts in control mode.
  *
  * Camera: orthographic at the HeroCamera's angle (read from the GLB, so it stays in step with Blender).
  * The frustum is the canvas in px, so `zoom` is px per metre. Views:
  *   - overview, default angle: framed exactly like the poster (src/assets/house/hero-p2.png), so the
  *     3D fades in over the still without a jump;
- *   - overview, turned: the whole house fitted in the free space, the page surface lifted away;
+ *   - overview, turned: the whole house fitted in the free space;
  *   - a room: zoomed in on the room's centre, centred in the space the HUD and the window leave.
  * Turning goes in quarter turns (`rot`), plus a small drag tilt.
  *
- * Cut-aways: the GLB has walls on the rooms' back edges only, which are the far walls from the hero
- * angle. Turned around, the perimeter walls nearest the camera hide the rooms, so house_shell and
- * wall_art are split at load into one group per side of the outline (-x, +x, -z, +z), and the groups
- * facing the camera are clipped down to a low stub. The page surface (the holdout that sinks the house
- * into the page) only works from the default angle, so it's hidden in turned views.
+ * The house stays sunk into the page at every angle: the page surface (the holdout) is always on, and
+ * once turned, viewer.ts's cut_walls line the whole cut, so whichever side is far there is a wall, and
+ * the near side's walls hide under the page's edge like the front ones do in the hero. (At the hero
+ * angle they're off, so the view matches the poster exactly.) Hotspots hung on a perimeter wall that
+ * faces the camera are hidden (their wall's art faces away).
  */
 import * as THREE from 'three';
 import type { HouseView } from './viewer';
-import { RUNNING_WALL } from './props';
 import { ROOMS, HOTSPOTS, onFootprint, inRect, roomAt, type RoomId, type Anchor } from './rooms';
 
 export type Face = '-x' | '+x' | '-z' | '+z';
-const FACES: Face[] = ['-x', '+x', '-z', '+z'];
 const NORMAL: Record<Face, readonly [number, number]> = { '-x': [-1, 0], '+x': [1, 0], '-z': [0, -1], '+z': [0, 1] };
 
 export interface Insets { top: number; right: number; bottom: number; left: number }
@@ -41,8 +39,6 @@ export function posterRect(w: number, h: number, ins: Insets) {
   return { left: ins.left + (aw - pw) / 2, top: ins.top + (ah - ph) / 2, width: pw, height: ph };
 }
 
-/** Wall stub left standing where a wall is cut away (m). */
-const STUB = 0.3;
 const MOVE_RATE = 6; // camera easing, 1/s
 
 interface Pose { target: THREE.Vector3; zoom: number; az: number }
@@ -75,8 +71,9 @@ export class Stage {
   private pose: Pose | null = null;
   private goal: Goal | null = null;
   private instant = false;
-  private planes: Partial<Record<Face, THREE.Plane>> = {};
   private page: THREE.Object3D[] = [];
+  private cutWalls: THREE.Object3D | null = null;
+  private pageGrid: THREE.Object3D | null = null;
   private pickable: THREE.Object3D[] = [];
 
   constructor() {
@@ -121,15 +118,13 @@ export class Stage {
     for (const hit of ray.intersectObjects(this.pickable, false)) {
       if (!shown(hit.object)) continue;
       const m = hit.object as THREE.Mesh;
-      const plane = (m.material as THREE.Material).clippingPlanes?.[0];
-      if (plane && plane.distanceToPoint(hit.point) < 0) continue; // clipped part of a cut wall
       if (this.page.some((p) => p === m || p === m.parent)) return null; // the page around the house
       return roomAt(hit.point.x, hit.point.z);
     }
     return null;
   }
 
-  /** Is this wall standing (not cut away) at quarter turn `rot`? */
+  /** Does this perimeter wall face away from the camera (its art visible) at quarter turn `rot`? */
   wallShown(face: Face | undefined, rot: number) {
     if (!face || !this.ready) return true;
     return !this.facing(face, this.az0 + (rot * Math.PI) / 2);
@@ -221,11 +216,13 @@ export class Stage {
     cam.far = 200;
     cam.updateProjectionMatrix();
     cam.updateMatrixWorld();
-    // cut-aways follow the camera as it turns
-    for (const f of FACES) this.planes[f]?.set(new THREE.Vector3(0, -1, 0), this.facing(f, az) ? STUB : 100);
-    const homeAz = this.az0 + (Math.round((az - this.az0) / (Math.PI / 2)) * Math.PI) / 2;
-    const atHome = Math.abs(Math.round((az - this.az0) / (Math.PI / 2))) % 4 === 0 && Math.abs(az - homeAz) < 0.35;
-    for (const p of this.page) p.visible = atHome;
+    // Turned: the cut's own walls on, and the page 1 cm higher, clear of the wall tops that sit just
+    // under it (seen from the far side they flicker through it as dots). At the hero angle neither, so
+    // the view matches the poster exactly.
+    const quarters = (az - this.az0) / (Math.PI / 2);
+    const turned = Math.abs(quarters - Math.round(quarters)) > 0.05 || Math.round(quarters) % 4 !== 0;
+    if (this.cutWalls) this.cutWalls.visible = turned;
+    if (this.pageGrid) this.pageGrid.position.y = turned ? 0.01 : 0;
   }
 
   private frame() {
@@ -237,12 +234,11 @@ export class Stage {
     this.onFrame?.(cam, this.w, this.h);
   }
 
-  /** Once the house is in: read the hero camera, split the walls, place the anchors. */
+  /** Once the house is in: read the hero camera, place the anchors. */
   private init(): boolean {
     if (this.ready) return true;
     const view = this.view, cam = view?.camera(), house = view?.house();
     if (!view || !cam || !house) return false;
-    view.renderer.localClippingEnabled = true;
     house.updateMatrixWorld(true);
 
     // hero angle and the poster's place in it
@@ -261,8 +257,14 @@ export class Stage {
     house.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh); });
     for (const m of meshes) {
       const isPage = m.name.startsWith('page_surface') || m.parent?.name === 'page_surface';
-      if (isPage) { this.page.push(m); this.pickable.push(m); continue; }
+      if (isPage) {
+        this.page.push(m);
+        this.pickable.push(m);
+        if (m.name === 'page_surface_grid') this.pageGrid = m;
+        continue;
+      }
       this.pickable.push(m);
+      if (m.name === 'cut_walls') { this.cutWalls = m; continue; } // not part of the poster's framing
       if (m.name === 'character_abraham' || m.parent?.name === 'character_abraham') continue;
       box.setFromObject(m);
       for (let i = 0; i < 8; i++) this.corners.push(new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z));
@@ -272,7 +274,7 @@ export class Stage {
     const axisPoint = camPos.clone().addScaledVector(toCam, -centre.clone().sub(camPos).dot(toCam.clone().negate()));
     this.posterCentre.copy(axisPoint).addScaledVector(r, fw * (cxFromLeft - 0.5)).addScaledVector(u, fh * (0.5 - cyFromTop));
 
-    // anchors (before the split below moves wall_art's triangles into other meshes)
+    // anchors
     for (const h of HOTSPOTS) {
       const a = this.anchorFor(house, h.anchor);
       if (!a) {
@@ -283,19 +285,6 @@ export class Stage {
       if (a.face) this.walls.set(h.id, a.face);
     }
     for (const [id, R] of Object.entries(ROOMS)) this.anchors.get(`room:${id}`)!.set(R.rect[0] + R.rect[2] / 2, 1.9, R.rect[1] + R.rect[3] / 2);
-
-    // walls: one group per side of the outline
-    for (const f of FACES) this.planes[f] = new THREE.Plane(new THREE.Vector3(0, -1, 0), 100);
-    const split = (name: string) => {
-      const node = house.getObjectByName(name);
-      if (!node) return;
-      const parts: THREE.Mesh[] = [];
-      node.traverse((o) => { if ((o as THREE.Mesh).isMesh) parts.push(o as THREE.Mesh); });
-      for (const m of parts) for (const extra of splitByFace(m, this.planes)) this.pickable.push(extra);
-    };
-    split('house_shell');
-    split('wall_art');
-    split(RUNNING_WALL); // props.ts: hung on the deck's outer wall
 
     this.ready = true;
     this.onReady?.();
@@ -355,55 +344,4 @@ function side(x: number, z: number): Face | null {
   if (onFootprint(x + s, z + s) || onFootprint(x + s, z - s)) return '-x';
   if (onFootprint(x - s, z + s) || onFootprint(x - s, z - s)) return '+x';
   return null;
-}
-
-/** Which side of the outline a triangle belongs to (by its centroid), or null (stays put). */
-function classify(c: THREE.Vector3): Face | null {
-  return c.y < 0.05 ? null : side(c.x, c.z); // floors never move
-}
-
-/** Move a mesh's perimeter-wall triangles into one clipped mesh per side. Returns the new meshes. */
-function splitByFace(mesh: THREE.Mesh, planes: Partial<Record<Face, THREE.Plane>>): THREE.Mesh[] {
-  const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
-  const pos = geo.getAttribute('position');
-  const tris = pos.count / 3;
-  const buckets = new Map<Face | null, number[]>();
-  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
-  for (let t = 0; t < tris; t++) {
-    a.fromBufferAttribute(pos, 3 * t).applyMatrix4(mesh.matrixWorld);
-    b.fromBufferAttribute(pos, 3 * t + 1).applyMatrix4(mesh.matrixWorld);
-    c.fromBufferAttribute(pos, 3 * t + 2).applyMatrix4(mesh.matrixWorld);
-    const face = classify(a.add(b).add(c).divideScalar(3));
-    if (!buckets.has(face)) buckets.set(face, []);
-    buckets.get(face)!.push(t);
-  }
-  if (buckets.size === 1 && buckets.has(null)) return [];
-  const subset = (list: number[]) => {
-    const g = new THREE.BufferGeometry();
-    for (const [name, attr] of Object.entries(geo.attributes)) {
-      const src = attr as THREE.BufferAttribute;
-      const n = src.itemSize;
-      const out = new (src.array.constructor as Float32ArrayConstructor)(list.length * 3 * n);
-      list.forEach((t, i) => out.set((src.array as Float32Array).subarray(3 * t * n, 3 * (t + 1) * n), 3 * i * n));
-      g.setAttribute(name, new THREE.BufferAttribute(out, n, src.normalized));
-    }
-    return g;
-  };
-  const made: THREE.Mesh[] = [];
-  for (const [face, list] of buckets) {
-    if (face === null) continue;
-    const mat = (mesh.material as THREE.Material).clone();
-    mat.clippingPlanes = [planes[face]!];
-    const m = new THREE.Mesh(subset(list), mat);
-    m.name = `${mesh.name}:${face}`;
-    m.castShadow = mesh.castShadow;
-    m.receiveShadow = mesh.receiveShadow;
-    m.position.copy(mesh.position);
-    m.quaternion.copy(mesh.quaternion);
-    m.scale.copy(mesh.scale);
-    mesh.parent!.add(m);
-    made.push(m);
-  }
-  mesh.geometry = subset(buckets.get(null) ?? []);
-  return made;
 }

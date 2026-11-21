@@ -105,7 +105,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       </div>
 
       <div class="stage" data-stage>
-        <img class="grid" src="/images/iso-grid.webp" alt="" width="2880" height="1720" decoding="async" />
+        <img class="grid" src="/images/iso-grid.svg" alt="" width="2880" height="1720" decoding="async" />
         <a class="house fx" href={houseHref} aria-label="Step into my space">
           <Picture
             src={housePoster}
@@ -662,7 +662,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .stage { position: relative; aspect-ratio: 860 / 645; margin-right: -4%; }
   /* The iso grid is the whole 1440 × 860 hero in the design (its left side fades out by itself); the
      edges fade so a wider window doesn't show where it ends. */
-  .grid { position: absolute; left: -65.116%; top: -18.605%; width: 167.442%; max-width: none; height: auto; z-index: 0; pointer-events: none; -webkit-mask-image: linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent); mask-composite: intersect; }
+  .grid { position: absolute; left: -65.116%; top: 0; margin-top: -13.954%; width: 167.442%; max-width: none; height: auto; z-index: 0; pointer-events: none; -webkit-mask-image: linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent); mask-composite: intersect; }
   .house { position: absolute; left: 0; right: 0; top: 13.643%; z-index: 2; display: block; }
   /* "Step in": the house morphs into the /house poster (src/pages/house.astro) */
   @media (prefers-reduced-motion: no-preference) {
@@ -724,7 +724,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
     .hero-in { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 36px 0 40px; gap: 8px; }
     .stage { aspect-ratio: auto; margin: 0 -6%; }
     .house { position: relative; left: auto; right: auto; top: auto; transform: none; margin: 4% 0 2%; }
-    .grid { top: -30%; }
+    .grid { margin-top: -20.186%; } /* same distance above the house as on desktop: the grid lines stay on its walls */
     .stk { display: none; }
     .hero-wins { position: static; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; padding: 0 6%; pointer-events: auto; }
     .stage :global(.hw) { position: static; width: auto; }
