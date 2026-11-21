@@ -93,8 +93,8 @@ export const HOTSPOTS: Hotspot[] = [
   { id: 'turntable', room: 'living', label: 'Turntable · next record', anchor: { object: 'living_console_Turntable' } },
   { id: 'photos', room: 'living', label: 'Record shelf · photos', anchor: { object: 'living_shelf_Records' } },
   { id: 'door', room: 'living', label: 'Front door · contact + CV', anchor: { point: [3, 1.2, 3.75] } },
-  // bedroom (the gaming PC opens nothing for now; the photo wall is still an open question)
-  { id: 'photowall', room: 'bedroom', label: 'Photo wall', anchor: { art: [1.6, 0, 2.2, 0.6] } },
+  // bedroom (the gaming PC opens nothing for now)
+  { id: 'photowall', room: 'bedroom', label: 'Photo wall · travel', anchor: { art: [1.6, 0, 2.2, 0.6] } },
   // studio
   { id: 'folders', room: 'studio', label: '3 featured folders', anchor: { object: 'studio_desk_Desk', drop: 0.5 } },
   { id: 'archive', room: 'studio', label: 'Shelves · archive', anchor: { object: 'studio_shelf_Archive' } },
@@ -116,7 +116,7 @@ export const WINDOW_TITLES: Record<string, string> = {
   turntable: 'Living room · turntable',
   photos: 'Living room · record shelf',
   door: 'Living room · front door',
-  photowall: 'Bedroom · photo wall',
+  photowall: 'Bedroom · travel photos',
   folders: 'Studio · featured work',
   archive: 'Studio · archive',
   pinboard: 'Studio · how I work',

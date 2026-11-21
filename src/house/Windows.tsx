@@ -28,6 +28,20 @@ function Rows({ rows }: { rows: ReadonlyArray<{ what: string; when?: string }> }
   );
 }
 
+/** Instax-style prints (the running wall, the bedroom photo wall). */
+function Instax({ photos, label }: { photos: ReadonlyArray<{ src?: string; caption: string }>; label: string }) {
+  return (
+    <ul className="hx-instax" aria-label={label}>
+      {photos.map((ph, i) => (
+        <li key={i}>
+          {ph.src ? <img src={ph.src} alt={ph.caption} loading="lazy" /> : <span className="hx-instax-empty" aria-hidden="true" />}
+          <span>{ph.caption}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Ph({ children, ratio = '16 / 9' }: { children: string; ratio?: string }) {
   return (
     <div className="hx-ph" style={{ aspectRatio: ratio }} role="img" aria-label={children}>
@@ -218,23 +232,16 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
         <>
           <h3 className="hx-h">Miles on the wall</h3>
           <p>{content.running.intro}</p>
-          <ul className="hx-instax" aria-label="Photos from my running">
-            {content.running.photos.map((ph, i) => (
-              <li key={i}>
-                {ph.src ? <img src={ph.src} alt={ph.caption} loading="lazy" /> : <span className="hx-instax-empty" aria-hidden="true" />}
-                <span>{ph.caption}</span>
-              </li>
-            ))}
-          </ul>
+          <Instax photos={content.running.photos} label="Photos from my running" />
           <Rows rows={content.running.medals} />
         </>
       );
     case 'photowall':
       return (
         <>
-          <h3 className="hx-h">[Still to decide]</h3>
-          <p>[What opens here is an open question for Abraham.]</p>
-          <Ph>[Content]</Ph>
+          <h3 className="hx-h">Places I've been</h3>
+          <p>{content.travel.intro}</p>
+          <Instax photos={content.travel.photos} label="Travel photos" />
         </>
       );
     case 'photos':

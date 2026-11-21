@@ -83,3 +83,19 @@ export const running = {
     { what: '[Race 3]', when: '[Year · time]' },
   ],
 };
+
+/**
+ * The photo wall in the bedroom: travel photos (/house, bedroom).
+ * TODO(owner): photos go in /public/images/travel/ (portrait, about 3:4), e.g. src: '/images/travel/kyoto.jpg'.
+ */
+export const travel = {
+  intro: '[A line about travelling: where you go, and what you bring back.]',
+  photos: [
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+  ] as Array<{ src?: string; caption: string }>,
+};

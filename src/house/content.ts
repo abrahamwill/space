@@ -24,6 +24,8 @@ export interface HouseContent {
   records: ReadonlyArray<{ title: string; artist: string; label: string; src?: string }>;
   /** The running wall beside the treadmill (House v2). */
   running: { intro: string; photos: ReadonlyArray<{ src?: string; caption: string }>; medals: ReadonlyArray<{ what: string; when: string }> };
+  /** The bedroom photo wall (House v2). */
+  travel: { intro: string; photos: ReadonlyArray<{ src?: string; caption: string }> };
 }
 
 export interface Hotspot {
