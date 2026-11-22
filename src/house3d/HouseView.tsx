@@ -109,7 +109,7 @@ export default function HouseView({ content }: { content: HouseContent }) {
   // The scene: poster framing first, then the view asked for.
   useEffect(() => {
     if (!gl || !stageRef.current) return;
-    const v = mountHouse(stageRef.current, { control: true, fps: 60, onResize: (w, h) => stage.resize(w, h) });
+    const v = mountHouse(stageRef.current, { control: true, fps: 60, grid: true, onResize: (w, h) => stage.resize(w, h) });
     house.current = v;
     stage.attach(v);
     stage.setInstant(reduced());

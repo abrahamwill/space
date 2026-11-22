@@ -52,6 +52,12 @@ export interface HouseOptions {
   control?: boolean;
   /** Called after the canvas is resized (control mode), before the frame is drawn. */
   onResize?: (w: number, h: number) => void;
+  /**
+   * Draw the hero's iso grid on the page plane, in 3D (the full house view). The hero has it as a flat
+   * SVG for its one camera angle (public/images/iso-grid.svg); this one stays put as the view zooms,
+   * tilts and turns.
+   */
+  grid?: boolean;
 }
 
 export interface HouseView {
@@ -100,7 +106,7 @@ const CELL = 0.25;
  *     outside the cut (behind the house's own walls where they exist) and stops just under the page.
  *     Off by default: stage.ts shows them when the house is turned, so the hero angle matches the poster.
  */
-function sinkHouse(page: THREE.Mesh, floor: number): { mask: THREE.Mesh; walls: THREE.Mesh } {
+function sinkHouse(page: THREE.Mesh, floor: number, grid = false): { mask: THREE.Mesh; walls: THREE.Mesh } {
   const pos = page.geometry.getAttribute('position');
   const index = page.geometry.index;
   const tris = index ? index.count / 3 : pos.count / 3;
@@ -168,11 +174,64 @@ function sinkHouse(page: THREE.Mesh, floor: number): { mask: THREE.Mesh; walls: 
   walls.visible = false;
   walls.castShadow = true;
   walls.receiveShadow = true;
+  if (grid) mask.add(isoGrid((x, z) => at(Math.floor((x - x0) / CELL), Math.floor((z - z0) / CELL)), y));
   return { mask, walls };
 }
 
+/**
+ * The hero's iso grid (scripts/render-house3d-poster.mjs → public/images/iso-grid.svg), on the page
+ * plane: a line every 0.5 m (the plan module, so every wall and notch of the cut lands on one), darker
+ * every 1.5 m counted from the plan's origin, the same ink and strengths as the SVG. Only on the page,
+ * never across the cut, and fading out away from the house. Child of the page mask, so it rises with
+ * it when the house is turned (stage.ts).
+ */
+const GRID = { cell: 0.5, major: 3, reach: 22, fadeFrom: 7, fadeTo: 19, ink: 0x1b1a17, minor: 0.11, majorAlpha: 0.26 };
+function isoGrid(onPage: (x: number, z: number) => boolean, y: number): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'page_iso_grid';
+  const cx = 5.5, cz = 5.5; // about the middle of the house (plan m)
+  const step = 0.25; // pieces short enough to follow the cut's 0.25 m page cells
+  const fade = (x: number, z: number) => {
+    const d = Math.hypot(x - cx, z - cz);
+    const t = Math.min(1, Math.max(0, (d - GRID.fadeFrom) / (GRID.fadeTo - GRID.fadeFrom)));
+    return 1 - t * t * (3 - 2 * t);
+  };
+  const lines = { minor: { p: [] as number[], c: [] as number[] }, major: { p: [] as number[], c: [] as number[] } };
+  const n = Math.ceil(GRID.reach / GRID.cell);
+  const k0 = Math.round(Math.max(cx, cz) / GRID.cell);
+  const e = 0.01;
+  for (const along of ['x', 'z'] as const)
+    for (let k = k0 - n; k <= k0 + n; k++) {
+      const at = k * GRID.cell; // the line: x = at (running along z), or z = at (running along x)
+      const L = Math.abs(k) % GRID.major === 0 ? lines.major : lines.minor;
+      const lo = (along === 'x' ? cz : cx) - GRID.reach, hi = (along === 'x' ? cz : cx) + GRID.reach;
+      for (let u = Math.floor(lo / step) * step; u < hi; u += step) {
+        const m = u + step / 2;
+        const page = along === 'x' ? onPage(at - e, m) || onPage(at + e, m) : onPage(m, at - e) || onPage(m, at + e);
+        if (!page) continue;
+        const a: [number, number] = along === 'x' ? [at, u] : [u, at];
+        const b: [number, number] = along === 'x' ? [at, u + step] : [u + step, at];
+        const fa = fade(...a), fb = fade(...b);
+        if (fa <= 0 && fb <= 0) continue;
+        L.p.push(a[0], y, a[1], b[0], y, b[1]);
+        L.c.push(1, 1, 1, fa, 1, 1, 1, fb);
+      }
+    }
+  for (const [L, alpha] of [[lines.minor, GRID.minor], [lines.major, GRID.majorAlpha]] as const) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(L.p, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(L.c, 4));
+    const mat = new THREE.LineBasicMaterial({ color: GRID.ink, vertexColors: true, transparent: true, opacity: alpha, depthWrite: false });
+    const seg = new THREE.LineSegments(geo, mat);
+    seg.renderOrder = 1;
+    seg.frustumCulled = false;
+    g.add(seg);
+  }
+  return g;
+}
+
 export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView {
-  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, walks = WALKS_URL, still = false, fps = HERO_FPS, control = false } = opts;
+  const { url = '/house3d/house_P2.glb', light = LIGHT, character = CHARACTER_URL, walks = WALKS_URL, still = false, fps = HERO_FPS, control = false, grid = false } = opts;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -309,7 +368,7 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     houseRoot = root;
     root.updateMatrixWorld(true);
     if (page) {
-      const { mask, walls } = sinkHouse(page, box.min.y);
+      const { mask, walls } = sinkHouse(page, box.min.y, grid);
       page.visible = false; // the grid mask replaces it
       root.add(mask, walls);
     }
