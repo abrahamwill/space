@@ -46,6 +46,9 @@ SPOTS = {
     'turntable': dict(at=(6.85, 3.85), face=(0, -1), act='look', room='living'),
     'sofa':      dict(at=(4.95, 6.57), face=(0, -1), act='sit', seat=(4.95, 7.25), room='living'),
     'pet':       dict(at=(9.72, 4.15), face=(0, -1), act='pet', room='lab'),
+    # in front of the arcade cabinet (10.2, 1.55, 0.75 x 0.75), facing its screen. Only when asked
+    # (the arcade hotspot): `ask` spots aren't in his own routine.
+    'arcade':    dict(at=(10.575, 2.62), face=(0, -1), act='look', room='lab', ask=True),
     'pc':        dict(at=(4.75, 1.85), face=(0, -1), act='look', room='bedroom'),
     'books':     dict(at=(0.95, 7.45), face=(-1, 0), act='look', room='studio'),
     # the garden bench (5.5, 11.0) sits behind the page's front edge, where the camera hardly sees him,
@@ -258,6 +261,8 @@ for name, s in SPOTS.items():
                 path=[[round(x, 3), round(y, 3)] for x, y in path],
                 length=round(sum(math.dist(path[k], path[k + 1]) for k in range(len(path) - 1)), 2),
                 seen=seen(*s['at'], s['face']))
+    if s.get('ask'):
+        spot['ask'] = True
     if s['act'] == 'sit':
         top = seat_top(*s['seat'])
         spot['seat'] = list(s['seat'])
@@ -266,6 +271,22 @@ for name, s in SPOTS.items():
     out['spots'].append(spot)
     print('WALKS %-9s %-8s seen %.2f  path %.1f m, %d points%s' % (name, s['room'], spot['seen'], spot['length'], len(path),
           ('  seat %.2f m, lift %+.2f m' % (spot['seat_top'], spot['lift'])) if 'seat' in spot else ''))
+# Spot to spot, for when he's asked somewhere new while at (or on the way to) another spot (life.ts ask):
+# "a>b" walks from a to b; the site reverses it for b to a.
+out['between'] = {}
+names = [sp['name'] for sp in out['spots']]
+for i, a in enumerate(names):
+    for b in names[i + 1:]:
+        pa, pb = SPOTS[a]['at'], SPOTS[b]['at']
+        try:
+            path = pulled(astar(nearest_free(pa), nearest_free(pb)))
+        except SystemExit as e:
+            print('WALKS FAIL', a, '>', b, e)
+            failed.append('%s>%s' % (a, b))
+            continue
+        path[0], path[-1] = pa, pb
+        out['between']['%s>%s' % (a, b)] = [[round(x, 3), round(y, 3)] for x, y in path]
+print('WALKS between: %d paths' % len(out['between']))
 print('WALKS mark seen', out['mark']['seen'])
 if not failed:
     os.makedirs(os.path.dirname(os.path.abspath(OUT)), exist_ok=True)

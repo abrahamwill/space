@@ -18,6 +18,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { bringToLife, CHARACTER_URL, WALKS_URL, type Life, type Walks } from './life';
+import { addScreens, type Screens } from './screens';
 import { addProps } from './props';
 
 const UNITS = 1 / (683 * Math.PI);
@@ -76,6 +77,8 @@ export interface HouseView {
   house(): THREE.Object3D | null;
   /** The pet hops a few times (no-op with reduced motion or before load). */
   excitePet(): void;
+  /** He walks over to this walks.json spot now (no-op with reduced motion or before load). */
+  ask(spot: string): void;
   /** World point just above the character's head (null before load). */
   headAt(out: THREE.Vector3): THREE.Vector3 | null;
   dispose(): void;
@@ -208,6 +211,8 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
   };
 
   let life: Life | null = null;
+  let screens: Screens | null = null;
+  let clock = 0; // s the house has been alive (the screens' time)
   let houseRoot: THREE.Object3D | null = null;
   const view = { onFrame: null, step: null } as Pick<HouseView, 'onFrame' | 'step'>;
   const render = () => {
@@ -232,7 +237,11 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
     if (dt < 1 / fps - 0.004) return;
     last = now;
     const d = Math.min(dt, 0.1);
-    if (alive()) life!.update(d);
+    if (alive()) {
+      life!.update(d);
+      clock += d;
+      screens?.update(clock, life!.busyAt() === 'arcade');
+    }
     stepping = !!view.step?.(d);
     render();
   };
@@ -305,6 +314,7 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
       root.add(mask, walls);
     }
     if (charG) life = bringToLife(root, charG, walkG);
+    screens = addScreens(root);
 
     // Sun shadow camera: cover the whole house, seen from the sun.
     const suns: THREE.DirectionalLight[] = [];
@@ -368,10 +378,15 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
       life.excitePet();
       wake();
     },
+    ask(spot: string) {
+      if (!life || still || reduced.matches) return;
+      if (life.ask(spot)) wake();
+    },
     headAt(out: THREE.Vector3) {
       return life ? life.bubbleAt(out) : null;
     },
     dispose() {
+      screens?.dispose();
       cancelAnimationFrame(raf);
       io.disconnect();
       document.removeEventListener('visibilitychange', wake);

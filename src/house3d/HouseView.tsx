@@ -219,11 +219,20 @@ export default function HouseView({ content }: { content: HouseContent }) {
   const openHotspot = (id: string, room: RoomId, el: HTMLElement) => {
     lastHotspot.current = el;
     switch (id) {
+      // click-to-task: he comes over (life.ts ask); the pet and the sofa open no window
       case 'pet':
         house.current?.excitePet();
+        house.current?.ask('pet');
         return setPetted((n) => n + 1);
+      case 'sofa':
+        house.current?.ask('sofa');
+        return;
       case 'turntable':
         nextRecord();
+        house.current?.ask('turntable');
+        break;
+      case 'arcade':
+        house.current?.ask('arcade');
         break;
       case 'window': {
         // he waves when you ask about him

@@ -53,10 +53,11 @@ Claude drives Blender headless with Python (`blender -b -P script.py`). Blender 
 4. Character and pet, rigged and animated. (1–2) **Done for the hero (2026-11-21):** `house3d/rig_character.py` → `public/house3d/character.glb` (idle, wave, walk, sit); the hero waves and says hi on hover/focus, once on touch; the pet hops (`src/house3d/life.ts`). He walks routines too (`house3d/walks.py` → `public/house3d/walks.json`: records, turntable, sofa, pet, PC, books, garden tree) and stands on a new mark the camera sees whole. Hotspots and the 4-room switch are still step 5.
 5. Waypoints, hotspots, bedroom content, room switch for 4 rooms. (1) **Mostly done (2026-11-21, branch `house-v2-full`):** `/house` and "Step in" show the Pinwheel house. `src/house3d/HouseView.tsx` (room switch for living, bedroom, studio, lab; hotspots opening the old windows; quarter turns with cut-aways; drag tilt; poster first), `stage.ts` (camera, cut-aways), `rooms.ts` (rooms, hotspots). "Step in" is a cross-document view transition from the hero to the `/house` poster. Still open:
    - The GLB has no `room:` / `hot:` / `wp:` / `wall:` / `screen:` names yet. Rooms are copied from `plans.py`, hotspots hang on the named furniture, `wall_art` clusters and one plan point (the front door), and cut-aways are worked out from the plan outline. Naming them in Blender would replace the copies in `rooms.ts`.
-   - Not in the GLB at all: a window for "about me" (now on the character), the prints for "talks" (the old `notice` hotspot is dropped), the arcade's game screen and the turntable's record swap (`screen:` surfaces).
-   - Not wired yet: the old "ask him" routines (sofa: come and sit, arcade: go and play, pet: come and say hi). `walks.json` has the spots; `life.ts` needs a "go to spot X now" call.
-   - The bedroom photo wall opens a `[Still to decide]` window until the question below is answered.
-6. Hero placement (top 208, 860×454, new grid), posters, download size, phones, reduced motion. (1)
+   - Not in the GLB at all: a window for "about me" (now on the character), the prints for "talks" (the old `notice` hotspot is dropped) and the turntable's record swap. Adding objects needs Abraham's OK (house3d/BLENDER.md section 5).
+   - **Done (2026-11-22):** the "ask him" routines. `life.ts` `ask(spot)`: the turntable, arcade, sofa (a new inline hotspot) and pet hotspots send him there now, getting up first if he sits. `walks.py` adds an `arcade` spot (`ask: true`, never in his own routine) and `between`, a path from every spot to every other, so he walks straight from one to the next; mid-walk he carries on or turns back, whichever is shorter.
+   - **Done (2026-11-22):** the arcade's game screen, in code (`src/house3d/screens.ts`): the cabinet's own `glow_#86ad57` face gets UVs and a pixel canvas of the pet game; it speeds up and shows "P1" while he plays. Move it to a named `screen:arcade` face when the GLB is next rebuilt.
+   - Done (2026-11-21): the bedroom photo wall opens travel photos (`travel` in `src/data/site.ts`).
+6. Hero placement (top 208, 860×454, new grid), posters, download size, phones, reduced motion. (1) **Mostly done (2026-11-22):** hero placement and grid (d0465e5, df6037d); poster re-rendered with the arcade screen; `/house` and `/` checked at 375 px (no sideways scroll); with reduced motion nothing walks, asks are ignored and the screen stays on its first frame. **Still open: download size.** `house_P2.glb` is 1.03 MB (806 KB gzipped) against the ~400 KB budget. It's already Draco; coarser quantization (position 12 bits, normal 8) only gets 889 KB. The weight is the applied bevels (bookcase 83 KB, PC desk 51 KB…), 186 materials / 314 primitives (210 KB of JSON), and the house's static `character_abraham` (110 KB, hidden once character.glb loads). Getting near 400 KB means dropping or thinning the bevels, merging materials into vertex colours, and dropping the static character (the `still` poster mode would then need character.glb): Abraham's call, since the bevels are part of the look. Blender 5.2's exporter reproduces the current GLB byte for byte, so re-exporting is safe.
 
 ## Open questions for the owner
 
@@ -67,8 +68,11 @@ Answered 2026-11-21:
 - Rotation: snaps to four angles (plus the ±15° drag tilt).
 - The bedroom's "off the clock →" stays for now.
 
+Answered 2026-11-21 (later): the bedroom photo wall opens travel photos.
+
 Still open:
-- What opens for the bedroom photo wall? (A placeholder window for now.)
+- The GLB's download size (step 6).
+- Talks prints and an about-me window in the model (adding objects).
 
 ## Also still open from the board port
 

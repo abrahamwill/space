@@ -175,13 +175,16 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
               <ul className="hx-chips">
                 {['Comments', 'Touch hints', 'Guided flows', 'Versioning', 'Present mode'].map((c) => <li key={c}>{c}</li>)}
               </ul>
-              <Ph>[Screenshot: check internal prototype names before publishing]</Ph>
+              <Thumb title="Prototype Hub" src="/images/lab/prototype-hub-cover.webp" position="top left" />
+              <div className="hx-actions">
+                <a className="hx-btn" href="/work/prototype-hub">Read the case study</a>
+              </div>
             </>
           }
         />
       );
     case 'arcade':
-      return <LabItem content={content} index={1} extra={<Ph>[Screenshot of the pet game]</Ph>} />;
+      return <LabItem content={content} index={1} extra={<Thumb title="Pet game" src="/images/lab/pet-game-cover.webp" />} />;
     case 'voice':
       return <LabItem content={content} index={2} />;
     case 'whiteboard':

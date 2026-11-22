@@ -8,6 +8,10 @@
  *   public/house3d/walks.json (house3d/walks.py: paths round the furniture and through the doors), looks
  *   at the records, the turntable, the PC or the books, sits on the sofa, stands by the garden tree, or
  *   says hi to the pet, then walks back to his mark.
+ * - ask(spot) sends him to a spot now, whatever he's doing (getting up first if he sits): the hotspots
+ *   do this (turntable, arcade, sofa, pet). From a spot he takes walks.json's spot-to-spot path; mid-walk
+ *   he either carries on or turns back, whichever is shorter, and goes on from there. Spots marked `ask`
+ *   (the arcade) are only for asking, never in his own routine.
  * - greet(true) stops whatever he is doing (getting up first if he sits): he turns to the camera and
  *   waves. greet(false) puts his arm down and he carries on: on with a walk, or back to his mark.
  * - Pet: lab_pet_Pet in the house GLB. Its body and eyes hop on the cushion now and then and breathe in
@@ -42,10 +46,14 @@ export interface Spot {
   path: XY[];
   seat?: XY;
   lift?: number;
+  /** Only when asked (a hotspot), never in his own routine. */
+  ask?: boolean;
 }
 export interface Walks {
   mark: { at: XY; face: XY };
   spots: Spot[];
+  /** "a>b": spot a to spot b (reverse it for b to a). */
+  between?: Record<string, XY[]>;
 }
 
 export interface Life {
@@ -56,12 +64,19 @@ export interface Life {
   bubbleAt(out: THREE.Vector3): THREE.Vector3;
   /** The pet hops a few times in a row (the "pet me" hotspot). */
   excitePet(): void;
+  /** Go to this spot (walks.json name) now. False if there's no such spot. */
+  ask(name: string): boolean;
+  /** The spot he's busy at right now (looking, playing, sitting), or null. */
+  busyAt(): string | null;
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const heading = (d: XY) => Math.atan2(d[0], d[1]); // plan (x, y) = three (X, Z); he faces +Z at 0
 const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
 const ease = (t: number) => t * t * (3 - 2 * t);
+const ASKED_STAY: [number, number] = [6, 10]; // s at a spot he was asked to go to (a bit longer than his own visits)
+
+const lengthOf = (pts: XY[]) => pts.slice(1).reduce((t, p, i) => t + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
 
 /** A polyline he walks along, by distance. */
 function route(pts: XY[]) {
@@ -69,6 +84,12 @@ function route(pts: XY[]) {
   const total = len.reduce((a, b) => a + b, 0);
   return {
     total,
+    /** The corners still ahead of distance s, and the ones already passed (nearest first). */
+    split(s: number): { ahead: XY[]; behind: XY[] } {
+      let k = 0;
+      while (k < len.length - 1 && s > len[k]) s -= len[k++];
+      return { ahead: pts.slice(k + 1), behind: pts.slice(0, k + 1).reverse() };
+    },
     at(s: number): { p: XY; d: XY } {
       let k = 0;
       while (k < len.length - 1 && s > len[k]) s -= len[k++];
@@ -84,7 +105,11 @@ type Route = ReturnType<typeof route>;
 
 type State =
   | { k: 'home'; wait: number }
-  | { k: 'walk'; spot: Spot; back: boolean; r: Route; s: number }
+  /**
+   * To `spot` (or, back, from `spot` to his mark). `from`: where the walk started (null = his mark;
+   * undefined = somewhere along another walk, so there's no turning back, only carrying on).
+   */
+  | { k: 'walk'; spot: Spot; back: boolean; r: Route; s: number; from: Spot | null | undefined }
   | { k: 'turn'; spot: Spot | null; to: number }
   | { k: 'do'; spot: Spot; wait: number }
   | { k: 'sit'; spot: Spot; t: number; down: boolean; wait: number }
@@ -154,14 +179,57 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
   let state: State = { k: 'home', wait: rand(6, 10) };
   let before: State | null = null; // what he was doing when someone said hi
   let last = '';
+  let asked: Spot | null = null; // where to go once he's up from the sofa or done waving
+  let stay: [number, number] | null = null; // how long to stay at the spot he's walking to (asked)
 
   const walkTo = (spot: Spot, back: boolean, s = 0) => {
-    state = { k: 'walk', spot, back, r: route(back ? [...spot.path].reverse() : spot.path), s };
+    state = { k: 'walk', spot, back, r: route(back ? [...spot.path].reverse() : spot.path), s, from: back ? spot : null };
     play(clips.walk, 0.3);
   };
   const pick = () => {
-    const options = walks!.spots.filter((p) => p.name !== last);
+    const options = walks!.spots.filter((p) => p.name !== last && !p.ask);
     return options[Math.floor(Math.random() * options.length)];
+  };
+
+  /** The way from one place to another (null = his mark), starting at a. */
+  const between = (a: Spot | null, b: Spot | null): XY[] => {
+    if (a === b) return [a ? a.at : walks!.mark.at];
+    if (!a) return b!.path;
+    if (!b) return [...a.path].reverse();
+    const w = walks!.between ?? {};
+    const there = w[`${a.name}>${b.name}`];
+    if (there) return there;
+    const back = w[`${b.name}>${a.name}`];
+    if (back) return [...back].reverse();
+    return [...[...a.path].reverse(), ...b.path.slice(1)]; // by way of his mark
+  };
+
+  /** Off to `spot` now, from wherever he is. */
+  const goNow = (spot: Spot) => {
+    asked = null;
+    lift = 0;
+    const here: XY = [pos[0], pos[1]];
+    let pts: XY[];
+    let from: Spot | null | undefined;
+    if (state.k === 'walk') {
+      // carry on to where he was going, or turn back to where he came from: whichever is shorter overall
+      const w = state;
+      const { ahead, behind } = w.r.split(w.s);
+      const end = w.back ? null : w.spot;
+      const on = [...ahead, ...between(end, spot).slice(1)];
+      const back = w.from === undefined ? null : [...behind, ...between(w.from, spot).slice(1)];
+      pts = !back || lengthOf([here, ...on]) <= lengthOf([here, ...back]) ? on : back;
+      from = undefined;
+    } else {
+      from = 'spot' in state ? state.spot : null; // home / back at his mark: null
+      pts = between(from, spot).slice(1);
+    }
+    const all: XY[] = [here, ...pts];
+    const clean = all.filter((q, i) => !i || Math.hypot(q[0] - all[i - 1][0], q[1] - all[i - 1][1]) > 0.01);
+    last = spot.name;
+    stay = ASKED_STAY;
+    state = { k: 'walk', spot, back: false, r: route(clean), s: 0, from };
+    play(clips.walk, 0.3);
   };
 
   function step(dt: number) {
@@ -189,13 +257,16 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
       case 'turn':
         if (turnTo(state.to, dt)) {
           const spot = state.spot;
-          if (!spot) state = { k: 'home', wait: rand(8, 16) };
+          if (!spot) {
+            stay = null;
+            state = { k: 'home', wait: rand(8, 16) };
+          }
           else if (spot.act === 'sit') {
-            state = { k: 'sit', spot, t: 0, down: true, wait: rand(6, 10) };
+            state = { k: 'sit', spot, t: 0, down: true, wait: rand(...(stay ?? [6, 10])) };
             play(clips.sit, SIT_TIME);
           } else {
             if (spot.act === 'pet') pet?.excite();
-            state = { k: 'do', spot, wait: rand(3, 6) };
+            state = { k: 'do', spot, wait: rand(...(stay ?? [3, 6])) };
           }
         }
         break;
@@ -212,7 +283,10 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
           }
         } else {
           st.t = Math.max(0, st.t - dt / SIT_TIME);
-          if (st.t <= 0) walkTo(st.spot, true);
+          if (st.t <= 0) {
+            if (asked) goNow(asked);
+            else walkTo(st.spot, true);
+          }
         }
         seatAt(st.spot, st.t);
         break;
@@ -254,11 +328,16 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
       if (state.k !== 'hi') return;
       const was = before;
       before = null;
-      if (!walks || !was || was.k === 'home') {
+      if (asked) {
+        // asked to go somewhere while he was waving: up (if he was sitting) and off
+        if (was && 'spot' in was) state = was;
+        goNow(asked);
+      } else if (!walks || !was || was.k === 'home') {
         play(clips.idle, 0.45);
         state = { k: 'home', wait: rand(4, 8) };
       } else if (was.k === 'walk') {
-        walkTo(was.spot, was.back, was.s); // carry on where he was
+        state = was; // carry on where he was
+        play(clips.walk, 0.45);
       } else if (was.k === 'turn' && !was.spot) {
         play(clips.idle, 0.45);
         state = { k: 'turn', spot: null, to: heading(walks.mark.face) };
@@ -267,12 +346,43 @@ export function bringToLife(house: THREE.Object3D, char: GLTF, walks: Walks | nu
         const spot = was.spot!;
         lift = 0;
         const r = route([[pos[0], pos[1]], ...[...spot.path].reverse().slice(1)]);
-        state = { k: 'walk', spot, back: true, r, s: 0 };
+        state = { k: 'walk', spot, back: true, r, s: 0, from: undefined };
         play(clips.walk, 0.45);
       }
     },
     excitePet() {
       pet?.excite();
+    },
+    ask(name) {
+      const spot = walks?.spots.find((p) => p.name === name);
+      if (!spot) return false;
+      const s = state;
+      if (s.k === 'hi') {
+        asked = spot; // after the wave (greet(false))
+      } else if (s.k === 'sit') {
+        if (s.spot === spot) {
+          // already sitting there (or getting up from it): stay a while longer
+          if (!s.down) play(clips.sit, SIT_TIME);
+          s.down = true;
+          s.wait = Math.max(s.wait, rand(...ASKED_STAY));
+        } else {
+          asked = spot;
+          s.down = false; // gets up, then goes
+          play(clips.idle, SIT_TIME);
+        }
+      } else if (s.k === 'do' && s.spot === spot) {
+        s.wait = Math.max(s.wait, rand(...ASKED_STAY)); // already there
+      } else if (s.k === 'turn' && s.spot === spot) {
+        stay = ASKED_STAY; // just arrived
+      } else if (s.k === 'walk' && s.spot === spot && !s.back) {
+        stay = ASKED_STAY; // on the way already
+      } else {
+        goNow(spot);
+      }
+      return true;
+    },
+    busyAt() {
+      return state.k === 'do' || state.k === 'sit' ? state.spot.name : null;
     },
     bubbleAt(out) {
       head.getWorldPosition(out);

@@ -93,6 +93,7 @@ export const HOTSPOTS: Hotspot[] = [
   { id: 'turntable', room: 'living', label: 'Turntable · next record', anchor: { object: 'living_console_Turntable' } },
   { id: 'photos', room: 'living', label: 'Record shelf · photos', anchor: { object: 'living_shelf_Records' } },
   { id: 'door', room: 'living', label: 'Front door · contact + CV', anchor: { point: [3, 1.2, 3.75] } },
+  { id: 'sofa', room: 'living', label: 'Sofa · ask me to sit', anchor: { object: 'living_sofaL_Sofa' }, inline: true },
   // bedroom (the gaming PC opens nothing for now)
   { id: 'photowall', room: 'bedroom', label: 'Photo wall · travel', anchor: { art: [1.6, 0, 2.2, 0.6] } },
   // studio
