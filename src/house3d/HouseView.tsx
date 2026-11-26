@@ -1,8 +1,13 @@
 /**
  * /house: the Pinwheel house, full screen. The whole house first (framed exactly like the poster it
  * fades in over), then zoom into a room from the room switch, a room label or a click on the room;
- * hotspots on the furniture open the content windows; turn the house in quarter turns (Q / E) with the
- * near walls cut away, drag to tilt. Deep links: /house?room=living|bedroom|studio|lab
+ * hotspots on the furniture open the content windows. Getting around (the HUD's buttons do all of it too):
+ *   - turn: drag (all the way round), Q / E or [ / ] for quarter turns;
+ *   - zoom: scroll or trackpad pinch (toward the pointer), pinch on touch, + / -;
+ *   - move: right-drag or Shift + drag, two fingers on touch, the arrow keys;
+ *   - 0 or the reset button: back to the framed view at the default angle. Changing room resets zoom
+ *     and move (not the angle).
+ * Deep links: /house?room=living|bedroom|studio|lab
  *
  * Port of src/house/HouseApp.tsx (the old 3-room house) onto src/house3d: viewer.ts draws the GLB with
  * the character and pet (life.ts), stage.ts moves the camera and cuts the walls. The windows, the pins
@@ -19,7 +24,9 @@ import type { HouseContent } from '../house/content';
 import '../house/house.css';
 import './house.css';
 
-const MAX_TILT = (15 * Math.PI) / 180;
+const TURN_PER_PX = Math.PI / 450; // a drag across 900 px turns the house all the way round
+const KEY_PAN = 60; // px per arrow press (Shift: 3x)
+const KEY_ZOOM = 1.25;
 const reduced = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isRoom = (r: string | null): r is RoomId => !!r && r in ROOMS;
 
@@ -82,7 +89,7 @@ export default function HouseView({ content }: { content: HouseContent }) {
   const go = useHouse((s) => s.go);
   const close = useHouse((s) => s.close);
   const tilt = useHouse((s) => s.tilt);
-  const setTilt = useHouse((s) => s.setTilt);
+  const spin = useHouse((s) => s.spin);
   const rot = useHouse((s) => s.rot);
   const rotate = useHouse((s) => s.rotate);
   const record = useHouse((s) => s.record);
@@ -90,6 +97,7 @@ export default function HouseView({ content }: { content: HouseContent }) {
   const [gl, setGl] = useState<boolean | null>(null);
   const [ready, setReady] = useState(false);
   const [petted, setPetted] = useState(0);
+  const [moved, setMoved] = useState(false); // zoomed or panned away from the framed view
   const [stage] = useState(() => new Stage());
   const house = useRef<View3D | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -113,6 +121,7 @@ export default function HouseView({ content }: { content: HouseContent }) {
     house.current = v;
     stage.attach(v);
     stage.setInstant(reduced());
+    stage.onUserChange = setMoved;
     stage.onFrame = (cam, w, h) => updateOverlay(cam, w, h);
     if (import.meta.env.DEV) (window as any).__house = { view: v, stage };
     stage.go(goalFor('overview', null, 0, 0, true), true);
@@ -148,6 +157,9 @@ export default function HouseView({ content }: { content: HouseContent }) {
     if (ready) stage.go(goalFor(view, item, rot, tilt));
   }, [view, item, rot, tilt, ready, stage]);
 
+  // A new room (or back to the whole house) starts framed.
+  useEffect(() => stage.resetView(), [view, stage]);
+
   // Keep the URL in sync so a room can be shared.
   useEffect(() => {
     const url = new URL(location.href);
@@ -161,8 +173,25 @@ export default function HouseView({ content }: { content: HouseContent }) {
     const key = (e: KeyboardEvent) => {
       const s = useHouse.getState();
       const typing = (e.target as HTMLElement)?.closest?.('input, textarea, [contenteditable]');
-      if (!typing && (e.key === 'q' || e.key === '[')) return s.rotate(-1);
-      if (!typing && (e.key === 'e' || e.key === ']')) return s.rotate(1);
+      const inWindow = (e.target as HTMLElement)?.closest?.('.hx-window');
+      if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const k = e.key.toLowerCase();
+        if (k === 'q' || k === '[') return s.rotate(-1);
+        if (k === 'e' || k === ']') return s.rotate(1);
+        if (k === '+' || k === '=') return stage.zoomBy(KEY_ZOOM);
+        if (k === '-' || k === '_') return stage.zoomBy(1 / KEY_ZOOM);
+        if (k === '0') {
+          stage.resetView();
+          return s.unturn();
+        }
+        // arrows move the view, unless they're scrolling the open window
+        const arrow = ({ arrowleft: [1, 0], arrowright: [-1, 0], arrowup: [0, 1], arrowdown: [0, -1] } as Record<string, number[]>)[k];
+        if (arrow && !inWindow) {
+          e.preventDefault();
+          const d = KEY_PAN * (e.shiftKey ? 3 : 1);
+          return stage.panBy(arrow[0] * d, arrow[1] * d);
+        }
+      }
       if (e.key !== 'Escape') return;
       if (s.item) {
         s.close();
@@ -171,42 +200,104 @@ export default function HouseView({ content }: { content: HouseContent }) {
     };
     addEventListener('keydown', key);
     return () => removeEventListener('keydown', key);
-  }, []);
+  }, [stage]);
 
   // Move focus into a newly opened window.
   useEffect(() => {
     if (item) windowRef.current?.querySelector<HTMLElement>('h2')?.focus();
   }, [item]);
 
-  // Drag to tilt (±15°); a click without a drag walks into the room under the pointer.
-  const drag = useRef<{ x: number; y: number; t: number; moved: boolean } | null>(null);
+  // Pointers on the house. One (mouse, pen, a finger): drag to turn; right-drag or Shift + drag to move.
+  // Two fingers: pinch to zoom, move them together to pan. A click without a drag walks into the room
+  // under the pointer.
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const drag = useRef<{ x: number; y: number; moved: boolean; pan: boolean; multi: boolean } | null>(null);
+  const pinch = useRef<{ d: number; x: number; y: number } | null>(null);
+  const local = (e: { clientX: number; clientY: number }) => {
+    const r = stageRef.current!.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  const twoFingers = () => {
+    const [a, b] = [...pointers.current.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
   const onPointerDown = useCallback((e: React.PointerEvent) => {
-    drag.current = { x: e.clientX, y: e.clientY, t: useHouse.getState().tilt, moved: false };
+    if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); // keep the drag when it leaves the canvas
+    } catch {
+      /* not an active pointer (synthetic events) */
+    }
+    pointers.current.set(e.pointerId, local(e));
+    if (pointers.current.size === 2) {
+      pinch.current = twoFingers();
+      if (drag.current) drag.current.multi = true; // no click once a second finger lands
+    } else if (pointers.current.size === 1) {
+      drag.current = { x: e.clientX, y: e.clientY, moved: false, pan: e.button === 2 || e.shiftKey, multi: false };
+    }
   }, []);
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
+      const prev = pointers.current.get(e.pointerId);
+      if (!prev) return;
+      const now = local(e);
+      pointers.current.set(e.pointerId, now);
+      if (pointers.current.size >= 2 && pinch.current) {
+        const p = twoFingers(), q = pinch.current;
+        stage.setDragging(true);
+        if (q.d > 0 && p.d > 0) stage.zoomBy(p.d / q.d, p.x, p.y);
+        stage.panBy(p.x - q.x, p.y - q.y);
+        pinch.current = p;
+        return;
+      }
       const d = drag.current;
       if (!d) return;
-      if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 6) d.moved = true;
-      if (!d.moved || reduced()) return;
-      const t = d.t - ((e.clientX - d.x) / 600) * MAX_TILT * 2;
-      setTilt(Math.max(-MAX_TILT, Math.min(MAX_TILT, t)));
+      if (!d.moved && Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 6) d.moved = true;
+      if (!d.moved) return;
+      stage.setDragging(true);
+      if (d.pan || e.shiftKey) stage.panBy(now.x - prev.x, now.y - prev.y);
+      else spin(-(now.x - prev.x) * TURN_PER_PX);
     },
-    [setTilt],
+    [spin, stage],
   );
+  const release = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
+    if (pointers.current.size) return null;
+    stage.setDragging(false);
+    const d = drag.current;
+    drag.current = null;
+    return d;
+  };
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
-      const d = drag.current;
-      drag.current = null;
-      if (!d || d.moved || e.button !== 0) return;
-      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const room = stage.roomAt(e.clientX - r.left, e.clientY - r.top);
+      const had = pointers.current.has(e.pointerId);
+      const d = release(e);
+      if (!had || !d || d.moved || d.multi || d.pan || e.button !== 0) return;
+      const p = local(e);
+      const room = stage.roomAt(p.x, p.y);
       const s = useHouse.getState();
       if (room && room !== s.view) s.go(room, ROOM_DEFAULT[room]);
     },
     [stage],
   );
-  const endDrag = useCallback(() => (drag.current = null), []);
+  const endDrag = useCallback((e: React.PointerEvent) => void release(e), [stage]);
+
+  // Scroll (and trackpad pinch, which comes as ctrl + wheel) zooms toward the pointer.
+  useEffect(() => {
+    const el = stageRef.current?.parentElement;
+    if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      if ((e.target as HTMLElement).closest('.hx-window, .hx-top, .hx-now, .hx-turn')) return;
+      e.preventDefault();
+      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+      const f = Math.exp(-Math.max(-120, Math.min(120, px)) * (e.ctrlKey ? 0.01 : 0.002));
+      const p = local(e);
+      stage.zoomBy(f, p.x, p.y);
+    };
+    el.addEventListener('wheel', wheel, { passive: false });
+    return () => el.removeEventListener('wheel', wheel);
+  }, [gl, stage]);
 
   const here: RoomId = view === 'overview' ? 'living' : view;
   const crumb = view === 'overview' ? null : ROOMS[view].label;
@@ -285,7 +376,8 @@ export default function HouseView({ content }: { content: HouseContent }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={endDrag}
-        onPointerLeave={endDrag}
+        onLostPointerCapture={endDrag}
+        onContextMenu={(e) => e.preventDefault()}
       />
 
       {/* Hotspots and labels, pinned to the scene */}
@@ -368,9 +460,18 @@ export default function HouseView({ content }: { content: HouseContent }) {
         </div>
       )}
 
-      <p className="hx-hint">{view === 'overview' ? 'Pick a room, or click one · drag to tilt' : 'Esc to step back · drag to tilt'}</p>
+      <p className="hx-hint">
+        {view === 'overview' ? '' : 'Esc to step back · '}Drag to turn · scroll to zoom · right-drag to move
+      </p>
 
-      <div className="hx-turn" role="group" aria-label="Rotate the view">
+      <div className="hx-turn" role="toolbar" aria-label="Camera">
+        <button type="button" onClick={() => stage.zoomBy(1 / KEY_ZOOM)} aria-label="Zoom out (minus)" title="Zoom out (−)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14" /></svg>
+        </button>
+        <button type="button" onClick={() => stage.zoomBy(KEY_ZOOM)} aria-label="Zoom in (plus)" title="Zoom in (+)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14" /><path d="M12 5v14" /></svg>
+        </button>
+        <span className="hx-turn-sep" aria-hidden="true" />
         <button type="button" onClick={() => rotate(-1)} aria-label="Rotate left (Q)" title="Rotate left (Q)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /></svg>
         </button>
@@ -382,6 +483,19 @@ export default function HouseView({ content }: { content: HouseContent }) {
         </span>
         <button type="button" onClick={() => rotate(1)} aria-label="Rotate right (E)" title="Rotate right (E)">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></svg>
+        </button>
+        <span className="hx-turn-sep" aria-hidden="true" />
+        <button
+          type="button"
+          onClick={() => {
+            stage.resetView();
+            useHouse.getState().unturn();
+          }}
+          disabled={!moved && !tilt && rot % 4 === 0}
+          aria-label="Reset view (0)"
+          title="Reset view (0)"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 9V4h5" /><path d="M20 9V4h-5" /><path d="M4 15v5h5" /><path d="M20 15v5h-5" /></svg>
         </button>
       </div>
 

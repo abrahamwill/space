@@ -7,7 +7,12 @@
  *     3D fades in over the still without a jump;
  *   - overview, turned: the whole house fitted in the free space;
  *   - a room: zoomed in on the room's centre, centred in the space the HUD and the window leave.
- * Turning goes in quarter turns (`rot`), plus a small drag tilt.
+ * Turning goes in quarter turns (`rot`, Q / E and the buttons), plus `tilt`: the free turn a drag adds,
+ * kept within ±45° (past that it rolls over into `rot`, see store.ts spin). The elevation never changes.
+ *
+ * On top of the framed view, the visitor's own zoom (a factor on the framed zoom) and pan (a move of the
+ * camera's target across the ground, so turning pivots on what's in the middle of the screen):
+ * zoomBy / panBy / resetView. Changing room resets them.
  *
  * The house stays sunk into the page at every angle: the page surface (the holdout) is always on, and
  * once turned, viewer.ts's cut_walls line the whole cut, so whichever side is far there is a wall, and
@@ -40,6 +45,9 @@ export function posterRect(w: number, h: number, ins: Insets) {
 }
 
 const MOVE_RATE = 6; // camera easing, 1/s
+const DRAG_RATE = 30; // while a finger or the mouse is moving the camera: close to direct
+/** The visitor's zoom, as a factor on the poster's zoom (whatever view they're in). */
+const MIN_ZOOM = 0.55, MAX_ZOOM = 6;
 
 interface Pose { target: THREE.Vector3; zoom: number; az: number }
 
@@ -75,6 +83,12 @@ export class Stage {
   private cutWalls: THREE.Object3D | null = null;
   private pageGrid: THREE.Object3D | null = null;
   private pickable: THREE.Object3D[] = [];
+  private userZoom = 1; // factor on the framed view's zoom
+  private pan = new THREE.Vector3(); // added to the framed view's target, along the ground
+  private panReach = 8; // m: how far the pan may go (about the house's half diagonal)
+  private dragging = false;
+  /** Called when the visitor's zoom or pan changes (true: away from the framed view). */
+  onUserChange: ((moved: boolean) => void) | null = null;
 
   constructor() {
     // created up front so pins can track them before the house loads (they sit off-screen until then)
@@ -107,6 +121,64 @@ export class Stage {
     if (!this.init() || !this.goal) return;
     this.pose = this.solve(this.goal); // a resize jumps straight to the new framing
     this.apply();
+  }
+
+  /** Zoom by `f` (>1 in), keeping canvas point (sx, sy) where it is (default: the canvas centre). */
+  zoomBy(f: number, sx = this.w / 2, sy = this.h / 2) {
+    if (!this.init() || !this.goal) return;
+    const base = this.frame0(this.goal);
+    const z = this.zoomOf(base);
+    const pz = this.posterZoom(this.goal.insets(this.w, this.h));
+    this.userZoom = Math.min(MAX_ZOOM * pz, Math.max(MIN_ZOOM * pz, z * f)) / base.zoom;
+    const z2 = this.zoomOf(base);
+    const k = 1 / z - 1 / z2;
+    this.moveTarget((sx - this.w / 2) * k, -(sy - this.h / 2) * k, base.az);
+    this.changed();
+  }
+
+  /** Move the view by (dx, dy) canvas px: the house follows the pointer. */
+  panBy(dx: number, dy: number) {
+    if (!this.init() || !this.goal) return;
+    const base = this.frame0(this.goal);
+    const z = this.zoomOf(base);
+    this.moveTarget(-dx / z, dy / z, base.az);
+    this.changed();
+  }
+
+  /** Back to the framed view (no zoom or pan of the visitor's own). */
+  resetView() {
+    if (this.userZoom === 1 && this.pan.lengthSq() === 0) return;
+    this.userZoom = 1;
+    this.pan.set(0, 0, 0);
+    this.changed();
+  }
+
+  /** A pointer is moving the camera: follow it closely instead of easing. */
+  setDragging(on: boolean) {
+    this.dragging = on;
+  }
+
+  /** How far the visitor has zoomed, relative to the framed view (1 = as framed). */
+  get zoomFactor() {
+    return this.userZoom;
+  }
+
+  private zoomOf(base: Pose) {
+    return base.zoom * this.userZoom;
+  }
+
+  /** Move the target `right` m along the screen's right and `up` m up the screen, across the ground. */
+  private moveTarget(right: number, up: number, az: number) {
+    const se = Math.max(0.2, Math.sin(this.el));
+    const { r } = this.basis(az);
+    const fwd = new THREE.Vector3(-Math.sin(az), 0, -Math.cos(az)); // away from the camera, on the ground
+    this.pan.addScaledVector(r, right).addScaledVector(fwd, up / se);
+    if (this.pan.length() > this.panReach) this.pan.setLength(this.panReach);
+  }
+
+  private changed() {
+    this.view?.kick();
+    this.onUserChange?.(this.userZoom !== 1 || this.pan.lengthSq() > 1e-6);
   }
 
   /** The room under a canvas point (px from the canvas's top-left), or null. */
@@ -156,7 +228,14 @@ export class Stage {
     return posterRect(this.w, this.h, ins).width / this.posterWidth;
   }
 
+  /** The view with the visitor's zoom and pan on top. */
   private solve(g: Goal): Pose {
+    const base = this.frame0(g);
+    return { target: base.target.add(this.pan), zoom: this.zoomOf(base), az: base.az };
+  }
+
+  /** The framed view: the poster, the whole house, or a room. */
+  private frame0(g: Goal): Pose {
     const az = this.az0 + (g.rot * Math.PI) / 2 + g.tilt;
     const ins = g.insets(this.w, this.h);
     const free = (ins: Insets) => ({ x: ins.left + (this.w - ins.left - ins.right) / 2, y: ins.top + (this.h - ins.top - ins.bottom) / 2 });
@@ -193,7 +272,7 @@ export class Stage {
     const goal = this.solve(this.goal);
     if (!this.pose || this.instant) this.pose = goal;
     const p = this.pose;
-    const k = 1 - Math.exp(-MOVE_RATE * dt);
+    const k = 1 - Math.exp(-(this.dragging ? DRAG_RATE : MOVE_RATE) * dt);
     p.target.lerp(goal.target, k);
     p.zoom += (goal.zoom - p.zoom) * k;
     p.az += (goal.az - p.az) * k;
@@ -269,7 +348,9 @@ export class Stage {
       box.setFromObject(m);
       for (let i = 0; i < 8; i++) this.corners.push(new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z));
     }
-    const centre = new THREE.Box3().setFromPoints(this.corners).getCenter(new THREE.Vector3());
+    const all = new THREE.Box3().setFromPoints(this.corners);
+    const centre = all.getCenter(new THREE.Vector3());
+    this.panReach = Math.hypot(all.max.x - all.min.x, all.max.z - all.min.z) / 2;
     const camPos = cam.getWorldPosition(new THREE.Vector3());
     const axisPoint = camPos.clone().addScaledVector(toCam, -centre.clone().sub(camPos).dot(toCam.clone().negate()));
     this.posterCentre.copy(axisPoint).addScaledVector(r, fw * (cxFromLeft - 0.5)).addScaledVector(u, fh * (0.5 - cyFromTop));

@@ -3,6 +3,23 @@
 /* The page shows through (the poster underneath fades out once the scene is up, see src/pages/house.astro). */
 .hx2.is-ready { background: none; }
 
+/* Getting around: the canvas takes every gesture (drag turns, pinch zooms, two fingers move), so the
+   browser mustn't scroll or zoom the page under it. */
+.hx2 .hx-stage { touch-action: none; }
+.hx2 .hx-stage:active { cursor: grabbing; }
+
+/* The camera toolbar: zoom | turn | reset. */
+.hx2 .hx-turn-sep { width: 1px; height: 22px; margin: 0 4px; background: rgba(0, 0, 0, .12); }
+.hx2 .hx-turn button:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.hx2 .hx-turn button:disabled { color: rgba(0, 0, 0, .25); cursor: default; background: none; }
+/* The hint sits over the toolbar, so neither runs into the other (or into now playing). */
+.hx2 .hx-hint { right: auto; left: 50%; transform: translateX(-50%); bottom: 72px; white-space: nowrap; }
+@media (max-width: 899px) {
+  /* a column on the right, clear of now playing on the left */
+  .hx2 .hx-turn { flex-direction: column; bottom: 16px; }
+  .hx2 .hx-turn-sep { width: 22px; height: 1px; margin: 3px 0; }
+}
+
 /* House + four rooms in the switch: tighter on phones. */
 @media (max-width: 899px) {
   .hx2 .hx-rooms button { padding: 0 11px; }
