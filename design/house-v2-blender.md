@@ -75,7 +75,7 @@ Decided 2026-11-22: **keep the current house.** The model stays as it is: no thi
 ## Also still open from the board port
 
 - Home hero: the new grid and house placement above (do them with step 6, or as an image swap earlier if wanted).
-- Mobile home (Space-FullPage-Mobile): its own design, not the desktop layout stacked. Lowercase type, a status line and mail-icon "say hi" in the top bar, a "HELLO my name is" sticker, windows named like files, and a notes-style About.
+- Mobile home: **not building Space-FullPage-Mobile** (decided 2026-11-27). The mockup predates later decisions (sentence case, the Pinwheel house on its grid, the Get Info About, the turntable card) and no "HELLO my name is" sticker. Phones get the current home page in one column; fixed for phones: case previews keep the screenshots' landscape shape (no side crop) and the lab says "Tap to open." on touch screens.
 
 ## Setting up a new machine
 

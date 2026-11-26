@@ -213,7 +213,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
     <div class="head z">
       <span class="pillk">The lab</span>
       <h2 class="big-h2">Things I'm figuring out</h2>
-      <p class="head-p">Side projects, experiments, and a game that isn't launched yet. Hover to peek, click to open.</p>
+      <p class="head-p">Side projects, experiments, and a game that isn't launched yet. <span class="on-hover">Hover to peek, click to open.</span><span class="on-touch">Tap to open.</span></p>
     </div>
     <ul class="lab-row z" role="list">
       {labItems.map((it) => (
@@ -787,6 +787,8 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
     .wcard-lead, .wside { grid-column: auto; }
     .wthumb-lead { min-height: 320px; }
     .wthumb { height: 210px; }
+    /* narrow cards: the screenshots' own landscape shape, so nothing is cut off the sides */
+    .wthumb:not(.mock) { height: auto; min-height: 0; aspect-ratio: 16 / 10; }
   }
 
   /* ============ Lab ============ */
@@ -798,6 +800,9 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .lab-row :global(.lw) { transition: opacity .35s ease, filter .35s ease; }
   .lab-cap { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
   .lab-t { font-weight: 600; font-size: 17px; }
+  /* the lab's how-to: hover where there's a pointer that can, tap on touch screens */
+  .on-touch { display: none; }
+  @media (hover: none) { .on-hover { display: none; } .on-touch { display: inline; } }
   .lab-l { font-size: 14px; color: var(--muted); max-width: 280px; }
   .panel :global(.panel-t) { font-weight: 600; font-size: 17px; color: var(--ink); }
   .panel :global(.panel-d) { font-size: 15px; line-height: 1.5; color: var(--muted); margin-top: 4px; }
