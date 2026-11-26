@@ -16,6 +16,9 @@ Clips (30 fps):
   wave  1.2 s loop  the designed "wave" pose, hand waving. The site crossfades idle <-> wave.
   walk  1 s loop    a walk cycle, half-way to the designed "run" pose.
   sit   2 s loop    the designed "sit" pose, breathing. Sits on whatever is at the spot it is moved to.
+  run   0.67 s loop a running cycle in place (for the treadmill), around the designed "run" pose:
+                    contact, mid-stance, flight, then the other leg. Knee drive in front, heel up behind,
+                    elbows bent ~90° and swinging against the legs, a forward lean, a bounce in flight.
 
 Writes the GLB (Draco) and house3d/character_abraham.blend next to this script.
 """
@@ -279,7 +282,31 @@ def clips():
         (30, stride(22, -6, -20, -18, 18, 0)),
     ]
     sit_k = [(0, sit), (30, tweak(sit, lean=sit['lean'] + 1.2, tilt=2, move=(sit['move'][0], sit['move'][1], sit['move'][2] - .006))), (60, sit)]
-    return {'idle': idle, 'wave': wave_k, 'walk': walk, 'sit': sit_k}
+    return {'idle': idle, 'wave': wave_k, 'walk': walk, 'sit': sit_k, 'run': run_cycle()}
+
+
+# run: the right leg's half of the stride; the left's is its mirror (legs and arm swings swapped)
+RUN_HALF = [
+    # frame, hips (R thigh, R knee, L thigh, L knee), arms ((R swing, elbow), (L swing, elbow)), lean, bounce
+    (0, (22, -12, -25, -65), ((-42, 80), (36, 75)), 9, .01),     # contact: right foot lands ahead
+    (3, (2, -30, 10, -105), ((-12, 90), (10, 85)), 10, -.02),     # mid-stance: weight on it, left heel up behind
+    (6, (-30, -10, 48, -88), ((30, 80), (-44, 85)), 9, .06),      # flight: right pushes off, left knee drives
+]
+RUN_LOOP = 20   # frames (0.67 s at 30 fps)
+RUN_ABDUCT = 10
+
+
+def run_cycle():
+    def pose(hips, arms, lean, bob):
+        (sr, er), (sl, el) = arms
+        return pose_dict(hips=hips, arms=((sr, RUN_ABDUCT, er), (sl, RUN_ABDUCT, el)), lean=lean, tilt=0, turn=0, move=(0, 0, bob))
+    keys = []
+    for f, hips, arms, lean, bob in RUN_HALF:
+        keys.append((f, pose(hips, arms, lean, bob)))
+    for f, (hr, kr, hl, kl), (ar, al), lean, bob in RUN_HALF:
+        keys.append((f + RUN_LOOP // 2, pose((hl, kl, hr, kr), (al, ar), lean, bob)))
+    keys.append((RUN_LOOP, keys[0][1]))
+    return keys
 
 
 def animate(rig):

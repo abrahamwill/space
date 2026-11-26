@@ -62,7 +62,7 @@ Claude drives Blender headless with Python (`blender -b -P script.py`). Blender 
 ## Open questions for the owner
 
 Answered 2026-11-21:
-- Treadmill: on the wall beside it, a medal hanger and instax prints of his running; the prints open a window of running photos (`running` in `src/data/site.ts`, placeholders until he adds photos). Built in code for now (`src/house3d/props.ts`, on the deck's outer wall between the pull-up uprights); move it into `house3d/source` when the GLB is next rebuilt, then drop the code copy. The treadmill itself does nothing. Maybe later: he runs on it when his walk reaches it.
+- Treadmill: on the wall beside it, a medal hanger and instax prints of his running; the prints open a window of running photos (`running` in `src/data/site.ts`, placeholders until he adds photos). Built in code for now (`src/house3d/props.ts`, on the deck's outer wall between the pull-up uprights); move it into `house3d/source` when the GLB is next rebuilt, then drop the code copy. The treadmill itself does nothing to click; on `/house` his routine takes him there now and then: he steps onto the belt, runs (the `run` clip) for 12–20 s, turns round and steps off. Not in the hero (asked by Abraham).
 - Gaming PC: nothing for now.
 - Bedroom: light on arrival, like every room.
 - Rotation: snaps to four angles (plus the ±15° drag tilt).

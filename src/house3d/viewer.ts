@@ -372,7 +372,9 @@ export function mountHouse(el: HTMLElement, opts: HouseOptions = {}): HouseView 
       page.visible = false; // the grid mask replaces it
       root.add(mask, walls);
     }
-    if (charG) life = bringToLife(root, charG, walkG);
+    // The treadmill run (act "run") is for the full house only; in the hero he keeps to the other spots.
+    const routes = walkG && !control ? { ...walkG, spots: walkG.spots.filter((sp) => sp.act !== 'run') } : walkG;
+    if (charG) life = bringToLife(root, charG, routes);
     screens = addScreens(root);
 
     // Sun shadow camera: cover the whole house, seen from the sun.
