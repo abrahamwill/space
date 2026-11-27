@@ -35,12 +35,18 @@ export function overviewInsets(w: number): Insets {
   return w >= 900 ? { top: 96, right: 32, bottom: 72, left: 32 } : { top: 136, right: 16, bottom: 32, left: 16 };
 }
 
+/** The open window's size on screen, measured as it changes, so the room frames in what it leaves. */
+const windowBox = { w: 0, h: 0 };
+
 /** Space the HUD and the open window take up, so a zoomed room centres in what's left. */
 function insetsFor(view: View, item: string | null) {
   return (w: number, h: number): Insets => {
     const base = overviewInsets(w);
     if (view === 'overview' || !item) return base;
-    return w >= 900 ? { ...base, right: Math.min(460, w * 0.42) + 32 } : { ...base, bottom: Math.round(h * 0.55) };
+    // desktop: the window on the right (plus its margin and a gap); smaller: the sheet or card at the bottom
+    return w >= 900
+      ? { ...base, right: (windowBox.w || Math.min(440, w * 0.42)) + 48 }
+      : { ...base, bottom: (windowBox.h || Math.round(h * 0.55)) + 16 };
   };
 }
 
@@ -150,8 +156,8 @@ export default function HouseView({ content }: { content: HouseContent }) {
   useEffect(() => {
     const w = innerWidth, h = innerHeight;
     const ins = insetsFor(view, item)(w, h);
-    // labels flip side before they'd run under the window (desktop) or off the right edge
-    setFlipEdge(w - ins.right - 200);
+    // labels open away from the window (desktop) and the screen's edges
+    setFlipEdge(w - ins.right);
     // pins that slide under the HUD bar or the window can't be clicked, so hide them
     setVisibleBand(overviewInsets(w).top - 16, w >= 900 || view === 'overview' || !item ? h : h - ins.bottom);
     if (ready) stage.go(goalFor(view, item, rot, tilt));
@@ -201,6 +207,26 @@ export default function HouseView({ content }: { content: HouseContent }) {
     addEventListener('keydown', key);
     return () => removeEventListener('keydown', key);
   }, [stage]);
+
+  // Measure the open window (it fits its content), and reframe the room around it.
+  useEffect(() => {
+    const el = windowRef.current;
+    if (!item || !el) {
+      windowBox.w = windowBox.h = 0;
+      return;
+    }
+    const ro = new ResizeObserver(() => {
+      const r = el.getBoundingClientRect();
+      windowBox.w = r.width;
+      windowBox.h = innerHeight - r.top; // from its top edge to the bottom of the screen
+      const ins = insetsFor(useHouse.getState().view, item)(innerWidth, innerHeight);
+      setFlipEdge(innerWidth - ins.right);
+      setVisibleBand(overviewInsets(innerWidth).top - 16, innerWidth >= 900 ? innerHeight : innerHeight - ins.bottom);
+      house.current?.kick();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [item]);
 
   // Move focus into a newly opened window.
   useEffect(() => {
@@ -517,7 +543,7 @@ export default function HouseView({ content }: { content: HouseContent }) {
             </span>
             <h2 id="hx-window-title" tabIndex={-1}>{WINDOW_TITLES[item]}</h2>
           </div>
-          <div className="hx-window-body">
+          <div className="hx-window-body" key={item}>
             <WindowBody id={item} content={content} deck={deck} />
           </div>
         </aside>
