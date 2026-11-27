@@ -93,5 +93,5 @@ Anything in `[brackets]` is a placeholder. Never invent metrics.
 
 ## Next
 
-- Swap primitives for Blender GLBs room by room: compressed, flat vertex colours, no textures.
+- House v2 (the Pinwheel house, built with Blender): plan and handoff in [design/house-v2-blender.md](design/house-v2-blender.md). On Windows, Blender is at `C:\Program Files\Blender Foundation\Blender 5.2\blender.exe` (not on PATH).
 - Fill in the [bracket] content, pick real records, and check the lab screenshots for internal names.

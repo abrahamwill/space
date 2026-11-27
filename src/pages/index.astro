@@ -9,17 +9,16 @@ import Space from '../layouts/Space.astro';
 import PeekWin, { type WinData } from '../components/home/PeekWin.astro';
 import NowPlaying from '../components/home/NowPlaying.astro';
 import { site, lab, houseHref } from '../data/site';
-import { getHouseContent, inlineJson } from '../data/houseContent';
-// The hero rests in the arrival state (main room lit); the other rooms light up when someone looks.
-import houseDim from '../assets/house/poster-dim.png';
+// The Pinwheel house (House v2): a still of the live 3D (scripts/render-house3d-poster.mjs), so the
+// 3D that fades in over it lines up exactly.
+import housePoster from '../assets/house/hero-p2.png';
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order).slice(0, 3);
 const [lead, ...rest] = work;
-const houseContent = inlineJson(await getHouseContent());
 const metaLine = (w: (typeof work)[number]) => [w.data.company, w.data.year, w.data.role].join(' · ');
 
 const wins: Record<'proto' | 'pet' | 'voice', WinData> = {
-  proto: { kind: 'proto', file: 'Prototype Hub', title: 'Prototype Hub', desc: lab[0].body },
+  proto: { kind: 'proto', file: 'Prototype Hub', title: 'Prototype Hub', desc: lab[0].body, href: '/work/prototype-hub', cta: 'Read the case study' },
   pet: { kind: 'pet', file: 'Pet game', title: 'A cozy pet game', desc: lab[1].body },
   voice: { kind: 'voice', file: 'Voice AI', title: 'Learning voice AI', desc: lab[2].body },
 };
@@ -55,7 +54,6 @@ const info = [
 const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
 ---
 <Space>
-  <script type="application/json" id="house-content" set:html={houseContent} />
 
   <!-- ============ Menu bar ============ -->
   <header slot="header" class="mb">
@@ -107,14 +105,14 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       </div>
 
       <div class="stage" data-stage>
-        <img class="grid" src="/images/iso-grid.webp" alt="" width="2880" height="1720" decoding="async" />
+        <img class="grid" src="/images/iso-grid.svg" alt="" width="2880" height="1720" decoding="async" />
         <a class="house fx" href={houseHref} aria-label="Step into my space">
           <Picture
-            src={houseDim}
+            src={housePoster}
             formats={['avif', 'webp']}
             widths={[720, 1080, 1440, 1800, 2336]}
             sizes="(max-width: 900px) 120vw, 900px"
-            alt="My house, cut into the page: the main room lit, with a turntable and a sofa; the studio behind it and the lab to the right still dark, with light spilling from their doorways"
+            alt="My house, cut into the page: a living room in the middle with a sofa, a checkered rug and me, and around it a bedroom, a studio with a bookcase and a treadmill, a lab, and small gardens with trees"
             loading="eager"
             fetchpriority="high"
             decoding="async"
@@ -129,7 +127,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
         </div>
 
         <button type="button" class="stk fx stk-key" data-drag aria-label="House key, decoration. Drag it, or focus it and use the arrow keys.">
-          <span class="keyobj"><svg width="168" height="78" viewBox="0 0 168 78" aria-hidden="true"><g transform="rotate(-8 84 39)"><rect x="4" y="16" width="78" height="44" rx="6" fill="#f4e7c3" stroke="rgba(0,0,0,.18)"/><circle cx="16" cy="38" r="4" fill="#f3f3f5" stroke="rgba(0,0,0,.25)"/><text x="28" y="34" font-family="IBM Plex Mono, monospace" font-size="8.5" letter-spacing=".8" fill="#7a6a3c">KEY NO. 01</text><text x="28" y="49" font-family="Inter, sans-serif" font-weight="600" font-size="12" letter-spacing="-.2" fill="#151517">My space</text><path d="M82 38 C 90 38, 92 30, 100 30" fill="none" stroke="#8a8a90" stroke-width="1.5"/><circle cx="106" cy="30" r="7" fill="none" stroke="#9a9aa2" stroke-width="2.2"/><circle cx="122" cy="34" r="11" fill="#e1aa3f" stroke="#b9852a" stroke-width="1.2"/><circle cx="122" cy="34" r="4" fill="#f3f3f5" stroke="#b9852a" stroke-width="1"/><path d="M131 38 L162 50 L160 55 L156 53.5 L154.5 58 L150 56.3 L151.5 52 L147 50.3 L145.5 54.5 L141 52.8 L143 46 L129 42 Z" fill="#e1aa3f" stroke="#b9852a" stroke-width="1.2" stroke-linejoin="round"/></g></svg></span>
+          <span class="keyobj"><svg width="210" height="75" viewBox="0 0 210 75" aria-hidden="true"><g transform="rotate(-7 54 44)"><path fill="#f4e7c3" d="M9 22h90v5h-90zM4 27h100v5h-100zM4 32h100v5h-100zM4 37h5v5h-5zM14 37h90v5h-90zM4 42h5v5h-5zM14 42h90v5h-90zM4 47h100v5h-100zM4 52h100v5h-100zM4 57h100v5h-100z"/><path fill="#f3f3f5" d="M9 37h5v5h-5zM9 42h5v5h-5z"/><path fill="#e2cd96" d="M9 62h90v5h-90z"/><path fill="#8a7444" d="M20 31h2v2h-2zM24 31h2v2h-2zM20 33h4v2h-4zM20 35h2v2h-2zM20 37h4v2h-4zM20 39h2v2h-2zM24 39h2v2h-2zM28 31h6v2h-6zM28 33h2v2h-2zM28 35h4v2h-4zM28 37h2v2h-2zM28 39h6v2h-6zM36 31h2v2h-2zM40 31h2v2h-2zM36 33h2v2h-2zM40 33h2v2h-2zM38 35h2v2h-2zM38 37h2v2h-2zM38 39h2v2h-2zM50 31h4v2h-4zM50 33h2v2h-2zM54 33h2v2h-2zM50 35h2v2h-2zM54 35h2v2h-2zM50 37h2v2h-2zM54 37h2v2h-2zM50 39h2v2h-2zM54 39h2v2h-2zM58 31h6v2h-6zM58 33h2v2h-2zM62 33h2v2h-2zM58 35h2v2h-2zM62 35h2v2h-2zM58 37h2v2h-2zM62 37h2v2h-2zM58 39h6v2h-6zM66 39h2v2h-2zM76 31h6v2h-6zM76 33h2v2h-2zM80 33h2v2h-2zM76 35h2v2h-2zM80 35h2v2h-2zM76 37h2v2h-2zM80 37h2v2h-2zM76 39h6v2h-6zM86 31h2v2h-2zM84 33h4v2h-4zM86 35h2v2h-2zM86 37h2v2h-2zM86 39h2v2h-2z"/><path fill="#151517" d="M20 45h2v2h-2zM28 45h2v2h-2zM20 47h4v2h-4zM26 47h4v2h-4zM20 49h2v2h-2zM24 49h2v2h-2zM28 49h2v2h-2zM20 51h2v2h-2zM28 51h2v2h-2zM20 53h2v2h-2zM28 53h2v2h-2zM32 45h2v2h-2zM36 45h2v2h-2zM32 47h2v2h-2zM36 47h2v2h-2zM34 49h2v2h-2zM34 51h2v2h-2zM34 53h2v2h-2zM46 45h6v2h-6zM46 47h2v2h-2zM46 49h6v2h-6zM50 51h2v2h-2zM46 53h6v2h-6zM54 45h6v2h-6zM54 47h2v2h-2zM58 47h2v2h-2zM54 49h6v2h-6zM54 51h2v2h-2zM54 53h2v2h-2zM62 45h6v2h-6zM62 47h2v2h-2zM66 47h2v2h-2zM62 49h6v2h-6zM62 51h2v2h-2zM66 51h2v2h-2zM62 53h2v2h-2zM66 53h2v2h-2zM70 45h6v2h-6zM70 47h2v2h-2zM70 49h2v2h-2zM70 51h2v2h-2zM70 53h6v2h-6zM78 45h6v2h-6zM78 47h2v2h-2zM78 49h4v2h-4zM78 51h2v2h-2zM78 53h6v2h-6z"/></g><g shape-rendering="crispEdges"><path fill="#e1aa3f" d="M135 15h15v5h-15zM130 20h5v5h-5zM140 20h15v5h-15zM125 25h15v5h-15zM150 25h10v5h-10zM125 30h15v5h-15zM150 30h10v5h-10zM125 35h30v5h-30zM160 35h20v5h-20zM135 40h15v5h-15zM170 40h20v5h-20zM180 45h20v5h-20zM180 50h30v5h-30zM195 55h10v5h-10z"/><path fill="#f8d77d" d="M135 20h5v5h-5zM160 30h10v5h-10z"/><path fill="#8a8a90" d="M100 25h10v5h-10zM110 30h5v5h-5zM140 30h10v5h-10zM115 35h10v5h-10z"/><path fill="#f3f3f5" d="M140 25h10v5h-10z"/><path fill="#b9852a" d="M155 35h5v5h-5zM130 40h5v5h-5zM150 40h5v5h-5zM135 45h15v5h-15zM180 55h10v5h-10zM205 55h5v5h-5zM195 60h10v5h-10z"/></g></svg></span>
         </button>
         <button type="button" class="stk fx stk-pet" data-drag aria-label="The pet from my game, decoration. Drag it, or focus it and use the arrow keys.">
           <span class="petobj">
@@ -215,7 +213,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
     <div class="head z">
       <span class="pillk">The lab</span>
       <h2 class="big-h2">Things I'm figuring out</h2>
-      <p class="head-p">Side projects, experiments, and a game that isn't launched yet. Hover to peek, click to open.</p>
+      <p class="head-p">Side projects, experiments, and a game that isn't launched yet. <span class="on-hover">Hover to peek, click to open.</span><span class="on-touch">Tap to open.</span></p>
     </div>
     <ul class="lab-row z" role="list">
       {labItems.map((it) => (
@@ -300,15 +298,22 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
 
 <script>
   /**
-   * The live house in the hero, and stepping inside without a page load (unchanged from milestone 4,
-   * except the cursor, which is now the kit's glass "Step in →" pill).
+   * The live 3D house (House v2, src/house3d/viewer.ts) fades in over the poster.
    *
    * Auto-load only when it's cheap and wanted: after the page is idle AND the hero is on screen.
    * Never on Save-Data, slow connections, low-memory devices, reduced motion, or ?mode=focus;
    * there it waits for intent (hover/focus/touch).
+   *
+   * "Step in" is a link to /house. Where the browser has cross-document view transitions, the house
+   * zooms from here into the /house poster (view-transition-name: house on both), and the live house
+   * fades in over that; elsewhere it's a plain page load.
+   *
+   * The house never moves; things happen inside it when someone looks (as the old src/house/hero.ts):
+   * on hover or keyboard focus the character waves and says hello in a bubble over his head, and the pet
+   * hops; they settle a moment after the pointer leaves. Touch screens (no hover) play it once, the first
+   * time the hero is properly in view. With reduced motion he changes pose without animating.
    */
-  import type { HouseEngine } from '../house/engine';
-  import type { HouseContent } from '../house/content';
+  import type { HouseView } from '../house3d/viewer';
 
   const host = document.querySelector<HTMLElement>('[data-house-live]');
   const link = host?.closest<HTMLElement>('.house');
@@ -323,32 +328,82 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       matchMedia('(prefers-reduced-motion: reduce)').matches ||
       document.documentElement.dataset.mode === 'focus';
 
-    let engine: Promise<HouseEngine> | null = null;
-    const start = () =>
-      (engine ??= import('../house/hero').then(
-        ({ mountHero }) =>
-          new Promise<HouseEngine>((resolve) => {
-            const e = mountHero(host, () => {
-              link.classList.add('is-live');
-              resolve(e);
-            });
-          }),
-      ));
-    // Dev only: this page has no React island, so @astrojs/react never adds the React Refresh
-    // preamble, and importing enter.ts (React) throws "can't detect preamble". Install it first.
-    const preamble: Promise<unknown> = import.meta.env.DEV
-      ? import(/* @vite-ignore */ '/@react-refresh' as string).then(({ injectIntoGlobalHook }) => {
-          const w = window as unknown as Record<string, unknown>;
-          injectIntoGlobalHook(window);
-          w.$RefreshReg$ = () => {};
-          w.$RefreshSig$ = () => (type: unknown) => type;
-        })
-      : Promise.resolve();
-    const loadEnter = () => preamble.then(() => import('../house/enter'));
-    const warm = () => {
-      start();
-      loadEnter();
+    // the talking box, pinned above the character's head
+    const bubble = document.createElement('div');
+    bubble.className = 'hero-bubble';
+    bubble.setAttribute('aria-hidden', 'true');
+    bubble.innerHTML = '<p>Hi! Come on in, I’ll show you around.</p>';
+
+    let looking = false;
+    let live: HouseView | null = null;
+    let byeTimer = 0;
+    const hello = () => {
+      if (!live) return;
+      clearTimeout(byeTimer);
+      live.greet(true);
+      bubble.classList.add('is-on');
     };
+    const bye = () => {
+      clearTimeout(byeTimer);
+      byeTimer = window.setTimeout(() => {
+        live?.greet(false);
+        bubble.classList.remove('is-on');
+      }, 350);
+    };
+
+    let view: Promise<HouseView> | null = null;
+    const start = () =>
+      (view ??= import('../house3d/viewer').then(({ mountHouse }) => {
+        const v = mountHouse(host);
+        host.appendChild(bubble);
+        v.onFrame = () => {
+          const a = v.bubbleAnchor();
+          if (a) bubble.style.transform = `translate3d(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px, 0)`;
+        };
+        return v.ready.then(() => {
+          link.classList.add('is-live');
+          live = v;
+          v.render();
+          if (looking) hello();
+          else touchOnce();
+          return v;
+        });
+      }));
+
+    const enter = () => {
+      looking = true;
+      hello();
+    };
+    const leave = () => {
+      looking = false;
+      bye();
+    };
+    link.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && enter());
+    link.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && leave());
+    link.addEventListener('focusin', enter);
+    link.addEventListener('focusout', leave);
+
+    // Touch screens can't hover: play it once, the first time the hero is properly in view and the
+    // live house is up (this never loads it by itself, so Save-Data and the like still hold it back).
+    let inView = false;
+    let played = false;
+    function touchOnce() {
+      if (played || !inView || !live) return;
+      played = true;
+      seen.disconnect();
+      setTimeout(() => {
+        hello();
+        byeTimer = window.setTimeout(() => !looking && bye(), 3600);
+      }, 500);
+    }
+    const seen = new IntersectionObserver(
+      (entries) => {
+        inView = entries.some((e) => e.isIntersecting);
+        touchOnce();
+      },
+      { threshold: 0.6 },
+    );
+    if (matchMedia('(hover: none)').matches) seen.observe(link);
 
     if (holdBack) {
       for (const ev of ['pointerenter', 'focusin', 'touchstart'] as const) link.addEventListener(ev, () => start(), { once: true, passive: true });
@@ -381,47 +436,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
       });
       link.addEventListener('pointermove', move);
       link.addEventListener('pointerleave', () => pill.classList.remove('is-on'));
-      new MutationObserver(() => document.documentElement.classList.contains('in-house') && pill.classList.remove('is-on')).observe(
-        document.documentElement,
-        { attributes: true, attributeFilter: ['class'] },
-      );
     }
-
-    // ---- stepping inside ----
-    const webgl = (() => {
-      try {
-        const c = document.createElement('canvas');
-        return !!(c.getContext('webgl2') || c.getContext('webgl'));
-      } catch {
-        return false;
-      }
-    })();
-    const content = () => JSON.parse(document.getElementById('house-content')!.textContent!) as HouseContent;
-    const isHouseLink = (t: EventTarget | null) => (t as Element | null)?.closest?.('a[href="/house"]');
-
-    for (const ev of ['pointerover', 'focusin'] as const)
-      document.addEventListener(ev, (e) => isHouseLink(e.target) && webgl && warm(), { passive: true });
-
-    let busy = false;
-    const go = async (push: boolean) => {
-      if (busy) return;
-      busy = true;
-      document.documentElement.classList.add('house-loading');
-      try {
-        const [e, mod] = await Promise.all([start(), loadEnter()]);
-        mod.onHistory(() => go(false));
-        mod.enter(e, host, content(), push);
-      } finally {
-        busy = false;
-        document.documentElement.classList.remove('house-loading');
-      }
-    };
-    document.addEventListener('click', (e) => {
-      if (!webgl || !isHouseLink(e.target)) return;
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      e.preventDefault();
-      go(true);
-    });
   }
 </script>
 
@@ -635,25 +650,33 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
 
   /* ============ Hero ============ */
   .hero { position: relative; overflow-x: clip; }
-  .hero-in { position: relative; width: min(1320px, 100% - 2 * var(--gutter)); margin-inline: auto; display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); align-items: center; gap: 0 20px; min-height: min(820px, calc(100svh - 40px)); padding: 48px 0 72px; }
+  .hero-in { position: relative; width: min(1320px, 100% - 2 * var(--gutter)); margin-inline: auto; display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); align-items: center; gap: 0 30px; min-height: min(820px, calc(100svh - 40px)); padding: 48px 0 72px; }
   .hero-copy { position: relative; z-index: 4; display: flex; flex-direction: column; gap: 24px; }
   .hero-title { font-size: clamp(56px, 4.4vw + 20px, 84px); line-height: .95; letter-spacing: -.05em; }
   .hero-text { max-width: 400px; font-size: 18px; line-height: 1.5; color: var(--muted); }
   .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .hero-skim { display: none; }
 
+  /* The stage is the design's 860 × 645 box at (560, 120) in the 1440 × 860 hero (canvas: Hero-Sunken-P2);
+     everything in it is placed in % of that box, so it matches the design at 1440 and scales around it. */
   .stage { position: relative; aspect-ratio: 860 / 645; margin-right: -4%; }
-  .grid { position: absolute; left: -22%; top: -12%; width: 144%; max-width: none; height: auto; z-index: 0; pointer-events: none; opacity: .9; -webkit-mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); mask-image: radial-gradient(ellipse 52% 50% at 50% 50%, #000 40%, transparent 100%); }
-  .house { position: absolute; left: -2%; right: -2%; top: 50%; transform: translateY(-50%); z-index: 2; display: block; }
+  /* The iso grid is the whole 1440 × 860 hero in the design (its left side fades out by itself); the
+     edges fade so a wider window doesn't show where it ends. */
+  .grid { position: absolute; left: -65.116%; top: 0; margin-top: -13.954%; width: 167.442%; max-width: none; height: auto; z-index: 0; pointer-events: none; -webkit-mask-image: linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, #000 88%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 92%, transparent); mask-composite: intersect; }
+  .house { position: absolute; left: 0; right: 0; top: 13.643%; z-index: 2; display: block; }
+  /* "Step in": the house morphs into the /house poster (src/pages/house.astro) */
+  @media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto; }
+    .house { view-transition-name: house; }
+    :global(::view-transition-group(house)) { animation-duration: .55s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+  }
   .house :global(img) { display: block; width: 100%; height: auto; transition: opacity .6s ease; }
-  .house-live { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+  /* The live canvas shows the whole HeroCamera frame; the poster is cropped to the house. This inset
+     (printed by scripts/render-house3d-poster.mjs) makes the two line up. */
+  .house-live { position: absolute; inset: -25.098% -1.807% -22.142% -1.807%; opacity: 0; transition: opacity .6s ease; pointer-events: none; }
   .house:global(.is-live) .house-live { opacity: 1; }
   .house:global(.is-live) :global(img) { opacity: 0; }
-  .house:global(.is-handoff) :global(img) { opacity: 1; transition: none; }
-  .house:global(.is-away) :global(img) { opacity: 0; transition: none; }
   .house:global(.has-pill), .house:global(.has-pill) * { cursor: none; }
-
-  /* Character's talking box (hero.ts pins it above their head). */
   .house :global(.hero-bubble) { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 1; }
   .house :global(.hero-bubble p) { position: absolute; left: 0; bottom: 14px; transform: translate(-50%, 6px) scale(.92); transform-origin: 50% 100%; width: max-content; max-width: 220px; margin: 0; padding: 8px 12px; border-radius: 12px; background: #fff; color: var(--ink); font-size: 14px; font-weight: 500; line-height: 1.35; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .2), 0 8px 20px rgba(0, 0, 0, .12); opacity: 0; transition: opacity .2s ease, transform .25s cubic-bezier(.2, .7, .2, 1.3); }
   .house :global(.hero-bubble p::after) { content: ''; position: absolute; left: 50%; bottom: -6px; width: 12px; height: 12px; background: #fff; transform: translateX(-50%) rotate(45deg); box-shadow: .5px .5px 0 rgba(0, 0, 0, .15); }
@@ -667,8 +690,8 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .hero-wins { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
   .hero-wins :global(.pw) { pointer-events: auto; }
   .stage :global(.hw) { position: absolute; z-index: 5; }
-  .stage :global(.hw-pet) { left: 75%; top: -5%; width: 184px; }
-  .stage :global(.hw-proto) { left: 4.5%; top: 80%; width: 196px; }
+  .stage :global(.hw-pet) { left: 75.116%; top: -7.132%; width: 184px; }
+  .stage :global(.hw-proto) { left: 4.651%; top: 82.171%; width: 196px; }
   .stage :global(.hw:hover), .stage :global(.hw:focus-within) { z-index: 30; }
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
     .stage :global(.hw:hover .pw-win) { transform: scale(1.25) rotate(-1deg); box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25), 0 24px 60px rgba(0, 0, 0, .28); }
@@ -681,8 +704,8 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .stk { position: absolute; z-index: 6; padding: 0; margin: 0; border: 0; background: none; cursor: grab; touch-action: none; font: inherit; color: inherit; translate: var(--dx, 0) var(--dy, 0); transition: transform .15s; }
   .stk:hover { transform: scale(1.08) rotate(-3deg); }
   .stk:global(.is-drag) { cursor: grabbing; transform: scale(1.1) rotate(-3deg); transition: none; }
-  .stk-key { left: 76%; top: 86%; }
-  .stk-pet { left: 64%; top: 8%; }
+  .stk-key { left: 76.744%; top: 88.372%; }
+  .stk-pet { left: 65.116%; top: 10.853%; }
   .keyobj { display: block; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .14)); }
   .stk-key:hover .keyobj svg { animation: jingle .5s ease-in-out; }
   .petobj { position: relative; display: block; width: 60px; height: 62px; }
@@ -701,7 +724,7 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
     .hero-in { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 36px 0 40px; gap: 8px; }
     .stage { aspect-ratio: auto; margin: 0 -6%; }
     .house { position: relative; left: auto; right: auto; top: auto; transform: none; margin: 4% 0 2%; }
-    .grid { top: -30%; }
+    .grid { margin-top: -20.186%; } /* same distance above the house as on desktop: the grid lines stay on its walls */
     .stk { display: none; }
     .hero-wins { position: static; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; padding: 0 6%; pointer-events: auto; }
     .stage :global(.hw) { position: static; width: auto; }
@@ -764,6 +787,8 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
     .wcard-lead, .wside { grid-column: auto; }
     .wthumb-lead { min-height: 320px; }
     .wthumb { height: 210px; }
+    /* narrow cards: the screenshots' own landscape shape, so nothing is cut off the sides */
+    .wthumb:not(.mock) { height: auto; min-height: 0; aspect-ratio: 16 / 10; }
   }
 
   /* ============ Lab ============ */
@@ -775,6 +800,9 @@ const mockRows = ['#ffd166', '#ff8fa3', '#7cc3fb', '#8ee09b', '#c9a7ff'];
   .lab-row :global(.lw) { transition: opacity .35s ease, filter .35s ease; }
   .lab-cap { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
   .lab-t { font-weight: 600; font-size: 17px; }
+  /* the lab's how-to: hover where there's a pointer that can, tap on touch screens */
+  .on-touch { display: none; }
+  @media (hover: none) { .on-hover { display: none; } .on-touch { display: inline; } }
   .lab-l { font-size: 14px; color: var(--muted); max-width: 280px; }
   .panel :global(.panel-t) { font-weight: 600; font-size: 17px; color: var(--ink); }
   .panel :global(.panel-d) { font-size: 15px; line-height: 1.5; color: var(--muted); margin-top: 4px; }

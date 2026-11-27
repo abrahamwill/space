@@ -62,3 +62,40 @@ export const about = {
     { what: 'BSc Computer Science, Universitas Indonesia', when: '2021' },
   ],
 };
+
+/**
+ * The running wall in the house: medals and instax prints beside the treadmill (/house, studio).
+ * TODO(owner): photos go in /public/images/running/ (portrait, about 3:4), e.g. src: '/images/running/first-10k.jpg'.
+ */
+export const running = {
+  intro: '[A line or two about running: how it started, and what it does for you.]',
+  photos: [
+    { caption: '[First race]' },
+    { caption: '[Training run]' },
+    { caption: '[Finish line]' },
+    { caption: '[Race day]' },
+    { caption: '[Long run]' },
+    { caption: '[Medal haul]' },
+  ] as Array<{ src?: string; caption: string }>,
+  medals: [
+    { what: '[Race 1]', when: '[Year · time]' },
+    { what: '[Race 2]', when: '[Year · time]' },
+    { what: '[Race 3]', when: '[Year · time]' },
+  ],
+};
+
+/**
+ * The photo wall in the bedroom: travel photos (/house, bedroom).
+ * TODO(owner): photos go in /public/images/travel/ (portrait, about 3:4), e.g. src: '/images/travel/kyoto.jpg'.
+ */
+export const travel = {
+  intro: '[A line about travelling: where you go, and what you bring back.]',
+  photos: [
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+    { caption: '[Place, year]' },
+  ] as Array<{ src?: string; caption: string }>,
+};

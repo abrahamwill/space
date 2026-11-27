@@ -3,6 +3,12 @@
  * Black-bezel phone whose screen scrolls inside (GokoMart "Phone" part from space-kit).
  * Keyboard focusable so the screen can be scrolled with arrow keys. The hint fades on hover/focus.
  * With `auto`, the screen drifts down and back on its own while visible (off under reduced motion).
+ *
+ * `top` and `bottom` pin the app's fixed parts, the way the real app holds them: the first `top`
+ * and last `bottom` source pixels of the screenshot (status bar and header, bottom nav, a sticky CTA
+ * or a bottom sheet) stay put while the rest scrolls underneath. They are slices of the same image,
+ * so at either end of the scroll they line up exactly with the screenshot.
+ * The screen is never taller than the screenshot, so a short screen leaves no empty band.
  */
 interface Props {
   src: string;
@@ -11,16 +17,25 @@ interface Props {
   height: number;
   /** Visible screen height in px at the default 300px width. */
   screen?: number;
+  /** Source px at the top of the screenshot that stay fixed (status bar, app bar). */
+  top?: number;
+  /** Source px at the bottom of the screenshot that stay fixed (bottom nav, CTA, sheet). */
+  bottom?: number;
   hint?: boolean;
   auto?: boolean;
   class?: string;
 }
-const { src, alt, width, height, screen = 600, hint = true, auto = false, class: className } = Astro.props;
+const { src, alt, width, height, screen = 600, top = 0, bottom = 0, hint = true, auto = false, class: className } = Astro.props;
 const tall = height / width > screen / 280 + 0.05;
+const vars = [`--screen:${screen}px`, `--ratio:${height / width}`, `--top:${top / width}`, `--bottom:${bottom / width}`, `--src:url("${src}")`].join(';');
 ---
-<div class:list={['phone', className]} data-phone={auto ? 'auto' : ''}>
-  <div class="phone-screen" tabindex={tall ? 0 : undefined} role={tall ? 'region' : undefined} aria-label={tall ? `${alt} (scrollable)` : undefined} style={`--screen:${screen}px`}>
-    <img src={src} alt={alt} width={width} height={height} loading="lazy" decoding="async" />
+<div class:list={['phone', className]} data-phone={auto ? 'auto' : ''} style={vars}>
+  <div class="phone-screen">
+    <div class="phone-scroll" tabindex={tall ? 0 : undefined} role={tall ? 'region' : undefined} aria-label={tall ? `${alt} (scrollable)` : undefined}>
+      <img src={src} alt={alt} width={width} height={height} loading="lazy" decoding="async" />
+    </div>
+    {top > 0 && <span class="phone-pin is-top" aria-hidden="true"></span>}
+    {bottom > 0 && <span class="phone-pin is-bottom" aria-hidden="true"></span>}
   </div>
   {tall && hint && <span class="phone-hint" aria-hidden="true">Scroll inside ↓</span>}
 </div>
@@ -29,7 +44,7 @@ const tall = height / width > screen / 280 + 0.05;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!reduce) {
     document.querySelectorAll<HTMLElement>('[data-phone="auto"]').forEach((phone) => {
-      const screen = phone.querySelector<HTMLElement>('.phone-screen');
+      const screen = phone.querySelector<HTMLElement>('.phone-scroll');
       if (!screen) return;
       let dir = 1, raf = 0, visible = false, held = false, last = 0;
       const step = (t: number) => {
@@ -55,10 +70,19 @@ const tall = height / width > screen / 280 + 0.05;
 </script>
 
 <style>
-  .phone { position: relative; width: 300px; max-width: 100%; padding: 10px; border-radius: 46px; background: #0b0b0c; box-shadow: inset 0 0 0 1.5px #2b2b2f, 0 0 0 1px rgba(0, 0, 0, .5), 0 30px 60px rgba(0, 0, 0, .22), 0 8px 18px rgba(0, 0, 0, .14); }
-  .phone-screen { height: var(--screen); max-height: 78vh; overflow-y: auto; border-radius: 37px; background: #000; scrollbar-width: none; overscroll-behavior: contain; }
-  .phone-screen::-webkit-scrollbar { display: none; }
-  .phone-screen img { display: block; width: 100%; height: auto; }
-  .phone-hint { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); padding: 5px 11px; border-radius: 999px; background: rgba(20, 20, 22, .78); color: #fff; font-size: 12px; white-space: nowrap; pointer-events: none; transition: opacity .25s; backdrop-filter: blur(6px); }
+  .phone { position: relative; width: 300px; max-width: 100%; padding: 10px; border-radius: 46px; background: #0b0b0c; box-shadow: inset 0 0 0 1.5px #2b2b2f, 0 0 0 1px rgba(0, 0, 0, .5), 0 30px 60px rgba(0, 0, 0, .22), 0 8px 18px rgba(0, 0, 0, .14); container-type: inline-size; }
+  /* Clips the corners; never taller than the screenshot itself (100cqw is the screen width). */
+  .phone-screen { position: relative; height: min(var(--screen), 78vh, calc(100cqw * var(--ratio))); overflow: hidden; border-radius: 37px; background: #000; isolation: isolate; }
+  .phone-scroll { height: 100%; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; border-radius: inherit; }
+  .phone-scroll::-webkit-scrollbar { display: none; }
+  .phone-scroll:focus-visible { outline: none; }
+  .phone-screen:has(.phone-scroll:focus-visible) { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--blue, #2f6bff); }
+  .phone-scroll img { display: block; width: 100%; height: auto; }
+  /* Pinned slices of the same screenshot: the top band and the bottom band stay where the app keeps them. */
+  .phone-pin { position: absolute; left: 0; right: 0; z-index: 1; background-image: var(--src); background-repeat: no-repeat; background-size: 100% auto; pointer-events: none; }
+  .phone-pin.is-top { top: 0; height: calc(100cqw * var(--top)); background-position: top center; }
+  .phone-pin.is-bottom { bottom: 0; height: calc(100cqw * var(--bottom)); background-position: bottom center; }
+  /* Sits just above the pinned bottom band so it never covers a nav or a CTA. */
+  .phone-hint { position: absolute; left: 50%; bottom: calc(26px + 100cqw * var(--bottom)); z-index: 2; transform: translateX(-50%); padding: 5px 11px; border-radius: 999px; background: rgba(20, 20, 22, .78); color: #fff; font-size: 12px; white-space: nowrap; pointer-events: none; transition: opacity .25s; backdrop-filter: blur(6px); }
   .phone:hover .phone-hint, .phone:focus-within .phone-hint { opacity: 0; }
 </style>

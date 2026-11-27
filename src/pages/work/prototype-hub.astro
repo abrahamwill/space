@@ -1,0 +1,423 @@
+---
+/**
+ * Case study: Prototype Hub (self-initiated, piloted with my team at Gokomodo).
+ * From the canvas boards Case-PrototypeHub-Mac and -Mobile. The hero is coded (src/components/ph/);
+ * the three recordings and the stills were captured on a local copy of the Hub (5 Nov 2026 build)
+ * with scripted teammates and mock data.
+ */
+import CaseShell from '../../layouts/CaseShell.astro';
+import Win from '../../components/case2/Win.astro';
+import LiveReview from '../../components/ph/LiveReview.astro';
+
+const img = (f: string) => `/images/work/prototype-hub/${f}`;
+const vid = (f: string) => `/media/work/prototype-hub/${f}`;
+
+const phases = [
+  { n: 'Phase 0', h: 'Figma only', flow: ['Requirement', 'Research', 'Figma', 'Engineering'], v: 'Slow', k: 'slow', note: '“Controllable, very slow, was enough.”' },
+  { n: 'Phase 1', h: 'Everyone vibes', flow: ['Requirement', "Anyone's AI prototype", 'Engineering', 'Revamp after launch'], v: 'Broken', k: 'broken', note: '“Pure chaos”: UX errors and big revamps.' },
+  { n: 'Phase 2', h: 'Me + Netlify', flow: ['Requirement', 'UX: Figma + coded prototype', 'Review via links', 'Engineering'], v: 'Scattered', k: 'scattered', note: 'Well designed, but no shared place and no access control.' },
+  { n: 'Phase 3 · now', h: 'Me + the Hub', flow: ['Requirement', 'UX: Figma + coded prototype', 'Live review on the Hub', 'Engineering'], v: 'Works', k: 'works', note: 'One searchable place, company login, history kept.', now: true },
+];
+
+const dirs = [
+  { tag: 'A · cut', h: 'Quiet Ledger', t: 'Minimal dense list. Too corporate; people read text instead of seeing prototypes.', k: 'cut' },
+  { tag: 'B · starting point', h: 'Workbench Canvas', t: 'Spatial and visual-first. The one I kept iterating on.', k: '' },
+  { tag: 'C · cut', h: 'Staging Terminal', t: 'Keyboard-first. Built for developers, who are only part of the audience.', k: 'cut' },
+  { tag: 'Shipped', h: 'Desk', t: 'An idea pin board: prototypes as objects on a desk, quiet tools around them.', k: 'ship' },
+];
+
+// Timeline, 25 Sep to 5 Nov 2026. x is the position along the axis (0 = 25 Sep, 1 = 5 Nov), w a duration.
+const DAYS = 41;
+const at = (day: number) => day / DAYS;
+const ticks = [['25 Sep', 0], ['1 Oct', 6], ['8 Oct', 13], ['15 Oct', 20], ['22 Oct', 27], ['29 Oct', 34], ['5 Nov', 41]] as const;
+const events = [
+  { d: '25 Sep', t: 'Three design directions', x: at(0), kind: 'dot', up: true },
+  { d: '28–29 Sep', t: 'All 8 PRD phases built and deployed', x: at(3), w: at(1), kind: 'rng', up: false },
+  { d: '1–2 Oct', t: 'Live comments, presence, cursors, Follow', x: at(6), w: at(1), kind: 'rng', up: true },
+  { d: '7–13 Oct', t: 'Screen sizes, zoom, Follow shares width', x: at(12), w: at(6), kind: 'rng', up: false },
+  { d: '15 Oct', t: 'Browser tests + accessibility check in CI', x: at(20), kind: 'dot', up: true },
+  { d: 'Sometime in October', t: 'Real features: Checklist, Pesanan, Farmers Meeting', x: at(24), kind: 'vague', up: false },
+  { d: '5 Nov', t: '85 PRs, 11 prototypes', x: at(41), kind: 'dot', up: true },
+];
+---
+<CaseShell
+  title="Prototype Hub"
+  description="Case study: Prototype Hub, one place where my product team finds, tours and discusses every AI-built prototype, together and live, for $0 a month."
+  crumb="Prototype Hub"
+  next={{ href: '/work/gokomart', title: 'GokoMart, 0 to 1', line: 'Gokomodo · two doors to one farm store, for farmers in Kalimantan and Sumatra.' }}
+>
+  <!-- Hero -->
+  <section class="sec hero">
+    <span class="dotfade"></span>
+    <div class="col z stack" style="gap:26px">
+      <a class="back" href="/#lab">← All work</a>
+      <span class="kick">Case study · Self-initiated, piloted with my team at Gokomodo · 2026</span>
+      <h1>Prototype Hub</h1>
+      <p class="lede">One place where my product team finds, tours and discusses every AI-built prototype, together and live, for $0 a month.</p>
+      <dl class="meta">
+        <div><dt>Role</dt><dd>Sole designer and builder, with Claude</dd></div>
+        <div><dt>Time</dt><dd>28 Sep – 5 Nov 2026 · 85 pull requests</dd></div>
+        <div><dt>Users</dt><dd>~7 active reviewers, plus stakeholders</dd></div>
+        <div><dt>Status</dt><dd>Team pilot; open source next</dd></div>
+      </dl>
+    </div>
+    <div class="wide z hero-stage" data-reveal>
+      <Win title="gokomart-daily-checklist · live review"><LiveReview /></Win>
+    </div>
+    <p class="cap z"><b>A review in progress.</b> Teammates' cursors move over the same store page and pin comments to the element each one is about. Click anywhere on the page to drop your own pin, then scroll: every pin stays on its row.</p>
+  </section>
+
+  <!-- The spark -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">The spark</span><h2>AI made everyone a prototyper, and quality broke</h2></div>
+      <p>After an investment round, Gokomodo's operations grew fast while product design shrank to just me. AI let anyone build a prototype, so people skipped design and sent their prototypes straight to developers.</p>
+      <p>GokoMart Daily Checklist and IPC Stock Planning shipped that way: AI-generated components outside our design system, tested only on the happy path, broken in their error states. I rebuilt their information structure in days. That showed that going through UX first was faster than building alone.</p>
+      <p>So I took prototyping back. My prototypes were well designed, but they were scattered across Netlify links, shared nothing with each other, and were open to anyone with the link.</p>
+    </div>
+    <ol class="wide phases" role="list" data-reveal>
+      {phases.map((p, i) => (
+        <li class:list={['phase', { now: p.now }]} style={`--i:${i}`}>
+          <span class="ph-n">{p.n}</span>
+          <h3>{p.h}</h3>
+          <div class="flow">{p.flow.map((f, j) => <>{j > 0 && <i aria-hidden="true">→</i>}<span>{f}</span></>)}</div>
+          <span class={`verdict ${p.k}`}>{p.v}</span>
+          <span class="ph-note">{p.note}</span>
+        </li>
+      ))}
+    </ol>
+    <p class="cap">Where the review step went missing, and where it came back. The Hub is the step between my prototype and engineering.</p>
+  </section>
+
+  <!-- Goal and limits -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Goal and limits</span><h2>Three limits so developers can trust what they see</h2></div>
+      <p>Done meant one login-protected place to find, tour and comment on every prototype, where adding one takes a git push. I set three limits on myself:</p>
+      <ul class="points">
+        <li><b>$0 to run.</b> Free tiers only: Cloudflare Pages, D1, Access and Durable Objects.</li>
+        <li><b>Mobile prototypes must be buildable in React Native.</b> In 5+ years of designing for React Native, I watched blur, frosted glass, blending and layered shadows get rebuilt as “alternatives”. I turned that into rules the AI must follow. I gave up some polish so developers can trust what they see.</li>
+        <li><b>Nothing reaches the team untested.</b> Every change gets a preview link before it goes live.</li>
+      </ul>
+    </div>
+    <div class="col z" style="margin-top:44px" data-reveal>
+      <Win title="rulebook.md">
+        <div class="rules">
+          <span class="rules-n">A.2</span>
+          <h3>Mobile prototypes must stay buildable in React Native</h3>
+          <ul>
+            <li><b>Flexbox only.</b> No CSS grid, no <code>position: sticky</code>, no hover styles.</li>
+            <li><b>Avoid</b> backdrop-filter blur, clip-path, blend modes, layered shadows. If a design truly needs one, flag it red in the handoff.</li>
+            <li><b>Animate only</b> transform and opacity, as specs you can copy to Reanimated.</li>
+            <li><b>Only standard gestures.</b> Any custom gesture is flagged red.</li>
+          </ul>
+        </div>
+      </Win>
+    </div>
+    <p class="cap z">The rules the AI builds within. An excerpt from the rulebook every prototype follows. I wrote the first rules; Claude polished them and added some I hadn't listed.</p>
+  </section>
+
+  <!-- Exploration -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Exploration</span><h2>Real reviews rewrote my own PRD within days</h2></div>
+      <p>I wrote a PRD as the build brief and explored three looks. My reviewers are PMs, stakeholders and other divisions, not only developers, and they need to see prototypes, not read about them.</p>
+    </div>
+    <ul class="wide dirs" role="list" data-reveal>
+      {dirs.map((d, i) => (
+        <li class:list={['dir', d.k]} style={`--i:${i}`}>
+          <span class:list={['tag', { 'tag-ship': d.k === 'ship' }]}>{d.tag}</span>
+          <h3>{d.h}</h3>
+          <span>{d.t}</span>
+        </li>
+      ))}
+    </ul>
+    <div class="col stack" style="margin-top:56px">
+      <p>All eight PRD phases shipped in two days. Then the first real review broke my own assumption. My PRD said comments refreshing every 60 seconds was enough.</p>
+      <p class="quote">“Waiting for 60 seconds in a running discussion takes so many precious time.”</p>
+      <p>Four days later the Hub had live comments, presence, live cursors, Follow and Spotlight. I kept it on Cloudflare's free plan, with polling as a fallback. In return I accepted a second service to deploy, a daily cap, more testing and plenty of scope creep.</p>
+    </div>
+    <div class="wide" style="margin-top:52px" data-reveal>
+      <Win title="live-review.mp4 · Spotlight + Follow, both sides">
+        <video src={vid('live-review.mp4')} poster={img('live-review-poster.webp')} width="2304" height="784" muted loop playsinline preload="none" data-autoplay aria-label="Recording: Spotlight, Follow and a live comment, seen from both laptops side by side."></video>
+      </Win>
+    </div>
+    <p class="cap">Spotlight, Follow and a live comment, from both sides. Watch Nadia's 3-second countdown, then her laptop following me to the same store, not just the same screen. When she steps away to comment, her pin lands on my screen as she posts. Recorded on a local copy with scripted teammates and mock data.</p>
+    <div class="col stack" style="margin-top:56px">
+      <p>One dead end: a fixed Desktop width. Reviewers opened prototypes on different screens, so everyone saw a different layout. I tried drawing Desktop at a fixed 1440 shrunk to fit, then reversed it the same day. Now Desktop fills each person's window, and Follow shares the leader's real width, so everyone in a discussion sees the same layout.</p>
+      <p>Screen sizes were the hardest part. One change touched Follow and Spotlight across screens, prototypes with both a mobile and a desktop side, and comments hidden at some widths.</p>
+    </div>
+    <div class="wide" style="margin-top:40px" data-reveal>
+      <div class="tl" aria-label="Timeline, 25 September to 5 November 2026">
+        <span class="tl-band" style={`left:${at(6) * 100}%;width:${at(31) * 100}%`}><span>October</span></span>
+        <span class="tl-axis" aria-hidden="true"></span>
+        {ticks.map(([l, d]) => <span class="tl-tick" style={`left:${at(d) * 100}%`} aria-hidden="true"><span>{l}</span></span>)}
+        <ol class="tl-evs" role="list">
+          {events.map((e, i) => (
+            <li class:list={['tl-ev', e.up ? 'up' : 'down', e.kind]} style={`left:${e.x * 100}%;${e.w ? `width:${e.w * 100}%;` : ''}--i:${i}`}>
+              {e.kind === 'rng' && <span class="tl-rng" aria-hidden="true"></span>}
+              {e.kind !== 'rng' && <span class="tl-dot" aria-hidden="true"></span>}
+              <span class="tl-lb"><b>{e.d}</b>{e.t}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+      <div class="tl-key" aria-hidden="true">
+        <span><i class="k-dot"></i>Milestone (a single day)</span>
+        <span><i class="k-rng"></i>How long a step took</span>
+        <span><i class="k-band"></i>During that month, no exact date</span>
+      </div>
+    </div>
+    <p class="cap">Two days to build what I planned, five weeks of building what reviews asked for. Dates from the repository's history.</p>
+  </section>
+
+  <!-- Craft spotlight -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Craft spotlight</span><h2>Everyone points at the same thing, whatever their screen</h2></div>
+      <p>A live review only works if “this button” means the same button for everyone. So nothing people point with is tied to screen coordinates.</p>
+      <ul class="points">
+        <li><b>Pins stick to the element.</b> The first brief stored a pin as a percentage of the frame. In real use, pins stayed put while lists scrolled underneath, and I called it a bug. Now each pin saves the element it sits on and its spot inside it. It follows scrolling, screen changes and resizes, and hides when its spot scrolls out of view.</li>
+        <li><b>Live cursors work the same way</b>, so a cursor lands on the same element on a laptop and on a big monitor.</li>
+        <li><b>Follow lands on the same record</b>, not just the same screen: the same store and day, at the same scroll and tour step.</li>
+      </ul>
+    </div>
+    <div class="wide z craft" data-reveal>
+      <figure>
+        <Win title="pins.mp4 · pins follow the row">
+          <video src={vid('pins.mp4')} poster={img('pins-poster.webp')} width="1440" height="900" muted loop playsinline preload="none" data-autoplay aria-label="Recording: teammates' pins ride along as the page scrolls, then stay on their elements while the page narrows."></video>
+        </Win>
+        <figcaption class="cap">The pin follows the row, not the screen. Teammates' pins ride along as the page scrolls, then stay on their elements while I narrow the page from 1344 to 1144 px.</figcaption>
+      </figure>
+      <figure>
+        <Win title="tour.mp4 · tours follow taps">
+          <video src={vid('tour.mp4')} poster={img('tour-poster.webp')} width="600" height="900" muted loop playsinline preload="none" data-autoplay aria-label="Recording: a guided tour on a phone prototype moves on as the highlighted target is tapped."></video>
+        </Win>
+        <figcaption class="cap">Tours follow what people do. Tap the highlighted target and the tour moves on.</figcaption>
+      </figure>
+    </div>
+    <div class="col z stack" style="margin-top:56px">
+      <h3>Two smaller details</h3>
+      <p><b>Guided tours react to the reviewer.</b> A scripted tour fights someone who taps around. Here, tapping the target advances the tour, reaching the next screen any other way does too, and going back in the app moves the tour back.</p>
+      <p><b>Menus never flicker.</b> Prototypes redraw their screens, so every pick in a filter menu replayed its fade-in. I made “overlays update in place” a rule for every prototype, plus a safety net in the shared runtime that catches the ones that slip through.</p>
+    </div>
+  </section>
+
+  <!-- Result -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">Result</span><h2>Reviews moved onto the Hub once they went live</h2></div>
+      <p>About 7 people review on the Hub regularly (PM, dev and QA). Stakeholders and leadership join meetings through Follow. Production data, 29 Sep to 4 Nov 2026:</p>
+    </div>
+    <div class="wide stats" style="margin-top:36px" data-reveal data-count>
+      <div class="stat"><b data-to="58">58</b><span>comments in five weeks</span></div>
+      <div class="stat"><b data-to="33">33</b><span>from colleagues, not me</span></div>
+      <div class="stat"><b data-to="54">54</b><span>came after live review shipped</span></div>
+      <div class="stat"><b data-to="18">18</b><span>on the Daily Checklist, from 5 people</span></div>
+    </div>
+    <div class="col stack" style="margin-top:44px">
+      <p>Reviewers praised three things: easier discussion in online and in-room meetings with Follow and live cursors, tracking changes through version history and the Updates tray, and switching between projects. They also asked for more: screen export for decks (PM) and tours linked to test cases (QA, still in discussion).</p>
+    </div>
+    <div class="wide two" style="margin-top:52px" data-reveal>
+      <figure>
+        <Win title="Updates tray" src={img('updates-tray.webp')} alt="The Hub home with the Updates tray open: new comments on GokoMart Daily Checklist from Tari, Raka and Nadia, then Absensi's latest versions with their release notes." width={2000} height={1250} />
+        <figcaption class="cap">What changed since you last looked. Comments and new versions across every prototype, in one tray.</figcaption>
+      </figure>
+      <figure>
+        <Win title="Version history" src={img('version-history.webp')} alt="A prototype's version history: every build kept, each with its version number and release notes, taken from the repository." width={2000} height={1250} />
+        <figcaption class="cap">Every build is kept. Version history comes straight from the repository, so reviewers see what changed and when.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- How I built it with AI -->
+  <section class="sec">
+    <span class="dotfade"></span>
+    <div class="col z stack">
+      <div class="stack" style="gap:16px"><span class="pillk">How I built it with AI</span><h2>AI writes the code; I write the brief, the rules and the review</h2></div>
+      <p><b>The brief.</b> I wrote a one-page outline, and Claude expanded it into a full build brief. The product calls in the next version were mine: a working tool rather than a landing page, prototypes that arrive by git push, a four-tool toolbox, and a Present link for stakeholders (my need, Claude's mechanism). I also caught that tours had been left out. Later I spotted the missing test environment; Claude proposed the branch, preview and rollback steps.</p>
+      <p><b>The design.</b> I designed presence, comment pins, zoom, What's new and the home screen in Claude Design before Claude Code built them.</p>
+      <p><b>The review.</b> Even with a frontier model, I go through several rounds to get polished visuals, design-system consistency, and complete states and flows. It's still manageable.</p>
+      <p class="muted">Codex adds capacity and image generation; it doesn't replace Claude.</p>
+    </div>
+    <div class="wide z compare" data-reveal data-compare>
+      <div class="cmp-tabs" role="tablist" aria-label="Home screen">
+        <button type="button" role="tab" aria-selected="true" data-tab="designed">Designed · Home F</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="shipped">Shipped · today</button>
+      </div>
+      <div class="cmp-stage">
+        <Win title="Designed · Home F" src={img('home-designed.webp')} alt="Home F, the home screen as designed in Claude Design: a welcome card with a sketched phone illustration above a grid of sample prototypes." width={2000} height={1250} class="cmp-a" />
+        <Win title="Shipped · today" src={img('home-shipped.webp')} alt="The home screen as it runs today: the same welcome card and layout, with real prototypes in the grid." width={2000} height={1250} class="cmp-b" />
+      </div>
+    </div>
+    <p class="cap z">Designed first, then built. My Home F design next to the home screen as it runs today, with real prototypes in place of samples.</p>
+  </section>
+
+  <!-- What I learned -->
+  <section class="sec">
+    <div class="col stack">
+      <div class="stack" style="gap:16px"><span class="pillk">What I learned and what's next</span><h2>A feature needs a reason to be used, not just a button</h2></div>
+      <p><b>Only 2 of 58 comments were ever resolved.</b> Once people saw the update, closing each comment had no reward and no reason. I built a mechanism, not a motivation.</p>
+      <p>The other lesson: my plan lasted until the first real review. The biggest change in the project came from watching one discussion, not from the PRD.</p>
+      <p><b>Next</b>, a team setup flow and removing Gokomodo specifics, so any team with coded prototypes and reviewers can run its own Hub. After one or two more team tests, it goes open source.</p>
+      <p class="fine">Recordings and stills were captured on a local copy of the Hub at the 5 Nov 2026 build, with scripted teammates (Nadia, Raka, Tari) and the prototypes' mock data. Numbers in Result come from the production database.</p>
+    </div>
+  </section>
+</CaseShell>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Recordings play only while on screen (and never under reduced motion; the poster stays).
+  document.querySelectorAll<HTMLVideoElement>('video[data-autoplay]').forEach((v) => {
+    if (reduce) { v.controls = true; return; }
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { v.preload = 'auto'; v.play().catch(() => { v.controls = true; }); }
+      else v.pause();
+    }, { threshold: .35 }).observe(v);
+  });
+
+  // Result numbers count up once.
+  document.querySelectorAll<HTMLElement>('[data-count]').forEach((box) => {
+    if (reduce) return;
+    const nums = [...box.querySelectorAll<HTMLElement>('[data-to]')];
+    nums.forEach((b) => { b.textContent = '0'; });
+    new IntersectionObserver(([e], io) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const t0 = performance.now();
+      const tick = (t: number) => {
+        const k = Math.min(1, (t - t0) / 1200), ease = 1 - Math.pow(1 - k, 3);
+        nums.forEach((b) => { b.textContent = String(Math.round(Number(b.dataset.to) * ease)); });
+        if (k < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, { threshold: .5 }).observe(box);
+  });
+
+  // Designed vs shipped: tabs, and a slow crossfade while nobody has picked one.
+  document.querySelectorAll<HTMLElement>('[data-compare]').forEach((box) => {
+    const tabs = [...box.querySelectorAll<HTMLButtonElement>('[data-tab]')];
+    let picked = false, timer = 0, visible = false;
+    const show = (id: string) => {
+      box.dataset.show = id;
+      tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === id)));
+    };
+    show('designed');
+    tabs.forEach((t) => t.addEventListener('click', () => { picked = true; clearInterval(timer); show(t.dataset.tab!); }));
+    if (reduce) return;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: .4 }).observe(box);
+    timer = window.setInterval(() => { if (!picked && visible) show(box.dataset.show === 'designed' ? 'shipped' : 'designed'); }, 3200);
+  });
+</script>
+
+<style>
+  .hero { padding-top: clamp(48px, 6vw, 70px); }
+  .hero-stage { margin-top: 64px; }
+  .muted { color: var(--muted); }
+  .fine { margin-top: 12px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 13px; line-height: 1.5; color: var(--muted); }
+  figure { margin: 0; }
+  figure .cap { width: auto; margin: 14px 0 0; }
+  video { display: block; width: 100%; height: auto; background: #111; }
+
+  /* Phases */
+  .phases { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 48px; padding: 0; list-style: none; }
+  .phase { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 12px; background: #fff; box-shadow: var(--hair); }
+  .phase.now { box-shadow: 0 0 0 2px var(--blue); }
+  .phase h3 { font-size: 18px; }
+  .ph-n { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .ph-note { font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .verdict { align-self: flex-start; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .verdict.slow { background: #fff4d6; color: #8a5a00; }
+  .verdict.broken { background: #ffe1dc; color: #a3271a; }
+  .verdict.scattered { background: #ececee; color: #4a4a50; }
+  .verdict.works { background: #dff3e6; color: #1d6b40; }
+
+  /* Rulebook */
+  .rules { padding: 26px 30px; font-size: 15px; line-height: 1.6; }
+  .rules-n { display: block; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .rules h3 { font-size: 20px; margin-bottom: 14px; }
+  .rules ul { margin: 0; padding-left: 20px; }
+  .rules li { margin: 0 0 10px; }
+  .rules code { font-family: var(--mono); font-size: .9em; }
+
+  /* Directions */
+  .dirs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 40px; padding: 0; list-style: none; }
+  .dir { display: flex; flex-direction: column; gap: 8px; padding: 18px; border-radius: 12px; background: #fff; box-shadow: var(--hair); }
+  .dir.cut { opacity: .6; }
+  .dir.ship { box-shadow: 0 0 0 2px var(--blue); }
+  .dir h3 { font-size: 18px; }
+  .dir > span:last-child { font-size: 14px; line-height: 1.45; color: var(--muted); }
+  .tag-ship { background: var(--blue); color: #fff; }
+
+  /* Staggered entrance for the card rows */
+  :global(.js) .phases[data-reveal] > li, :global(.js) .dirs[data-reveal] > li { opacity: 0; transform: translateY(14px); transition: opacity .6s var(--ease), transform .6s var(--ease); transition-delay: calc(var(--i) * 110ms); }
+  :global(.js) .phases[data-reveal].is-in > li, :global(.js) .dirs[data-reveal].is-in > li { opacity: 1; transform: none; }
+  :global(.js) .dirs[data-reveal].is-in > li.cut { opacity: .6; }
+
+  /* Timeline: positions are fractions of the axis, so it scales with the column */
+  .tl { position: relative; height: 238px; margin: 0 68px; }
+  .tl-axis { position: absolute; left: 0; right: 0; top: 92px; height: 2px; background: var(--rule); transform-origin: left; }
+  .tl-band { position: absolute; top: 82px; height: 22px; border-radius: 4px; background: rgba(10, 108, 255, .1); }
+  .tl-band span { position: absolute; right: 6px; top: -20px; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .tl-tick { position: absolute; top: 96px; width: 1px; height: 8px; background: rgba(85, 85, 92, .6); }
+  .tl-tick span { position: absolute; top: 116px; left: 0; transform: translateX(-50%); font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .tl-evs { margin: 0; padding: 0; list-style: none; }
+  .tl-ev { position: absolute; top: 84px; width: 0; }
+  .tl-dot { position: absolute; left: -7px; top: 1px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--ink); }
+  .tl-ev.vague .tl-dot { display: none; }
+  .tl-rng { position: absolute; left: 0; top: 5px; width: 100%; height: 6px; min-width: 18px; border-radius: 3px; background: var(--blue); opacity: .85; }
+  .tl-lb { position: absolute; left: -68px; width: 136px; text-align: center; font-size: 13px; line-height: 1.35; }
+  .tl-ev.rng .tl-lb { left: calc(50% - 68px); }
+  .tl-ev.up .tl-lb { bottom: 24px; }
+  .tl-ev.down .tl-lb { top: 28px; }
+  .tl-lb b { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--muted); }
+  .tl-key { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 28px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .tl-key span { display: inline-flex; align-items: center; gap: 8px; }
+  .tl-key i { display: inline-block; }
+  .k-dot { width: 11px; height: 11px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--ink); }
+  .k-rng { width: 28px; height: 6px; border-radius: 3px; background: var(--blue); }
+  .k-band { width: 28px; height: 14px; border-radius: 3px; background: rgba(10, 108, 255, .14); }
+  :global(.js) [data-reveal] .tl-axis { transform: scaleX(0); transition: transform 1.1s var(--ease) .1s; }
+  :global(.js) [data-reveal].is-in .tl-axis { transform: none; }
+  :global(.js) [data-reveal] .tl-ev { opacity: 0; transition: opacity .45s var(--ease); transition-delay: calc(300ms + var(--i) * 140ms); }
+  :global(.js) [data-reveal].is-in .tl-ev { opacity: 1; }
+
+  /* Craft: wide recording + tall phone recording */
+  .craft { display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 52px; }
+
+  /* Designed vs shipped */
+  .compare { margin-top: 52px; }
+  .cmp-tabs { display: inline-flex; gap: 2px; padding: 3px; margin: 0 auto 16px; border-radius: 999px; background: #fff; box-shadow: var(--hair); }
+  .compare { display: flex; flex-direction: column; align-items: center; }
+  .cmp-tabs button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: none; font: 500 14px var(--sans); color: var(--muted); cursor: pointer; transition: background .2s, color .2s; }
+  .cmp-tabs button[aria-selected='true'] { background: var(--ink); color: #fff; }
+  .cmp-stage { position: relative; display: grid; width: 100%; }
+  .cmp-stage > :global(*) { grid-area: 1 / 1; transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .compare[data-show='designed'] :global(.cmp-b), .compare[data-show='shipped'] :global(.cmp-a) { opacity: 0; transform: scale(.985); pointer-events: none; }
+
+  @media (max-width: 960px) {
+    .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dirs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .craft { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+  }
+  @media (max-width: 760px) {
+    .phases, .dirs { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .craft { grid-template-columns: minmax(0, 1fr); }
+    .craft figure:last-child { width: min(320px, 100%); margin-inline: auto; }
+    /* The timeline turns into a list */
+    .tl { height: auto; margin: 0; }
+    .tl-axis, .tl-band, .tl-tick { display: none; }
+    .tl-ev { position: static; width: auto !important; display: grid; grid-template-columns: 86px 18px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+    .tl-dot, .tl-rng { position: static; }
+    .tl-dot { width: 12px; height: 12px; margin-top: 3px; }
+    .tl-rng { width: 18px !important; min-width: 0; margin-top: 6px; }
+    .tl-ev.vague::before { content: ''; grid-column: 2; grid-row: 1; width: 18px; height: 12px; border-radius: 3px; background: rgba(10, 108, 255, .18); }
+    .tl-lb { position: static; width: auto; display: contents; text-align: left; font-size: 15px; line-height: 1.45; }
+    .tl-lb b { grid-column: 1; grid-row: 1; padding-top: 2px; }
+    .tl-ev .tl-dot, .tl-ev .tl-rng { grid-column: 2; grid-row: 1; }
+    .tl-key { flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 16px; }
+  }
+</style>

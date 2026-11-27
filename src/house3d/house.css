@@ -1,0 +1,38 @@
+/* /house on the Pinwheel house: on top of src/house/house.css. */
+
+/* The page shows through (the poster underneath fades out once the scene is up, see src/pages/house.astro). */
+.hx2.is-ready { background: none; }
+
+/* Getting around: the canvas takes every gesture (drag turns, pinch zooms, two fingers move), so the
+   browser mustn't scroll or zoom the page under it. */
+.hx2 .hx-stage { touch-action: none; }
+.hx2 .hx-stage:active { cursor: grabbing; }
+
+/* The camera toolbar: zoom | turn | reset. */
+.hx2 .hx-turn-sep { width: 1px; height: 22px; margin: 0 4px; background: rgba(0, 0, 0, .12); }
+.hx2 .hx-turn button:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+.hx2 .hx-turn button:disabled { color: rgba(0, 0, 0, .25); cursor: default; background: none; }
+/* The hint sits over the toolbar, so neither runs into the other (or into now playing). */
+.hx2 .hx-hint { right: auto; left: 50%; transform: translateX(-50%); bottom: 72px; white-space: nowrap; }
+@media (max-width: 899px) {
+  /* a column on the right, clear of now playing on the left */
+  .hx2 .hx-turn { flex-direction: column; bottom: 16px; }
+  .hx2 .hx-turn-sep { width: 22px; height: 1px; margin: 3px 0; }
+}
+
+/* House + four rooms in the switch: tighter on phones. */
+@media (max-width: 899px) {
+  .hx2 .hx-rooms button { padding: 0 11px; }
+}
+@media (max-width: 400px) {
+  .hx2 .hx-rooms button { padding: 0 8px; font-size: 13px; }
+}
+
+/* The running window: instax prints (Windows.tsx, 'running'). */
+.hx-instax { margin: 0; padding: 4px 2px; list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 132px)); justify-content: center; gap: 14px 12px; } /* three across, print-sized, however wide the window */
+.hx-instax li { display: flex; flex-direction: column; gap: 6px; padding: 6px 6px 8px; background: #fffdf8; border-radius: 2px; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 4px 10px rgba(0, 0, 0, .1); transform: rotate(var(--tilt, -1.5deg)); }
+.hx-instax li:nth-child(3n + 2) { --tilt: 1.2deg; }
+.hx-instax li:nth-child(3n) { --tilt: -0.6deg; }
+.hx-instax img, .hx-instax-empty { display: block; width: 100%; aspect-ratio: 46 / 62; object-fit: cover; background: linear-gradient(160deg, #dfe8ef, #efe6d6); }
+.hx-instax li > span:last-child { font-size: 11px; line-height: 1.3; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .hx-instax li { transform: none; } }

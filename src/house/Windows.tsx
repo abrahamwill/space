@@ -5,13 +5,26 @@
 import { useState } from 'react';
 import type { HouseContent } from './content';
 
-/** A small Mac window with the project's picture, or a soft tile when there isn't one yet. */
+/**
+ * The project's picture: a plain rounded screenshot (the window around it is chrome enough), or a soft
+ * tile when there isn't one yet.
+ */
 function Thumb({ title, src, position }: { title: string; src?: string; position?: string }) {
   return (
     <div className="hx-thumb" aria-hidden="true">
-      <div className="hx-thumb-bar"><span className="hx-lights"><i /><i /><i /></span><span>{title}</span></div>
-      {src ? <img src={src} alt="" style={{ objectPosition: position }} /> : <div className="hx-thumb-empty">Case study</div>}
+      {src ? <img src={src} alt="" style={{ objectPosition: position }} /> : <div className="hx-thumb-empty">{title}</div>}
     </div>
+  );
+}
+
+/** A window's heading: an optional small label above the title, kept with it, and an optional line under. */
+function Head({ label, title, sub }: { label?: React.ReactNode; title: React.ReactNode; sub?: React.ReactNode }) {
+  return (
+    <header className="hx-head">
+      {label && <span className="hx-eyebrow">{label}</span>}
+      <h3 className="hx-h">{title}</h3>
+      {sub && <span className="hx-sub">{sub}</span>}
+    </header>
   );
 }
 
@@ -22,6 +35,20 @@ function Rows({ rows }: { rows: ReadonlyArray<{ what: string; when?: string }> }
         <li key={r.what}>
           <span>{r.what}</span>
           {r.when && <span className="hx-muted">{r.when}</span>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Instax-style prints (the running wall, the bedroom photo wall). */
+function Instax({ photos, label }: { photos: ReadonlyArray<{ src?: string; caption: string }>; label: string }) {
+  return (
+    <ul className="hx-instax" aria-label={label}>
+      {photos.map((ph, i) => (
+        <li key={i}>
+          {ph.src ? <img src={ph.src} alt={ph.caption} loading="lazy" /> : <span className="hx-instax-empty" aria-hidden="true" />}
+          <span>{ph.caption}</span>
         </li>
       ))}
     </ul>
@@ -51,8 +78,7 @@ function Folders({ content }: { content: HouseContent }) {
       </div>
       <div className="hx-folder" role="tabpanel">
         <Thumb title={w.short ?? w.company} src={w.thumb} position={w.thumbPosition} />
-        <span className="hx-muted hx-small">{w.company} · {w.role} · {w.year}</span>
-        <h3 className="hx-h">{w.published ? w.title : w.summary}</h3>
+        <Head label={`${w.company} · ${w.role} · ${w.year}`} title={w.published ? w.title : w.summary} />
         {w.published && <p>{w.tldr ?? w.summary}</p>}
         {w.published && w.metrics.length > 0 && (
           <ul className="hx-metrics">
@@ -78,8 +104,7 @@ function LabItem({ content, index, extra }: { content: HouseContent; index: numb
   const item = content.lab[index];
   return (
     <>
-      <span className="hx-muted hx-small">{item.status}</span>
-      <h3 className="hx-h">{item.title}</h3>
+      <Head label={item.status} title={item.title} />
       <p>{item.body}</p>
       {extra}
     </>
@@ -113,9 +138,7 @@ function Turntable({ content, deck }: { content: HouseContent; deck: Deck }) {
   if (!r) return null;
   return (
     <>
-      <span className="hx-muted hx-small">{deck.state === 'playing' ? 'On the turntable' : 'Changing the record…'}</span>
-      <h3 className="hx-h">{r.title}</h3>
-      <p>{r.artist}</p>
+      <Head label={deck.state === 'playing' ? 'On the turntable' : 'Changing the record…'} title={r.title} sub={r.artist} />
       <ul className="hx-records" aria-label="Records">
         {content.records.map((rec, i) => (
           <li key={i}>
@@ -139,7 +162,7 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
     case 'archive':
       return (
         <>
-          <h3 className="hx-h">The whole shelf</h3>
+          <Head title="The whole shelf" />
           <p>[Older and smaller projects, one line each, outcome first.]</p>
           <Rows rows={[{ what: '[Project]', when: '[Year]' }, { what: '[Project]', when: '[Year]' }, { what: '[Project]', when: '[Year]' }]} />
         </>
@@ -147,7 +170,7 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
     case 'pinboard':
       return (
         <>
-          <h3 className="hx-h">How I work</h3>
+          <Head title="How I work" />
           <p>[Three or four principles, one line each, with a small example for each.]</p>
         </>
       );
@@ -161,26 +184,29 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
               <ul className="hx-chips">
                 {['Comments', 'Touch hints', 'Guided flows', 'Versioning', 'Present mode'].map((c) => <li key={c}>{c}</li>)}
               </ul>
-              <Ph>[Screenshot: check internal prototype names before publishing]</Ph>
+              <Thumb title="Prototype Hub" src="/images/lab/prototype-hub-cover.webp" position="top left" />
+              <div className="hx-actions">
+                <a className="hx-btn" href="/work/prototype-hub">Read the case study</a>
+              </div>
             </>
           }
         />
       );
     case 'arcade':
-      return <LabItem content={content} index={1} extra={<Ph>[Screenshot of the pet game]</Ph>} />;
+      return <LabItem content={content} index={1} extra={<Thumb title="Pet game" src="/images/lab/pet-game-cover.webp" />} />;
     case 'voice':
       return <LabItem content={content} index={2} />;
     case 'whiteboard':
       return (
         <>
-          <h3 className="hx-h">Learning notes</h3>
+          <Head title="Learning notes" />
           <p>[What I'm learning right now, and the notes I keep while I do.]</p>
         </>
       );
     case 'window':
       return (
         <>
-          <h3 className="hx-h">And this is where I live, off the clock.</h3>
+          <Head title="And this is where I live, off the clock." />
           <p>{about.body}</p>
           <Rows rows={about.facts} />
         </>
@@ -190,7 +216,7 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
     case 'notice':
       return (
         <>
-          <h3 className="hx-h">Talks and workshops</h3>
+          <Head title="Talks and workshops" />
           <Rows
             rows={[
               { what: 'Workshops at RISTEK and COMPFEST', when: 'Speaker' },
@@ -203,7 +229,7 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
     case 'door':
       return (
         <>
-          <h3 className="hx-h">The door's open.</h3>
+          <Head title="The door's open." />
           <p>If any of this sounds like your kind of problem, come say hi.</p>
           <ul className="hx-links">
             <li><a href={site.emailHref}>{site.email}</a></li>
@@ -212,11 +238,29 @@ export function WindowBody({ id, content, deck }: { id: string; content: HouseCo
           </ul>
         </>
       );
+    // House v2 (Pinwheel): what these open is still an open question (design/house-v2-blender.md)
+    case 'running':
+      return (
+        <>
+          <Head title="Miles on the wall" />
+          <p>{content.running.intro}</p>
+          <Instax photos={content.running.photos} label="Photos from my running" />
+          <Rows rows={content.running.medals} />
+        </>
+      );
+    case 'photowall':
+      return (
+        <>
+          <Head title="Places I've been" />
+          <p>{content.travel.intro}</p>
+          <Instax photos={content.travel.photos} label="Travel photos" />
+        </>
+      );
     case 'photos':
       return (
         <>
-          <h3 className="hx-h">Off the record</h3>
-          <Ph ratio="4 / 3">[Photos]</Ph>
+          <Head title="Off the record" />
+          <Ph ratio="16 / 10">[Photos]</Ph>
         </>
       );
     default:

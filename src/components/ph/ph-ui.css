@@ -1,0 +1,30 @@
+/*
+  Prototype Hub UI tokens for the coded demos on /work/prototype-hub.
+  Copied from the Hub's own design tokens (prototype-hub src/styles.css, "Desk" direction).
+*/
+@import '@fontsource-variable/geist';
+
+.ph-ui {
+  --p-ink: #17171b;
+  --p-ink-2: #4a4a52;
+  --p-muted: #6b6b73;
+  --p-desk: #efede8;
+  --p-desk-2: #e6e3dc;
+  --p-surface: #ffffff;
+  --p-raised: #faf9f6;
+  --p-hair: #dad6ce;
+  --p-hair-soft: #e8e5de;
+  --p-violet: #5b4cff;
+  --p-violet-ink: #3f31d9;
+  --p-violet-tint: #eceaff;
+  --p-tangerine: #ff8a3d;
+  --p-live: #1f9d55;
+  --p-live-ink: #17702f;
+  --p-live-tint: #e3f3e9;
+  --p-error: #d92d20;
+  --p-dot: #cbc6bc;
+  --p-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Geist Variable', 'Geist', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.ph-ui p { color: inherit; font-size: inherit; line-height: inherit; }
